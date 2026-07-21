@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log In - ApexVault</title>
+  <style>
+    :root {
+      --bg-deep: #0a0e1a;
+      --bg-card: #112240;
+      --border: #233554;
+      --accent: #64ffda;
+      --gradient-start: #00d4aa;
+      --gradient-end: #00a8e8;
+      --text-muted: #8892b0;
+      --text-light: #ccd6f6;
+      --text-white: #ffffff;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-light);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .particles-container {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px; height: 4px;
+      background: var(--accent);
+      border-radius: 50%;
+      opacity: 0;
+      animation: float-up linear infinite;
+    }
+
+    @keyframes float-up {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    .login-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+    }
+
+    .logo-link {
+      text-align: center;
+      margin-bottom: 32px;
+      text-decoration: none;
+      display: block;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .login-container h2 {
+      color: var(--text-white);
+      font-size: 1.6rem;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 32px;
+      font-size: 0.95rem;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      color: var(--text-light);
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-wrapper input {
+      width: 100%;
+      padding: 14px 50px 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-deep);
+      color: var(--text-white);
+      font-size: 1rem;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .password-wrapper input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(100, 255, 218, 0.1);
+    }
+
+    .password-wrapper input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 4px;
+      transition: color 0.3s;
+    }
+
+    .toggle-password:hover {
+      color: var(--accent);
+    }
+
+    .form-group input:not(.password-wrapper input) {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-deep);
+      color: var(--text-white);
+      font-size: 1rem;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .form-group input:not(.password-wrapper input):focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(100, 255, 218, 0.1);
+    }
+
+    .form-group input:not(.password-wrapper input)::placeholder {
+      color: var(--text-muted);
+    }
+
+    .input-error {
+      border-color: var(--danger) !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+    }
+
+    .error-text {
+      color: var(--danger);
+      font-size: 0.8rem;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .error-text.show {
+      display: block;
+    }
+
+    .forgot-password {
+      text-align: right;
+      margin-bottom: 20px;
+    }
+
+    .forgot-password a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+
+    .forgot-password a:hover {
+      text-decoration: underline;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 212, 170, 0.3);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 24px 0;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .divider span {
+      padding: 0 16px;
+    }
+
+    .signup-link {
+      text-align: center;
+      margin-top: 24px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .signup-link a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
+
+    .status {
+      padding: 14px;
+      border-radius: 10px;
+      margin-top: 16px;
+      text-align: center;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .status.success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      display: block;
+    }
+
+    .status.error {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      display: block;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--bg-deep);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="particles-container" id="particles"></div>
+
+  <div class="login-container">
+    <a href="index.html" class="logo-link">
+      <div class="logo">🔥 ApexVault</div>
+    </a>
+
+    <h2>Welcome Back</h2>
+    <p class="subtitle">Log in to access your portfolio</p>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="you@example.com" required>
+        <div class="error-text" id="emailError">Please enter a valid email address</div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="password-wrapper">
+          <input type="password" id="password" placeholder="Enter your password" required>
+          <button type="button" class="toggle-password" onclick="togglePassword('password', this)">👁️</button>
+        </div>
+      </div>
+
+      <div class="forgot-password">
+        <a href="forgot-password.html">Forgot password?</a>
+      </div>
+
+      <button type="submit" class="btn-primary" id="submitBtn">
+        Log In
+      </button>
+    </form>
+
+    <div id="status" class="status"></div>
+
+    <div class="divider"><span>or</span></div>
+
+    <p class="signup-link">
+      Don't have an account? <a href="create-account.html">Sign up</a>
+    </p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBt77e2QQCtOyCVCupw-6jIJ8MVyHf3UKY",
+      authDomain: "apexvault-eea2a.firebaseapp.com",
+      databaseURL: "https://apexvault-eea2a-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "apexvault-eea2a",
+      storageBucket: "apexvault-eea2a.firebasestorage.app",
+      messagingSenderId: "153560225073",
+      appId: "1:153560225073:web:10fcd76eb82cebd8f18c10",
+      measurementId: "G-E5QQK8RBTN"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Toggle password visibility
+    window.togglePassword = function(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈';
+      } else {
+        input.type = 'password';
+        btn.textContent = '👁️';
+      }
+    };
+
+    // Email validation
+    function isValidEmail(email) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      return emailRegex.test(email);
+    }
+
+    // Show/hide field error
+    function showFieldError(inputId, errorId, show) {
+      const input = document.getElementById(inputId);
+      const error = document.getElementById(errorId);
+      if (show) {
+        input.classList.add('input-error');
+        error.classList.add('show');
+      } else {
+        input.classList.remove('input-error');
+        error.classList.remove('show');
+      }
+    }
+
+    // Real-time email validation
+    document.getElementById('email').addEventListener('blur', function() {
+      const email = this.value.trim();
+      if (email && !isValidEmail(email)) {
+        showFieldError('email', 'emailError', true);
+      } else {
+        showFieldError('email', 'emailError', false);
+      }
+    });
+
+    document.getElementById('email').addEventListener('input', function() {
+      showFieldError('email', 'emailError', false);
+    });
+
+    // Particles
+    function createParticles() {
+      const container = document.getElementById('particles');
+      for (let i = 0; i < 25; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.width = (Math.random() * 3 + 2) + 'px';
+        p.style.height = p.style.width;
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (Math.random() * 8 + 12) + 's';
+        p.style.animationDelay = (Math.random() * 8) + 's';
+        container.appendChild(p);
+      }
+    }
+    createParticles();
+
+    // Login form
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const status = document.getElementById('status');
+      const btn = document.getElementById('submitBtn');
+
+      // Validate email
+      if (!isValidEmail(email)) {
+        showFieldError('email', 'emailError', true);
+        status.className = 'status error';
+        status.textContent = '❌ Please enter a valid email address!';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span> Logging in...';
+
+      try {
+        const snapshot = await get(ref(db, 'users'));
+        const users = snapshot.val();
+        
+        let foundUser = null;
+        let userId = null;
+        
+        if (users) {
+          for (const [key, user] of Object.entries(users)) {
+            if (user.email === email) {
+              foundUser = user;
+              userId = key;
+              break;
+            }
+          }
+        }
+
+        if (!foundUser) {
+          status.className = 'status error';
+          status.textContent = '❌ Email not found!';
+          btn.disabled = false;
+          btn.textContent = 'Log In';
+          return;
+        }
+
+        if (foundUser.password !== password) {
+          status.className = 'status error';
+          status.textContent = '❌ Incorrect password!';
+          btn.disabled = false;
+          btn.textContent = 'Log In';
+          return;
+        }
+
+        sessionStorage.setItem('apexvault_user', JSON.stringify({
+          id: userId,
+          name: foundUser.fullName,
+          email: foundUser.email
+        }));
+
+        status.className = 'status success';
+        status.innerHTML = '✅ Login successful!<br>Redirecting to dashboard...';
+        
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 1500);
+
+      } catch (error) {
+        status.className = 'status error';
+        status.textContent = '❌ Error: ' + error.message;
+        btn.disabled = false;
+        btn.textContent = 'Log In';
+      }
+    });
+  </script>
+
+</body>
+  </html>
+  
