@@ -60,11 +60,11 @@
 
       <div class="nav-section">
         <div class="nav-section-title">More</div>
+        <button class="nav-item" onclick="showSection('history')">
+          <span class="icon">📜</span> History
+        </button>
         <button class="nav-item" onclick="showSection('referral')">
           <span class="icon">🎁</span> Referral
-        </button>
-        <button class="nav-item" onclick="showSection('transactions')">
-          <span class="icon">📋</span> Transactions
         </button>
         <button class="nav-item" onclick="showSection('pending')">
           <span class="icon">⏳</span> Pending
@@ -89,19 +89,20 @@
         <p>Welcome back! Here is your portfolio summary.</p>
       </div>
       <div class="top-actions">
-        <button class="btn-small btn-deposit" onclick="openModal('depositModal')">+ Deposit</button>
+        <button class="btn-small btn-deposit" onclick="showSection('deposit')">+ Deposit</button>
       </div>
     </div>
 
     <!-- STATS CARDS -->
     <div class="stats-grid">
-      <div class="stat-card">
+      <div class="stat-card hero">
         <div class="stat-card-header">
           <span>Total Balance</span>
           <div class="stat-icon green">💵</div>
         </div>
         <h3 id="totalBalance">$0.00</h3>
         <p>Available for withdrawal</p>
+        <div class="sparkline"></div>
       </div>
       <div class="stat-card">
         <div class="stat-card-header">
@@ -168,9 +169,9 @@
         </div>
 
         <div class="section-card">
-          <h2>📋 Recent Transactions</h2>
+          <h2>📋 Recent Activity</h2>
           <div class="transaction-list" id="recentTransactions">
-            <p style="color: var(--text-muted); text-align: center; padding: 20px;">No transactions yet</p>
+            <p style="color: var(--text-muted); text-align: center; padding: 20px;">No activity yet</p>
           </div>
         </div>
       </div>
@@ -179,7 +180,17 @@
       <div class="section-content" id="investSection" style="display: none;">
         <div class="section-card">
           <h2>💼 Choose an Investment Plan</h2>
-          <div class="plans-grid">
+          <div id="investmentStatus" style="display: none; margin-bottom: 20px;">
+            <div class="investment-locked">
+              <span class="lock-icon">🔒</span>
+              <div>
+                <h4>Investment Locked</h4>
+                <p>You have an active investment. You can invest again once it completes.</p>
+                <div class="lock-timer" id="lockTimer">Time remaining: calculating...</div>
+              </div>
+            </div>
+          </div>
+          <div class="plans-grid" id="plansGrid">
             <div class="plan-card">
               <h3>🚀 Startup Plan</h3>
               <div class="plan-price">$100 <span>min</span></div>
@@ -226,21 +237,30 @@
           <h2>💰 Deposit Funds</h2>
           <p style="color: var(--text-muted); margin-bottom: 20px;">Add money to your wallet to start investing.</p>
           <div class="actions-grid">
-            <button class="action-btn" onclick="openDepositModal('bank')">
+            <!-- Bank Transfer - Unavailable -->
+            <div class="action-btn unavailable">
+              <div class="unavailable-overlay">
+                <span class="unavailable-badge">Currently Unavailable</span>
+              </div>
               <div class="icon">🏦</div>
               <h4>Bank Transfer</h4>
               <p>Direct bank deposit</p>
-            </button>
-            <button class="action-btn" onclick="openDepositModal('crypto')">
+            </div>
+            <!-- Crypto - Available -->
+            <button class="action-btn" onclick="openDepositModal()">
               <div class="icon">₿</div>
               <h4>Cryptocurrency</h4>
-              <p>BTC, ETH, USDT</p>
+              <p>USDT BEP20 / TRC20</p>
             </button>
-            <button class="action-btn" onclick="openDepositModal('card')">
+            <!-- Credit Card - Unavailable -->
+            <div class="action-btn unavailable">
+              <div class="unavailable-overlay">
+                <span class="unavailable-badge">Currently Unavailable</span>
+              </div>
               <div class="icon">💳</div>
               <h4>Credit Card</h4>
               <p>Visa, Mastercard</p>
-            </button>
+            </div>
           </div>
         </div>
       </div>
@@ -249,14 +269,29 @@
       <div class="section-content" id="withdrawSection" style="display: none;">
         <div class="section-card">
           <h2>💸 Withdraw Funds</h2>
+          <div class="withdraw-limit-banner" id="withdrawLimitBanner">
+            <div class="limit-icon">📊</div>
+            <div class="limit-info">
+              <span class="limit-label">Daily Withdrawal Limit</span>
+              <span class="limit-amount" id="dailyLimitAmount">$10,000.00 / $10,000.00</span>
+              <div class="limit-bar">
+                <div class="limit-fill" id="dailyLimitFill" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
           <p style="color: var(--text-muted); margin-bottom: 20px;">Request a withdrawal. It will show in Pending until approved.</p>
           <div class="actions-grid">
-            <button class="action-btn" onclick="openWithdrawModal('bank')">
+            <!-- Bank Transfer - Unavailable -->
+            <div class="action-btn unavailable">
+              <div class="unavailable-overlay">
+                <span class="unavailable-badge">Currently Unavailable</span>
+              </div>
               <div class="icon">🏦</div>
               <h4>Bank Transfer</h4>
               <p>To your bank account</p>
-            </button>
-            <button class="action-btn" onclick="openWithdrawModal('crypto')">
+            </div>
+            <!-- Crypto - Available -->
+            <button class="action-btn" onclick="openWithdrawModal()">
               <div class="icon">₿</div>
               <h4>Cryptocurrency</h4>
               <p>To your crypto wallet</p>
@@ -271,6 +306,23 @@
           <h2>🔄 Transfer Funds</h2>
           <p style="color: var(--text-muted); margin-bottom: 20px;">Send money to another ApexVault user instantly.</p>
           <button class="btn-small btn-deposit" onclick="openTransferModal()" style="padding: 14px 28px; font-size: 1rem;">+ New Transfer</button>
+        </div>
+      </div>
+
+      <!-- HISTORY SECTION -->
+      <div class="section-content" id="historySection" style="display: none;">
+        <div class="section-card">
+          <h2>📜 Transaction History</h2>
+          <div class="history-filters" id="historyFilters">
+            <button class="filter-btn active" data-filter="all" onclick="filterHistory('all')">All</button>
+            <button class="filter-btn" data-filter="deposit" onclick="filterHistory('deposit')">Deposits</button>
+            <button class="filter-btn" data-filter="withdraw" onclick="filterHistory('withdraw')">Withdrawals</button>
+            <button class="filter-btn" data-filter="invest" onclick="filterHistory('invest')">Investments</button>
+            <button class="filter-btn" data-filter="transfer" onclick="filterHistory('transfer')">Transfers</button>
+          </div>
+          <div class="history-list" id="historyList">
+            <p style="color: var(--text-muted); text-align: center; padding: 40px;">No transactions yet</p>
+          </div>
         </div>
       </div>
 
@@ -306,16 +358,6 @@
               <h3 id="totalReferralEarned">$0.00</h3>
               <p>Commission earned</p>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TRANSACTIONS SECTION -->
-      <div class="section-content" id="transactionsSection" style="display: none;">
-        <div class="section-card">
-          <h2>📋 All Transactions</h2>
-          <div class="transaction-list" id="allTransactions">
-            <p style="color: var(--text-muted); text-align: center; padding: 20px;">No transactions yet</p>
           </div>
         </div>
       </div>
@@ -366,20 +408,32 @@
   <!-- ========== DEPOSIT MODAL ========== -->
   <div class="modal-overlay" id="depositModal">
     <div class="modal">
-      <h2>Deposit Funds</h2>
-      <p>Enter the amount you want to deposit.</p>
+      <h2>Deposit via Crypto</h2>
+      <p>Select network and enter amount to deposit.</p>
       <form class="modal-form" onsubmit="submitDeposit(event)">
         <div class="form-group">
-          <label>Amount ($)</label>
-          <input type="number" id="depositAmount" min="10" step="1" required>
+          <label>Select Network <span>*</span></label>
+          <select id="depositNetwork" required>
+            <option value="">Choose network...</option>
+            <option value="USDT_BEP20">USDT BEP20 (BSC)</option>
+            <option value="USDT_TRC20">USDT TRC20 (Tron)</option>
+          </select>
         </div>
         <div class="form-group">
-          <label>Payment Method</label>
-          <input type="text" id="depositMethod" readonly>
+          <label>Amount ($) <span>*</span></label>
+          <input type="number" id="depositAmount" min="10" step="0.01" required>
+        </div>
+        <div class="form-group" id="depositAddressGroup" style="display: none;">
+          <label>Deposit Address</label>
+          <div class="address-box">
+            <input type="text" id="depositAddress" readonly>
+            <button type="button" onclick="copyDepositAddress()">Copy</button>
+          </div>
+          <p class="address-hint" id="addressHint"></p>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn-cancel" onclick="closeModal('depositModal')">Cancel</button>
-          <button type="submit" class="btn-confirm">Submit Deposit</button>
+          <button type="submit" class="btn-confirm" id="depositSubmitBtn">Submit Deposit</button>
         </div>
       </form>
     </div>
@@ -388,16 +442,38 @@
   <!-- ========== WITHDRAW MODAL ========== -->
   <div class="modal-overlay" id="withdrawModal">
     <div class="modal">
-      <h2>Withdraw Funds</h2>
-      <p>Enter the amount you want to withdraw.</p>
+      <h2>Withdraw via Crypto</h2>
+      <p>Select network and enter withdrawal details.</p>
       <form class="modal-form" onsubmit="submitWithdraw(event)">
         <div class="form-group">
-          <label>Amount ($)</label>
-          <input type="number" id="withdrawAmount" min="10" step="1" required>
+          <label>Select Network <span>*</span></label>
+          <select id="withdrawNetwork" required>
+            <option value="">Choose network...</option>
+            <option value="USDT_BEP20">USDT BEP20 (BSC)</option>
+            <option value="USDT_TRC20">USDT TRC20 (Tron)</option>
+          </select>
         </div>
         <div class="form-group">
-          <label>Withdrawal Method</label>
-          <input type="text" id="withdrawMethod" readonly>
+          <label>Your Wallet Address <span>*</span></label>
+          <input type="text" id="withdrawWalletAddress" placeholder="Enter your wallet address" required>
+        </div>
+        <div class="form-group">
+          <label>Amount ($) <span>*</span></label>
+          <input type="number" id="withdrawAmount" min="10" step="0.01" required>
+        </div>
+        <div class="withdraw-info" id="withdrawInfo">
+          <div class="info-row">
+            <span>Daily Remaining:</span>
+            <span id="withdrawRemaining">$10,000.00</span>
+          </div>
+          <div class="info-row">
+            <span>Processing Fee:</span>
+            <span id="withdrawFee">$0.00</span>
+          </div>
+          <div class="info-row total">
+            <span>Total Deduction:</span>
+            <span id="withdrawTotal">$0.00</span>
+          </div>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn-cancel" onclick="closeModal('withdrawModal')">Cancel</button>
@@ -419,19 +495,16 @@
         </div>
         <div class="form-group">
           <label>Amount ($)</label>
-          <input type="number" id="transferAmount" min="1" step="1" required>
+          <input type="number" id="transferAmount" min="1" step="0.01" required>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn-cancel" onclick="closeModal('transferModal')">Cancel</button>
-          <button type="submit" class="btn-confirm">Send Transfer</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Firebase SDK -->
-  <script type="module" src="dashboard.js"></script>
-
+   <button type="submit" class="btn-confirm">Send Transfer</button>
+   </div>
+ </form>
+</div>
+</div>
+   <!--Firebase SDK -->
+ <script type="module" src="dashboard.js"></script>
 </body>
-</html>'''
-          
+</html>
