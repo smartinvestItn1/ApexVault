@@ -23,17 +23,29 @@ let allDeposits = {};
 let allWithdrawals = {};
 let allTransactions = [];
 let platformSettings = {};
+let currentAdmin = null;
 
 // ========== CHECK ADMIN LOGIN ==========
-function checkAdmin() {
+async function checkAdmin() {
   const userJson = sessionStorage.getItem('apexvault_user');
   if (!userJson) {
     window.location.href = 'login.html';
     return false;
   }
+  
   const user = JSON.parse(userJson);
-  // For demo, any logged-in user can access admin
-  // In production, check user.role === 'admin'
+  currentAdmin = user;
+  
+  // Check if user has admin role in database
+  const userSnap = await get(ref(db, 'users/' + user.id + '/role'));
+  const role = userSnap.val();
+  
+  if (role !== 'admin') {
+    alert('🚫 Access denied. Admin privileges required.');
+    window.location.href = 'dashboard.html';
+    return false;
+  }
+  
   return true;
 }
 
@@ -141,7 +153,9 @@ window.showSection = function(sectionName) {
   if (section) section.style.display = 'block';
   
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  event.target.closest('.nav-item').classList.add('active');
+  if (event && event.target) {
+    event.target.closest('.nav-item').classList.add('active');
+  }
   
   const titles = {
     overview: 'Admin Dashboard',
@@ -172,7 +186,7 @@ function renderDeposits() {
   }
   
   let html = `<table class="data-table"><thead><tr>
-    <th>User</th><th>Amount</th><th>Method</th><th>Date</th><th>Status</th><th>Actions</th>
+    <th>User</th><th>Amount</th><th>Network</th><th>Date</th><th>Status</th><th>Actions</th>
   </tr></thead><tbody>`;
   
   for (const [id, d] of deposits) {
@@ -187,7 +201,7 @@ function renderDeposits() {
     html += `<tr>
       <td><div class="user-cell"><div class="user-avatar">${(d.userName || 'U').charAt(0)}</div><div>${d.userName || 'Unknown'}<br><small style="color: var(--text-muted);">${d.userEmail || ''}</small></div></div></td>
       <td style="color: var(--success); font-weight: 600;">+$${d.amount.toLocaleString()}</td>
-      <td>${d.method || 'N/A'}</td>
+      <td>${d.network ? d.network.replace('_', ' ') : (d.method || 'N/A')}</td>
       <td>${new Date(d.date).toLocaleDateString()}</td>
       <td><span class="badge ${statusClass}">${d.status.toUpperCase()}</span></td>
       <td>${actions}</td>
@@ -232,13 +246,14 @@ window.approveDeposit = async function(depositId) {
       balance: (user.balance || 0) + deposit.amount
     });
     
-    // Add transaction
-    await push(ref(db, 'users/' + deposit.userId + '/transactions'), {
+    // Add to history
+    await push(ref(db, 'users/' + deposit.userId + '/history'), {
       type: 'deposit',
       amount: deposit.amount,
-      method: deposit.method,
+      network: deposit.network || deposit.method,
       status: 'completed',
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      timestamp: Date.now()
     });
     
     allDeposits[depositId].status = 'approved';
@@ -280,7 +295,7 @@ function renderWithdrawals() {
   }
   
   let html = `<table class="data-table"><thead><tr>
-    <th>User</th><th>Amount</th><th>Method</th><th>Date</th><th>Status</th><th>Actions</th>
+    <th>User</th><th>Amount</th><th>Network</th><th>Wallet</th><th>Date</th><th>Status</th><th>Actions</th>
   </tr></thead><tbody>`;
   
   for (const [id, w] of withdrawals) {
@@ -295,7 +310,8 @@ function renderWithdrawals() {
     html += `<tr>
       <td><div class="user-cell"><div class="user-avatar">${(w.userName || 'U').charAt(0)}</div><div>${w.userName || 'Unknown'}<br><small style="color: var(--text-muted);">${w.userEmail || ''}</small></div></div></td>
       <td style="color: var(--danger); font-weight: 600;">-$${w.amount.toLocaleString()}</td>
-      <td>${w.method || 'N/A'}</td>
+      <td>${w.network ? w.network.replace('_', ' ') : (w.method || 'N/A')}</td>
+      <td><small style="color: var(--text-muted); font-family: monospace;">${w.walletAddress ? w.walletAddress.substring(0, 12) + '...' : 'N/A'}</small></td>
       <td>${new Date(w.date).toLocaleDateString()}</td>
       <td><span class="badge ${statusClass}">${w.status.toUpperCase()}</span></td>
       <td>${actions}</td>
@@ -333,13 +349,17 @@ window.approveWithdrawal = async function(withdrawalId) {
     await update(ref(db, 'pendingWithdrawals/' + withdrawalId), { status: 'approved' });
     await update(ref(db, 'users/' + withdrawal.userId + '/pendingWithdrawals/' + withdrawalId), { status: 'approved' });
     
-    // Add transaction
-    await push(ref(db, 'users/' + withdrawal.userId + '/transactions'), {
+    // Add to history
+    await push(ref(db, 'users/' + withdrawal.userId + '/history'), {
       type: 'withdraw',
       amount: withdrawal.amount,
-      method: withdrawal.method,
+      fee: withdrawal.fee || 0,
+      total: withdrawal.total || withdrawal.amount,
+      network: withdrawal.network || withdrawal.method,
+      walletAddress: withdrawal.walletAddress,
       status: 'completed',
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      timestamp: Date.now()
     });
     
     allWithdrawals[withdrawalId].status = 'approved';
@@ -363,12 +383,21 @@ window.rejectWithdrawal = async function(withdrawalId) {
     const userSnap = await get(ref(db, 'users/' + withdrawal.userId));
     const user = userSnap.val() || {};
     await update(ref(db, 'users/' + withdrawal.userId), {
-      balance: (user.balance || 0) + withdrawal.amount
+      balance: (user.balance || 0) + (withdrawal.total || withdrawal.amount)
     });
     
     // Update status
     await update(ref(db, 'pendingWithdrawals/' + withdrawalId), { status: 'rejected' });
     await update(ref(db, 'users/' + withdrawal.userId + '/pendingWithdrawals/' + withdrawalId), { status: 'rejected' });
+    
+    // Add to history
+    await push(ref(db, 'users/' + withdrawal.userId + '/history'), {
+      type: 'withdraw',
+      amount: withdrawal.amount,
+      status: 'rejected',
+      date: new Date().toISOString(),
+      timestamp: Date.now()
+    });
     
     allWithdrawals[withdrawalId].status = 'rejected';
     updateStats();
@@ -434,7 +463,7 @@ window.viewUser = function(userId) {
   const user = allUsers[userId];
   if (!user) return;
   
-  alert(`User: ${user.fullName || 'N/A'}\nEmail: ${user.email || 'N/A'}\nPhone: ${user.phone || 'N/A'}\nBalance: $${(user.balance || 0).toLocaleString()}\nInvested: $${(user.totalInvested || 0).toLocaleString()}\nProfit: $${(user.totalProfit || 0).toLocaleString()}`);
+  alert(`User: ${user.fullName || 'N/A'}\nEmail: ${user.email || 'N/A'}\nPhone: ${user.phone || 'N/A'}\nBalance: $${(user.balance || 0).toLocaleString()}\nInvested: $${(user.totalInvested || 0).toLocaleString()}\nProfit: $${(user.totalProfit || 0).toLocaleString()}\nReferral Earnings: $${(user.referralEarnings || 0).toLocaleString()}`);
 };
 
 // ========== RENDER TRANSACTIONS ==========
@@ -443,14 +472,22 @@ function renderTransactions() {
   allTransactions = [];
   
   for (const [userId, user] of Object.entries(allUsers)) {
+    if (user.history) {
+      for (const [txId, tx] of Object.entries(user.history)) {
+        allTransactions.push({ ...tx, userId, userName: user.fullName, txId });
+      }
+    }
+    // Also check old transactions path for backward compatibility
     if (user.transactions) {
       for (const [txId, tx] of Object.entries(user.transactions)) {
-        allTransactions.push({ ...tx, userId, userName: user.fullName, txId });
+        if (!allTransactions.find(t => t.txId === txId)) {
+          allTransactions.push({ ...tx, userId, userName: user.fullName, txId });
+        }
       }
     }
   }
   
-  allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+  allTransactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   
   if (allTransactions.length === 0) {
     container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No transactions found</p></div>';
@@ -458,21 +495,43 @@ function renderTransactions() {
   }
   
   let html = `<table class="data-table"><thead><tr>
-    <th>User</th><th>Type</th><th>Amount</th><th>Date</th><th>Status</th>
+    <th>User</th><th>Type</th><th>Amount</th><th>Details</th><th>Date</th><th>Status</th>
   </tr></thead><tbody>`;
   
   for (const tx of allTransactions) {
-    const typeColors = { deposit: 'var(--success)', withdraw: 'var(--danger)', invest: 'var(--info)', transfer_out: 'var(--danger)', transfer_in: 'var(--success)' };
-    const typeLabels = { deposit: 'Deposit', withdraw: 'Withdraw', invest: 'Invest', transfer_out: 'Transfer Out', transfer_in: 'Transfer In' };
+    const typeColors = { 
+      deposit: 'var(--success)', 
+      withdraw: 'var(--danger)', 
+      invest: 'var(--info)', 
+      invest_return: 'var(--success)',
+      transfer_out: 'var(--danger)', 
+      transfer_in: 'var(--success)' 
+    };
+    const typeLabels = { 
+      deposit: 'Deposit', 
+      withdraw: 'Withdraw', 
+      invest: 'Invest', 
+      invest_return: 'Invest Return',
+      transfer_out: 'Transfer Out', 
+      transfer_in: 'Transfer In' 
+    };
     const color = typeColors[tx.type] || 'var(--text-light)';
-    const sign = tx.type === 'withdraw' || tx.type === 'transfer_out' ? '-' : '+';
+    const sign = tx.type === 'withdraw' || tx.type === 'transfer_out' || tx.type === 'invest' ? '-' : '+';
+    
+    let details = '';
+    if (tx.network) details = tx.network.replace('_', ' ');
+    if (tx.walletAddress) details = tx.walletAddress.substring(0, 16) + '...';
+    if (tx.to) details = 'To: ' + tx.to;
+    if (tx.from) details = 'From: ' + tx.from;
+    if (tx.plan) details = tx.plan + ' Plan';
     
     html += `<tr data-type="${tx.type}">
       <td><div class="user-cell"><div class="user-avatar">${(tx.userName || 'U').charAt(0)}</div><div>${tx.userName || 'Unknown'}</div></div></td>
       <td style="color: ${color};">${typeLabels[tx.type] || tx.type}</td>
       <td style="color: ${color}; font-weight: 600;">${sign}$${tx.amount.toLocaleString()}</td>
+      <td><small style="color: var(--text-muted);">${details}</small></td>
       <td>${new Date(tx.date).toLocaleDateString()}</td>
-      <td><span class="badge badge-approved">${tx.status.toUpperCase()}</span></td>
+          <td><span class="badge ${tx.status === 'pending' ? 'badge-pending' : tx.status === 'rejected' ? 'badge-rejected' : 'badge-approved'}">${tx.status.toUpperCase()}</span></td>
     </tr>`;
   }
   
@@ -503,10 +562,12 @@ window.logout = function() {
 
 // ========== INIT ==========
 document.addEventListener('DOMContentLoaded', async () => {
-  if (!checkAdmin()) return;
+  const isAdmin = await checkAdmin();
+  if (!isAdmin) return;
   
   setTimeout(async () => {
     document.getElementById('loginOverlay').classList.add('hidden');
     await loadAllData();
   }, 1500);
 });
+  
