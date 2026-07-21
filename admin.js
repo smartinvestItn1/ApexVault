@@ -1,7 +1,7 @@
-// ========== APEXVAULT ADMIN JAVASCRIPT ==========
+// ========== APEXVAULT ADMIN JAVASCRIPT (HARDENED) ==========
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, remove, onValue } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+import { getDatabase, ref, set, get, update, push, onValue } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBt77e2QQCtOyCVCupw-6jIJ8MVyHf3UKY",
@@ -17,6 +17,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// ========== CONFIG ==========
+const ADMIN_PASSWORD = 'ApexVault2024!SecureAdmin'; // CHANGE THIS!
+const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in ms
+const MAX_LOGIN_ATTEMPTS = 3;
+
 // ========== GLOBAL STATE ==========
 let allUsers = {};
 let allDeposits = {};
@@ -24,6 +29,23 @@ let allWithdrawals = {};
 let allTransactions = [];
 let platformSettings = {};
 let currentAdmin = null;
+let sessionTimer = null;
+let lastActivity = Date.now();
+
+// ========== ACTIVITY TRACKER ==========
+function resetSessionTimer() {
+  lastActivity = Date.now();
+  if (sessionTimer) clearTimeout(sessionTimer);
+  sessionTimer = setTimeout(() => {
+    alert('⏰ Session expired due to inactivity. Logging out...');
+    logout();
+  }, SESSION_TIMEOUT);
+}
+
+// Track activity
+['click', 'keypress', 'scroll', 'mousemove'].forEach(event => {
+  document.addEventListener(event, resetSessionTimer);
+});
 
 // ========== CHECK ADMIN LOGIN ==========
 async function checkAdmin() {
@@ -36,7 +58,7 @@ async function checkAdmin() {
   const user = JSON.parse(userJson);
   currentAdmin = user;
   
-  // Check if user has admin role in database
+  // Layer 1: Check admin role in database
   const userSnap = await get(ref(db, 'users/' + user.id + '/role'));
   const role = userSnap.val();
   
@@ -46,7 +68,73 @@ async function checkAdmin() {
     return false;
   }
   
+  // Layer 2: Password check with attempt limiting
+  const attemptsSnap = await get(ref(db, 'adminSecurity/loginAttempts/' + user.id));
+  const attempts = attemptsSnap.val() || 0;
+  
+  if (attempts >= MAX_LOGIN_ATTEMPTS) {
+    alert('🚫 Account locked due to too many failed attempts. Contact super admin.');
+    window.location.href = 'dashboard.html';
+    return false;
+  }
+  
+  const password = prompt('🔐 Enter admin password:');
+  
+  if (password !== ADMIN_PASSWORD) {
+    // Log failed attempt
+    await update(ref(db, 'adminSecurity/loginAttempts/' + user.id), (attempts + 1));
+    
+    // Log to audit
+    await push(ref(db, 'adminAudit/loginAttempts'), {
+      adminId: user.id,
+      adminEmail: user.email,
+      adminName: user.fullName,
+      success: false,
+      timestamp: Date.now(),
+      date: new Date().toISOString(),
+      ip: 'client-side' // In production, get from server
+    });
+    
+    alert('🚫 Incorrect password. Attempt ' + (attempts + 1) + ' of ' + MAX_LOGIN_ATTEMPTS);
+    
+    if ((attempts + 1) >= MAX_LOGIN_ATTEMPTS) {
+      alert('🔒 Account locked. Contact super admin to unlock.');
+    }
+    
+    window.location.href = 'dashboard.html';
+    return false;
+  }
+  
+  // Success — reset attempts
+  await set(ref(db, 'adminSecurity/loginAttempts/' + user.id), 0);
+  
+  // Log successful login
+  await push(ref(db, 'adminAudit/logins'), {
+    adminId: user.id,
+    adminEmail: user.email,
+    adminName: user.fullName,
+    success: true,
+    timestamp: Date.now(),
+    date: new Date().toISOString()
+  });
+  
+  // Start session timer
+  resetSessionTimer();
+  
   return true;
+}
+
+// ========== AUDIT LOG ==========
+async function logAdminAction(action, details) {
+  await push(ref(db, 'adminAudit/actions'), {
+    adminId: currentAdmin?.id,
+    adminEmail: currentAdmin?.email,
+    adminName: currentAdmin?.fullName,
+    action: action,
+    details: details,
+    timestamp: Date.now(),
+    date: new Date().toISOString()
+  });
 }
 
 // ========== LOAD ALL DATA ==========
@@ -138,6 +226,9 @@ window.toggleFeature = async function(feature) {
     
     platformSettings[feature + 'Enabled'] = enabled;
     updateStats();
+    
+    // Audit log
+    await logAdminAction('toggle_feature', { feature, enabled });
     
     alert((enabled ? '✅ Enabled' : '🚫 Blocked') + ' ' + feature);
   } catch (error) {
@@ -256,6 +347,9 @@ window.approveDeposit = async function(depositId) {
       timestamp: Date.now()
     });
     
+    // Audit log
+    await logAdminAction('approve_deposit', { depositId, amount: deposit.amount, userId: deposit.userId });
+    
     allDeposits[depositId].status = 'approved';
     updateStats();
     renderDeposits();
@@ -273,6 +367,9 @@ window.rejectDeposit = async function(depositId) {
   try {
     await update(ref(db, 'pendingDeposits/' + depositId), { status: 'rejected' });
     await update(ref(db, 'users/' + allDeposits[depositId].userId + '/pendingDeposits/' + depositId), { status: 'rejected' });
+    
+    // Audit log
+    await logAdminAction('reject_deposit', { depositId, amount: allDeposits[depositId].amount, userId: allDeposits[depositId].userId });
     
     allDeposits[depositId].status = 'rejected';
     updateStats();
@@ -362,6 +459,9 @@ window.approveWithdrawal = async function(withdrawalId) {
       timestamp: Date.now()
     });
     
+    // Audit log
+    await logAdminAction('approve_withdrawal', { withdrawalId, amount: withdrawal.amount, userId: withdrawal.userId, walletAddress: withdrawal.walletAddress });
+    
     allWithdrawals[withdrawalId].status = 'approved';
     updateStats();
     renderWithdrawals();
@@ -398,6 +498,9 @@ window.rejectWithdrawal = async function(withdrawalId) {
       date: new Date().toISOString(),
       timestamp: Date.now()
     });
+    
+    // Audit log
+    await logAdminAction('reject_withdrawal', { withdrawalId, amount: withdrawal.amount, userId: withdrawal.userId, refunded: (withdrawal.total || withdrawal.amount) });
     
     allWithdrawals[withdrawalId].status = 'rejected';
     updateStats();
@@ -448,7 +551,7 @@ window.filterUsers = function() {
   rows.forEach(row => {
     const text = row.textContent.toLowerCase();
     const hasInvestment = row.getAttribute('data-has-investment') === 'true';
-    const matchSearch = text.includes(search);
+        const matchSearch = text.includes(search);
     let matchFilter = true;
     
     if (filter === 'withInvestment') matchFilter = hasInvestment;
@@ -477,7 +580,6 @@ function renderTransactions() {
         allTransactions.push({ ...tx, userId, userName: user.fullName, txId });
       }
     }
-    // Also check old transactions path for backward compatibility
     if (user.transactions) {
       for (const [txId, tx] of Object.entries(user.transactions)) {
         if (!allTransactions.find(t => t.txId === txId)) {
@@ -531,7 +633,7 @@ function renderTransactions() {
       <td style="color: ${color}; font-weight: 600;">${sign}$${tx.amount.toLocaleString()}</td>
       <td><small style="color: var(--text-muted);">${details}</small></td>
       <td>${new Date(tx.date).toLocaleDateString()}</td>
-          <td><span class="badge ${tx.status === 'pending' ? 'badge-pending' : tx.status === 'rejected' ? 'badge-rejected' : 'badge-approved'}">${tx.status.toUpperCase()}</span></td>
+      <td><span class="badge ${tx.status === 'pending' ? 'badge-pending' : tx.status === 'rejected' ? 'badge-rejected' : 'badge-approved'}">${tx.status.toUpperCase()}</span></td>
     </tr>`;
   }
   
@@ -556,6 +658,20 @@ window.filterTransactions = function() {
 
 // ========== LOGOUT ==========
 window.logout = function() {
+  if (sessionTimer) clearTimeout(sessionTimer);
+  
+  // Log logout
+  if (currentAdmin) {
+    push(ref(db, 'adminAudit/logins'), {
+      adminId: currentAdmin.id,
+      adminEmail: currentAdmin.email,
+      adminName: currentAdmin.fullName,
+      action: 'logout',
+      timestamp: Date.now(),
+      date: new Date().toISOString()
+    });
+  }
+  
   sessionStorage.removeItem('apexvault_user');
   window.location.href = 'index.html';
 };
@@ -570,4 +686,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadAllData();
   }, 1500);
 });
-  
+    
