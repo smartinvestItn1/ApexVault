@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deposit - ApexVault</title>
+  <style>
+    :root {
+      --bg-deep: #0a0e1a;
+      --bg-card: #112240;
+      --border: #233554;
+      --accent: #64ffda;
+      --gradient-start: #00d4aa;
+      --gradient-end: #00a8e8;
+      --text-muted: #8892b0;
+      --text-light: #ccd6f6;
+      --text-white: #ffffff;
+      --success: #10b981;
+      --warning: #f59e0b;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-light);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .particles-container {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px; height: 4px;
+      background: var(--accent);
+      border-radius: 50%;
+      opacity: 0;
+      animation: float-up linear infinite;
+    }
+
+    @keyframes float-up {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header {
+      text-align: center;
+      padding: 40px 0;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      cursor: pointer;
+    }
+
+    .header h1 {
+      color: var(--text-white);
+      font-size: 2rem;
+      margin-top: 16px;
+    }
+
+    .header p {
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      text-decoration: none;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+
+    .card h2 {
+      color: var(--text-white);
+      font-size: 1.3rem;
+      margin-bottom: 8px;
+    }
+
+    .card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+
+    .crypto-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .crypto-card {
+      background: var(--bg-deep);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      text-align: center;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .crypto-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+    }
+
+    .crypto-card.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 30px rgba(0, 212, 170, 0.15);
+    }
+
+    .crypto-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #26a17b, #2eb872);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin: 0 auto 16px;
+    }
+
+    .crypto-card h3 {
+      color: var(--text-white);
+      font-size: 1.2rem;
+      margin-bottom: 4px;
+    }
+
+    .crypto-card .network {
+      color: var(--accent);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .address-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+      display: none;
+    }
+
+    .address-box.show {
+      display: block;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .address-label {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .address-value {
+      font-family: 'Courier New', monospace;
+      color: var(--accent);
+      font-size: 0.85rem;
+      word-break: break-all;
+      background: var(--bg-deep);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .copy-btn {
+      padding: 10px 20px;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: transform 0.3s;
+    }
+
+    .copy-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .warning-box {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .warning-box h4 {
+      color: var(--warning);
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+
+    .warning-box p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .amount-form {
+      margin-top: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      color: var(--text-light);
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-deep);
+      color: var(--text-white);
+      font-size: 1rem;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+    }
+
+    .status {
+      padding: 14px;
+      border-radius: 10px;
+      margin-top: 16px;
+      text-align: center;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .status.success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      display: block;
+    }
+
+    .qr-code {
+      width: 150px;
+      height: 150px;
+      background: var(--text-white);
+      border-radius: 12px;
+      margin: 16px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      color: var(--bg-deep);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="particles-container" id="particles"></div>
+
+  <div class="container">
+    <div class="header">
+      <div class="logo" onclick="window.location.href='dashboard.html'">🔥 ApexVault</div>
+      <h1>Deposit Funds</h1>
+      <p>Choose your preferred cryptocurrency</p>
+    </div>
+
+    <a href="dashboard.html" class="back-link">← Back to Dashboard</a>
+
+    <div class="card">
+      <h2>Select Network</h2>
+      <p>Choose the USDT network you want to deposit with</p>
+
+      <div class="crypto-options">
+        <div class="crypto-card" id="trc20Card" onclick="selectNetwork('trc20')">
+          <div class="crypto-icon">₮</div>
+          <h3>USDT TRC20</h3>
+          <div class="network">Tron Network</div>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Low fees, fast confirmation</p>
+
+          <div class="address-box" id="trc20Box">
+            <div class="address-label">Deposit Address</div>
+            <div class="address-value" id="trc20Address">TBdkLH7z9d6p6NKk3pZcoDdMzwoSxTfcQA</div>
+            <button class="copy-btn" onclick="copyAddress('trc20Address', event)">📋 Copy Address</button>
+          </div>
+        </div>
+
+        <div class="crypto-card" id="bep20Card" onclick="selectNetwork('bep20')">
+          <div class="crypto-icon" style="background: linear-gradient(135deg, #f3ba2f, #f0b90b);">₮</div>
+          <h3>USDT BEP20</h3>
+          <div class="network">Binance Smart Chain</div>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Lowest fees, fastest speed</p>
+
+          <div class="address-box" id="bep20Box">
+            <div class="address-label">Deposit Address</div>
+            <div class="address-value" id="bep20Address">0x681ef5FF6d9e2FD31ce87Cd256d09a0e4755F9d9</div>
+            <button class="copy-btn" onclick="copyAddress('bep20Address', event)">📋 Copy Address</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="warning-box">
+        <h4>⚠️ Important</h4>
+        <p>• Only send USDT to the selected network address<br>
+        • Sending wrong crypto or wrong network will result in permanent loss<br>
+        • Minimum deposit: $10<br>
+        • Deposits are credited after admin confirmation</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Confirm Deposit</h2>
+      <p>Enter the amount you sent to notify admin</p>
+
+      <form class="amount-form" id="depositForm">
+        <div class="form-group">
+          <label>Selected Network</label>
+          <input type="text" id="selectedNetwork" value="None selected" readonly style="color: var(--text-muted);">
+        </div>
+
+        <div class="form-group">
+          <label>Amount (USDT)</label>
+          <input type="number" id="depositAmount" placeholder="Enter amount you deposited" min="10" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+          <label>Transaction Hash (TxID)</label>
+          <input type="text" id="txHash" placeholder="Paste your transaction hash" required>
+        </div>
+
+        <button type="submit" class="btn-primary">Submit Deposit Request</button>
+      </form>
+
+      <div id="status" class="status"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+    import { getDatabase, ref, set, push, get } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBt77e2QQCtOyCVCupw-6jIJ8MVyHf3UKY",
+      authDomain: "apexvault-eea2a.firebaseapp.com",
+      databaseURL: "https://apexvault-eea2a-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "apexvault-eea2a",
+      storageBucket: "apexvault-eea2a.firebasestorage.app",
+      messagingSenderId: "153560225073",
+      appId: "1:153560225073:web:10fcd76eb82cebd8f18c10",
+      measurementId: "G-E5QQK8RBTN"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Check login
+    const userJson = sessionStorage.getItem('apexvault_user');
+    if (!userJson) {
+      window.location.href = 'login.html';
+    }
+    const currentUser = JSON.parse(userJson);
+
+    let selectedNetwork = '';
+
+    // Particles
+    function createParticles() {
+      const container = document.getElementById('particles');
+      for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.width = (Math.random() * 3 + 2) + 'px';
+        p.style.height = p.style.width;
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (Math.random() * 8 + 12) + 's';
+        p.style.animationDelay = (Math.random() * 8) + 's';
+        container.appendChild(p);
+      }
+    }
+    createParticles();
+
+    // Select network
+    window.selectNetwork = function(network) {
+      selectedNetwork = network;
+      
+      document.querySelectorAll('.crypto-card').forEach(c => c.classList.remove('selected'));
+      document.querySelectorAll('.address-box').forEach(b => b.classList.remove('show'));
+      
+      document.getElementById(network + 'Card').classList.add('selected');
+      document.getElementById(network + 'Box').classList.add('show');
+      
+      const networkNames = { trc20: 'USDT TRC20 (Tron)', bep20: 'USDT BEP20 (BSC)' };
+      document.getElementById('selectedNetwork').value = networkNames[network];
+    };
+
+    // Copy address
+    window.copyAddress = function(elementId, event) {
+      event.stopPropagation();
+      const text = document.getElementById(elementId).textContent;
+      navigator.clipboard.writeText(text);
+      alert('Address copied: ' + text.substring(0, 20) + '...');
+    };
+
+    // Submit deposit
+    document.getElementById('depositForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!selectedNetwork) {
+        alert('Please select a network first!');
+        return;
+      }
+      
+      const amount = parseFloat(document.getElementById('depositAmount').value);
+      const txHash = document.getElementById('txHash').value.trim();
+      const status = document.getElementById('status');
+      
+      const userSnap = await get(ref(db, 'users/' + currentUser.id));
+      const userData = userSnap.val() || {};
+      
+      try {
+        const depositId = 'deposit_' + Date.now();
+        
+        await set(ref(db, 'users/' + currentUser.id + '/pendingDeposits/' + depositId), {
+          amount: amount,
+          network: selectedNetwork,
+          txHash: txHash,
+          status: 'pending',
+          date: new Date().toISOString()
+        });
+        
+        await set(ref(db, 'pendingDeposits/' + depositId), {
+          userId: currentUser.id,
+          userName: userData.fullName,
+          userEmail: userData.email,
+          amount: amount,
+          network: selectedNetwork,
+          txHash: txHash,
+          status: 'pending',
+          date: new Date().toISOString()
+        });
+        
+        status.className = 'status success';
+        status.innerHTML = '✅ Deposit request submitted!<br>Admin will verify and credit your account.';
+        
+        document.getElementById('depositForm').reset();
+        document.getElementById('selectedNetwork').value = 'None selected';
+        selectedNetwork = '';
+        document.querySelectorAll('.crypto-card').forEach(c => c.classList.remove('selected'));
+        document.querySelectorAll('.address-box').forEach(b => b.classList.remove('show'));
+        
+      } catch (error) {
+        alert('❌ Error: ' + error.message);
+      }
+    });
+  </script>
+
+</body>
+      </html>
