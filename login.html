@@ -484,9 +484,10 @@
           return;
         }
 
+        // FIXED: Use fullName instead of name for consistency
         sessionStorage.setItem('apexvault_user', JSON.stringify({
           id: userId,
-          name: foundUser.fullName,
+          fullName: foundUser.fullName,
           email: foundUser.email
         }));
 
@@ -498,6 +499,7 @@
         }, 1500);
 
       } catch (error) {
+        console.error('Login error:', error);
         status.className = 'status error';
         status.textContent = '❌ Error: ' + error.message;
         btn.disabled = false;
@@ -505,7 +507,6 @@
       }
     });
   </script>
-
 </body>
   </html>
   
