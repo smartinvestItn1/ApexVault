@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ApexVault - Smart Investments</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ========== ANIMATED PARTICLES ========== -->
+  <div class="particles-container" id="particles"></div>
+
+  <!-- ========== SIDEBAR OVERLAY ========== -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <!-- ========== RIGHT SIDEBAR ========== -->
+  <aside class="right-sidebar" id="rightSidebar">
+    <div class="sidebar-section">
+      <h3>Quick Actions</h3>
+      <a href="create-account.html" class="sidebar-link">
+        <div class="icon">👤</div>
+        <div>
+          <div class="text">Create Account</div>
+          <div class="subtext">Join ApexVault today</div>
+        </div>
+      </a>
+      <a href="about.html" class="sidebar-link">
+        <div class="icon">ℹ️</div>
+        <div>
+          <div class="text">About Us</div>
+          <div class="subtext">Learn our story</div>
+        </div>
+      </a>
+      <a href="contact.html" class="sidebar-link">
+        <div class="icon">📧</div>
+        <div>
+          <div class="text">Contact Us</div>
+          <div class="subtext">Get in touch</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Navigation</h3>
+      <a href="index.html" class="sidebar-link">
+        <div class="icon">🏠</div>
+        <div>
+          <div class="text">Home</div>
+          <div class="subtext">Back to main page</div>
+        </div>
+      </a>
+      <a href="dashboard.html" class="sidebar-link">
+        <div class="icon">📊</div>
+        <div>
+          <div class="text">Dashboard</div>
+          <div class="subtext">View your portfolio</div>
+        </div>
+      </a>
+      <a href="services.html" class="sidebar-link">
+        <div class="icon">🎯</div>
+        <div>
+          <div class="text">Services</div>
+          <div class="subtext">Explore investments</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="sidebar-cta">
+      <h4>Need Help?</h4>
+      <p>Our support team is available 24/7 to assist you.</p>
+      <button onclick="window.location.href='contact.html'">Contact Support</button>
+    </div>
+  </aside>
+
+  <!-- ========== SIDEBAR TOGGLE BUTTON ========== -->
+  <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+
+  <!-- ========== NAVIGATION ========== -->
+  <nav id="navbar">
+    <div class="nav-inner">
+      <div class="logo" onclick="window.location.href='index.html'">🔥 ApexVault</div>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+      <button class="nav-btn" onclick="window.location.href='create-account.html'">Get Started</button>
+    </div>
+  </nav>
+
+  <!-- ========== HERO ========== -->
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <div class="hero-tag fade-in">🚀 Next-Gen Investment Platform</div>
+      <h1 class="fade-in fade-in-delay-1">Invest Smarter.<br>Build <span>Wealth Faster.</span></h1>
+      <p class="fade-in fade-in-delay-2">ApexVault combines cutting-edge analytics with expert portfolio management to help you grow your wealth with confidence.</p>
+      <div class="hero-buttons fade-in fade-in-delay-3">
+        <button class="btn-primary" onclick="window.location.href='create-account.html'">Start Investing</button>
+        <button class="btn-secondary" onclick="window.location.href='dashboard.html'">View Dashboard</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== STATS BAR ========== -->
+  <div class="stats-bar">
+    <div class="stats-inner">
+      <div class="stat-item scroll-reveal">
+        <h3>$2.4B+</h3>
+        <p>Assets Under Management</p>
+      </div>
+      <div class="stat-item scroll-reveal">
+        <h3>10M+</h3>
+        <p>Active Investors</p>
+      </div>
+      <div class="stat-item scroll-reveal">
+        <h3>50%</h3>
+        <p>Average Annual Return</p>
+      </div>
+      <div class="stat-item scroll-reveal">
+        <h3>99.9%</h3>
+        <p>Platform Uptime</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SERVICES ========== -->
+  <section class="section" id="services">
+    <div class="section-header scroll-reveal">
+      <div class="section-label">What We Offer</div>
+      <h2>Our Investment Services</h2>
+      <p>Tailored solutions designed to maximize your returns while minimizing risk.</p>
+    </div>
+    <div class="cards-grid">
+      <div class="card scroll-reveal">
+        <div class="card-icon">📈</div>
+        <h3>Stock Portfolio</h3>
+        <p>Curated stock selections across diverse sectors. Our AI-powered analysis identifies high-growth opportunities.</p>
+      </div>
+      <div class="card scroll-reveal">
+        <div class="card-icon">🏠</div>
+        <h3>Real Estate</h3>
+        <p>Invest in premium real estate properties with fractional ownership. Start with as little as $500.</p>
+      </div>
+      <div class="card scroll-reveal">
+        <div class="card-icon">₿</div>
+        <h3>Cryptocurrency</h3>
+        <p>Secure crypto trading with cold storage protection. Access Bitcoin, Ethereum, and 50+ altcoins.</p>
+      </div>
+      <div class="card scroll-reveal">
+        <div class="card-icon">📊</div>
+        <h3>Mutual Funds</h3>
+        <p>Diversified fund options managed by top-tier fund managers. Low fees, high transparency.</p>
+      </div>
+      <div class="card scroll-reveal">
+        <div class="card-icon">🛡️</div>
+        <h3>Retirement Plans</h3>
+        <p>Tax-advantaged retirement accounts. 401(k) rollovers, IRAs, and pension planning made simple.</p>
+      </div>
+      <div class="card scroll-reveal">
+        <div class="card-icon">🤖</div>
+        <h3>Robo-Advisor</h3>
+        <p>Automated portfolio management that rebalances and optimizes based on market conditions 24/7.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CTA ========== -->
+  <section class="cta-section">
+    <div class="cta-inner scroll-reveal">
+      <h2>Ready to Grow Your Wealth?</h2>
+      <p>Join thousands of investors who trust ApexVault to manage their financial future. Start with as little as $100.</p>
+      <button class="btn-primary" onclick="window.location.href='create-account.html'">Create Free Account</button>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="logo">🔥 ApexVault</div>
+        <p>Empowering investors with intelligent tools, expert insights, and a secure platform to build lasting wealth.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="about.html">About Us</a>
+        <a href="careers.html">Careers</a>
+        <a href="press.html">Press</a>
+        <a href="blog.html">Blog</a>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <a href="help.html">Help Center</a>
+        <a href="market-data.html">Market Data</a>
+        <a href="api-docs.html">API Docs</a>
+        <a href="security.html">Security</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="cookies.html">Cookie Policy</a>
+        <a href="disclosures.html">Disclosures</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      © 2026 ApexVault. All rights reserved. Investment products are not FDIC insured.
+    </div>
+  </footer>
+<script>
+// ========== APEXVAULT HOMEPAGE SCRIPT ==========
+// No database code needed here
+
+// ========== SIDEBAR TOGGLE ==========
+function toggleSidebar() {
+  const sidebar = document.getElementById('rightSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const toggle = document.getElementById('sidebarToggle');
+  
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('open');
+  toggle.classList.toggle('active');
+  
+  toggle.textContent = sidebar.classList.contains('open') ? '✕' : '☰';
+}
+
+// ========== FLOATING PARTICLES ==========
+function createParticles() {
+  const container = document.getElementById('particles');
+  if (!container) return;
+  
+  const particleCount = 30;
+  
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    
+    const size = Math.random() * 4 + 2;
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+    particle.style.animationDelay = (Math.random() * 10) + 's';
+    particle.style.opacity = Math.random() * 0.5 + 0.2;
+    
+    container.appendChild(particle);
+  }
+}
+
+// ========== SCROLL REVEAL ANIMATIONS ==========
+function initScrollAnimations() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.scroll-reveal, .stat-item, .card').forEach(el => {
+    observer.observe(el);
+  });
+}
+
+// ========== NAVBAR SCROLL EFFECT ==========
+function initNavbarScroll() {
+  const navbar = document.getElementById('navbar');
+  if (!navbar) return;
+  
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+      navbar.classList.add('scrolled');
+    } else {
+      navbar.classList.remove('scrolled');
+    }
+  });
+}
+
+// ========== COUNTER ANIMATION ==========
+function animateCounters() {
+  const counters = document.querySelectorAll('.stat-item h3');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const target = entry.target;
+        const text = target.textContent;
+        const numMatch = text.match(/[\d.]+/);
+        if (numMatch) {
+          const num = parseFloat(numMatch[0]);
+          const suffix = text.replace(numMatch[0], '');
+          animateNumber(target, 0, num, 1500, suffix);
+        }
+        observer.unobserve(target);
+      }
+    });
+  }, { threshold: 0.5 });
+  
+  counters.forEach(counter => observer.observe(counter));
+}
+
+function animateNumber(element, start, end, duration, suffix) {
+  const startTime = performance.now();
+  const isDecimal = end % 1 !== 0;
+  
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = start + (end - start) * eased;
+    
+    element.textContent = (isDecimal ? current.toFixed(1) : Math.floor(current)) + suffix;
+    
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    }
+  }
+  
+  requestAnimationFrame(update);
+}
+
+// ========== START EVERYTHING ==========
+document.addEventListener('DOMContentLoaded', () => {
+  createParticles();
+  initScrollAnimations();
+  initNavbarScroll();
+  animateCounters();
+});
+
+</script>
+</body>
+  </html>
