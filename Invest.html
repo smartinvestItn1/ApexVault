@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invest - ApexVault</title>
+  <style>
+    :root {
+      --bg-deep: #0a0e1a;
+      --bg-card: #112240;
+      --border: #233554;
+      --accent: #64ffda;
+      --gradient-start: #00d4aa;
+      --gradient-end: #00a8e8;
+      --text-muted: #8892b0;
+      --text-light: #ccd6f6;
+      --text-white: #ffffff;
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-light);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .particles-container {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px; height: 4px;
+      background: var(--accent);
+      border-radius: 50%;
+      opacity: 0;
+      animation: float-up linear infinite;
+    }
+
+    @keyframes float-up {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header {
+      text-align: center;
+      padding: 40px 0;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      cursor: pointer;
+    }
+
+    .header h1 {
+      color: var(--text-white);
+      font-size: 2rem;
+      margin-top: 16px;
+    }
+
+    .header p {
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      text-decoration: none;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+
+    .balance-bar {
+      background: linear-gradient(90deg, rgba(0, 212, 170, 0.1), rgba(0, 168, 232, 0.1));
+      border: 1px solid rgba(100, 255, 218, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .balance-bar h3 {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .balance-bar .amount {
+      color: var(--text-white);
+      font-size: 2.5rem;
+      font-weight: 800;
+    }
+
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .plan-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      text-align: center;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .plan-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .plan-card.popular::before {
+      content: 'POPULAR';
+      position: absolute;
+      top: 16px;
+      right: -35px;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      color: var(--bg-deep);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 6px 40px;
+      transform: rotate(45deg);
+    }
+
+    .plan-icon {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin: 0 auto 20px;
+    }
+
+    .plan-icon.startup { background: linear-gradient(135deg, #3b82f6, #6366f1); }
+    .plan-icon.pro { background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); }
+    .plan-icon.ultimate { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+
+    .plan-card h2 {
+      color: var(--text-white);
+      font-size: 1.4rem;
+      margin-bottom: 4px;
+    }
+
+    .plan-range {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+
+    .plan-profit {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .plan-profit-label {
+      color: var(--success);
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    .plan-features {
+      list-style: none;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+
+    .plan-features li {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .plan-features li::before {
+      content: '✓';
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .plan-features li:last-child {
+      border-bottom: none;
+    }
+
+    .plan-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: 2px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .plan-btn:hover {
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      color: var(--bg-deep);
+      border-color: transparent;
+    }
+
+    .plan-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%;
+      max-width: 420px;
+      animation: modalIn 0.3s ease;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal h2 {
+      color: var(--text-white);
+      font-size: 1.3rem;
+      margin-bottom: 8px;
+    }
+
+    .modal p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      color: var(--text-light);
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-deep);
+      color: var(--text-white);
+      font-size: 1rem;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .expected-profit {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .expected-profit h4 {
+      color: var(--success);
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .expected-profit p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin: 0;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      padding: 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: none;
+      font-size: 0.95rem;
+    }
+
+    .btn-cancel {
+      background: var(--border);
+      color: var(--text-light);
+    }
+
+    .btn-cancel:hover {
+      background: #334466;
+    }
+
+    .btn-confirm {
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      color: var(--bg-deep);
+    }
+
+    .btn-confirm:hover {
+      transform: translateY(-2px);
+    }
+
+    .status-msg {
+      padding: 14px;
+      border-radius: 10px;
+      margin-top: 16px;
+      text-align: center;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .status-msg.success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      display: block;
+    }
+
+    .status-msg.error {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      display: block;
+    }
+
+    .blocked-msg {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      color: var(--danger);
+      margin-bottom: 24px;
+      display: none;
+    }
+
+    .blocked-msg.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="particles-container" id="particles"></div>
+
+  <div class="container">
+    <div class="header">
+      <div class="logo" onclick="window.location.href='dashboard.html'">🔥 ApexVault</div>
+      <h1>Investment Plans</h1>
+      <p>Choose a plan and start earning daily profit</p>
+    </div>
+
+    <a href="dashboard.html" class="back-link">← Back to Dashboard</a>
+
+    <div class="blocked-msg" id="blockedMsg">
+      🚫 Investments are currently disabled by admin.
+    </div>
+
+    <div class="balance-bar">
+      <h3>Your Available Balance</h3>
+      <div class="amount" id="userBalance">$0.00</div>
+    </div>
+
+    <div class="plans-grid">
+      <div class="plan-card">
+        <div class="plan-icon startup">🚀</div>
+        <h2>Startup Plan</h2>
+        <div class="plan-range">$100 - $999</div>
+        <div class="plan-profit">10%</div>
+        <div class="plan-profit-label">Monthly Profit</div>
+        <ul class="plan-features">
+          <li>Minimum $100 investment</li>
+          <li>Maximum $999 investment</li>
+          <li>Daily profit calculation</li>
+          <li>10% monthly return</li>
+          <li>24/7 support</li>
+        </ul>
+        <button class="plan-btn" id="startupBtn" onclick="openInvestModal('startup', 100, 999, 10)">Invest Now</button>
+      </div>
+
+      <div class="plan-card popular">
+        <div class="plan-icon pro">⭐</div>
+        <h2>Pro Plan</h2>
+        <div class="plan-range">$1,000 - $4,999</div>
+        <div class="plan-profit">20%</div>
+        <div class="plan-profit-label">Monthly Profit</div>
+        <ul class="plan-features">
+          <li>Minimum $1,000 investment</li>
+          <li>Maximum $4,999 investment</li>
+          <li>Daily profit calculation</li>
+          <li>20% monthly return</li>
+          <li>Priority support</li>
+        </ul>
+        <button class="plan-btn" id="proBtn" onclick="openInvestModal('pro', 1000, 4999, 20)">Invest Now</button>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-icon ultimate">👑</div>
+        <h2>Ultimate Plan</h2>
+        <div class="plan-range">$5,000+</div>
+        <div class="plan-profit">40%</div>
+        <div class="plan-profit-label">Monthly Profit</div>
+        <ul class="plan-features">
+          <li>Minimum $5,000 investment</li>
+          <li>Unlimited maximum</li>
+          <li>Daily profit calculation</li>
+          <li>40% monthly return</li>
+          <li>VIP account manager</li>
+        </ul>
+        <button class="plan-btn" id="ultimateBtn" onclick="openInvestModal('ultimate', 5000, 999999, 40)">Invest Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invest Modal -->
+  <div class="modal-overlay" id="investModal">
+    <div class="modal">
+      <h2 id="modalTitle">Invest in Plan</h2>
+      <p id="modalDesc">Enter your investment amount</p>
+      
+      <div class="form-group">
+        <label>Investment Amount ($)</label>
+        <input type="number" id="investAmount" placeholder="Enter amount" min="100" step="1">
+      </div>
+      
+      <div class="expected-profit" id="profitDisplay" style="display: none;">
+        <h4 id="profitAmount">+$0.00</h4>
+        <p>Expected monthly profit</p>
+      </div>
+      
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-confirm" onclick="submitInvest()">Confirm Investment</button>
+      </div>
+      
+      <div class="status-msg" id="statusMsg"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+    import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBt77e2QQCtOyCVCupw-6jIJ8MVyHf3UKY",
+      authDomain: "apexvault-eea2a.firebaseapp.com",
+      databaseURL: "https://apexvault-eea2a-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "apexvault-eea2a",
+      storageBucket: "apexvault-eea2a.firebasestorage.app",
+      messagingSenderId: "153560225073",
+      appId: "1:153560225073:web:10fcd76eb82cebd8f18c10",
+      measurementId: "G-E5QQK8RBTN"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Check login
+    const userJson = sessionStorage.getItem('apexvault_user');
+    if (!userJson) {
+      window.location.href = 'login.html';
+    }
+    const currentUser = JSON.parse(userJson);
+
+    let userData = {};
+    let currentPlan = '';
+    let currentMin = 0;
+    let currentMax = 0;
+    let currentProfit = 0;
+
+    // Particles
+    function createParticles() {
+      const container = document.getElementById('particles');
+      for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.width = (Math.random() * 3 + 2) + 'px';
+        p.style.height = p.style.width;
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (Math.random() * 8 + 12) + 's';
+        p.style.animationDelay = (Math.random() * 8) + 's';
+        container.appendChild(p);
+      }
+    }
+    createParticles();
+
+    // Load user data
+    async function loadData() {
+      const snapshot = await get(ref(db, 'users/' + currentUser.id));
+      userData = snapshot.val() || {};
+      
+      const balance = userData.balance || 0;
+      document.getElementById('userBalance').textContent = '$' + balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      
+      // Check if invest is blocked
+      const settingsSnap = await get(ref(db, 'platformSettings/investEnabled'));
+      if (settingsSnap.val() === false) {
+        document.getElementById('blockedMsg').classList.add('show');
+        document.querySelectorAll('.plan-btn').forEach(b => b.disabled = true);
+      }
+    }
+    loadData();
+
+    // Open modal
+    window.openInvestModal = function(plan, min, max, profit) {
+      currentPlan = plan;
+      currentMin = min;
+      currentMax = max;
+      currentProfit = profit;
+      
+      const names = { startup: 'Startup', pro: 'Pro', ultimate: 'Ultimate' };
+      document.getElementById('modalTitle').textContent = 'Invest in ' + names[plan] + ' Plan';
+      document.getElementById('modalDesc').textContent = 'Min: $' + min.toLocaleString() + ' | Max: $' + (max === 999999 ? 'Unlimited' : max.toLocaleString());
+      document.getElementById('investAmount').value = '';
+      document.getElementById('profitDisplay').style.display = 'none';
+      document.getElementById('statusMsg').style.display = 'none';
+      
+      document.getElementById('investModal').classList.add('show');
+    };
+
+    // Close modal
+    window.closeModal = function() {
+      document.getElementById('investModal').classList.remove('show');
+    };
+
+    // Calculate profit on input
+    document.getElementById('investAmount').addEventListener('input', function() {
+      const amount = parseFloat(this.value) || 0;
+      const profit = amount * currentProfit / 100;
+      
+      if (amount > 0) {
+        document.getElementById('profitDisplay').style.display = 'block';
+        document.getElementById('profitAmount').textContent = '+$' + profit.toFixed(2);
+      } else {
+        document.getElementById('profitDisplay').style.display = 'none';
+      }
+    });
+
+    // Submit investment
+    window.submitInvest = async function() {
+      const amount = parseFloat(document.getElementById('investAmount').value);
+      const status = document.getElementById('statusMsg');
+      
+      if (!amount || amount < currentMin || (currentMax !== 999999 && amount > currentMax)) {
+        status.className = 'status-msg error';
+        status.textContent = 'Amount must be between $' + currentMin + ' and $' + (currentMax === 999999 ? 'Unlimited' : currentMax);
+        return;
+      }
+      
+      const balance = userData.balance || 0;
+      if (amount > balance) {
+        status.className = 'status-msg error';
+        status.textContent = 'Insufficient balance! You have $' + balance.toLocaleString();
+        return;
+      }
+      
+      try {
+        const investId = 'invest_' + Date.now();
+        const profit = amount * currentProfit / 100;
+        
+        await set(ref(db, 'users/' + currentUser.id + '/investments/' + investId), {
+          plan: currentPlan,
+          amount: amount,
+          profitPercent: currentProfit,
+          expectedProfit: profit,
+          earnedProfit: 0,
+          status: 'active',
+          createdAt: new Date().toISOString(),
+          lastProfitCalc: new Date().toISOString()
+        });
+        
+        await update(ref(db, 'users/' + currentUser.id), {
+          balance: balance - amount,
+          totalInvested: (userData.totalInvested || 0) + amount
+        });
+        
+        await push(ref(db, 'users/' + currentUser.id + '/transactions'), {
+          type: 'invest',
+          amount: amount,
+          plan: currentPlan,
+          status: 'completed',
+          date: new Date().toISOString()
+        });
+        
+        status.className = 'status-msg success';
+        status.innerHTML = '✅ Investment successful!<br>Redirecting to dashboard...';
+        
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 2000);
+        
+      } catch (error) {
+        status.className = 'status-msg error';
+        status.textContent = '❌ Error: ' + error.message;
+      }
+    };
+
+    // Close modal on overlay click
+    document.getElementById('investModal').addEventListener('click', (e) => {
+      if (e.target.id === 'investModal') closeModal();
+    });
+  </script>
+
+</body>
+  </html>
