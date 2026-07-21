@@ -370,7 +370,7 @@
     </p>
   </div>
 
-  <script type="module">
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
     import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
@@ -469,6 +469,7 @@
       const phone = document.getElementById('phone').value.trim();
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
+      const referralCode = document.getElementById('referralCode')?.value.trim() || '';
       const status = document.getElementById('status');
       const btn = document.getElementById('submitBtn');
 
@@ -516,31 +517,56 @@
 
         const userId = 'user_' + Date.now();
         
-        await set(ref(db, 'users/' + userId), {
+        // Build user data object with ALL required fields
+        const userData = {
           fullName: fullName,
           email: email,
           phone: phone,
           password: password,
+          balance: 0,
+          totalInvested: 0,
+          totalProfit: 0,
+          referralEarnings: 0,
           createdAt: new Date().toISOString(),
-          portfolioValue: 0,
           status: 'active'
-        });
+        };
+
+        // Handle referral code if provided
+        if (referralCode) {
+          // Extract user ID from referral link or use as-is
+          const refId = referralCode.includes('/ref/') 
+            ? referralCode.split('/ref/').pop() 
+            : referralCode;
+          userData.referredBy = refId;
+        }
+
+        // Save to Firebase
+        await set(ref(db, 'users/' + userId), userData);
+
+        // Save to sessionStorage for auto-login
+        sessionStorage.setItem('apexvault_user', JSON.stringify({
+          id: userId,
+          email: email,
+          fullName: fullName
+        }));
 
         status.className = 'status success';
-        status.innerHTML = '✅ Account created successfully!<br>Redirecting to login...';
+        status.innerHTML = '✅ Account created successfully!<br>Redirecting to dashboard...';
         
         setTimeout(() => {
-          window.location.href = 'login.html';
-        }, 2000);
+          window.location.href = 'dashboard.html';
+        }, 1500);
 
       } catch (error) {
+        console.error('Signup error:', error);
         status.className = 'status error';
         status.textContent = '❌ Error: ' + error.message;
         btn.disabled = false;
         btn.textContent = 'Create Account';
       }
     });
-  </script>
+</script>
+  
 
 </body>
   </html>
