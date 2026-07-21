@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - ApexVault</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+  <!-- ========== LOGIN ANIMATION ========== -->
+  <div class="login-overlay" id="loginOverlay">
+    <div class="logo">🔥 ApexVault</div>
+    <p>Loading your dashboard...</p>
+    <div class="loading-bar"></div>
+  </div>
+
+  <!-- ========== LOGOUT ANIMATION ========== -->
+  <div class="logout-overlay" id="logoutOverlay">
+    <div class="logo">🔥 ApexVault</div>
+    <p>Logging out...</p>
+  </div>
+
+  <!-- ========== MOBILE TOGGLE ========== -->
+  <button class="mobile-toggle" id="mobileToggle" onclick="toggleMobileSidebar()">☰</button>
+
+  <!-- ========== SIDEBAR ========== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">🔥 ApexVault</div>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">U</div>
+      <div class="user-info">
+        <h4 id="userName">User</h4>
+        <p id="userEmail">user@email.com</p>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Main</div>
+        <button class="nav-item active" onclick="showSection('overview')">
+          <span class="icon">📊</span> Overview
+        </button>
+        <button class="nav-item" onclick="showSection('invest')">
+          <span class="icon">📈</span> Invest
+        </button>
+        <button class="nav-item" onclick="showSection('deposit')">
+          <span class="icon">💰</span> Deposit
+        </button>
+        <button class="nav-item" onclick="showSection('withdraw')">
+          <span class="icon">💸</span> Withdraw
+        </button>
+        <button class="nav-item" onclick="showSection('transfer')">
+          <span class="icon">🔄</span> Transfer
+        </button>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">More</div>
+        <button class="nav-item" onclick="showSection('referral')">
+          <span class="icon">🎁</span> Referral
+        </button>
+        <button class="nav-item" onclick="showSection('transactions')">
+          <span class="icon">📋</span> Transactions
+        </button>
+        <button class="nav-item" onclick="showSection('pending')">
+          <span class="icon">⏳</span> Pending
+        </button>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">
+        <span class="icon">🚪</span> Log Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <main class="main-content" id="mainContent">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div class="page-title">
+        <h1 id="pageTitle">Dashboard Overview</h1>
+        <p>Welcome back! Here is your portfolio summary.</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn-small btn-deposit" onclick="openModal('depositModal')">+ Deposit</button>
+      </div>
+    </div>
+
+    <!-- STATS CARDS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <span>Total Balance</span>
+          <div class="stat-icon green">💵</div>
+        </div>
+        <h3 id="totalBalance">$0.00</h3>
+        <p>Available for withdrawal</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <span>Total Invested</span>
+          <div class="stat-icon blue">📈</div>
+        </div>
+        <h3 id="totalInvested">$0.00</h3>
+        <p>Across all plans</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <span>Total Profit</span>
+          <div class="stat-icon purple">💎</div>
+        </div>
+        <h3 id="totalProfit">$0.00</h3>
+        <p class="stat-change up">+0% this month</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <span>Referral Earnings</span>
+          <div class="stat-icon orange">🎁</div>
+        </div>
+        <h3 id="referralEarnings">$0.00</h3>
+        <p>From 0 referrals</p>
+      </div>
+    </div>
+
+    <!-- SECTIONS CONTAINER -->
+    <div id="sectionsContainer">
+
+      <!-- OVERVIEW SECTION -->
+      <div class="section-content" id="overviewSection">
+        <div class="section-card">
+          <h2>📈 Active Investments</h2>
+          <div class="active-investments" id="activeInvestments">
+            <p style="color: var(--text-muted); text-align: center; padding: 20px;">No active investments yet. Choose a plan below!</p>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h2>⚡ Quick Actions</h2>
+          <div class="actions-grid">
+            <button class="action-btn" onclick="showSection('invest')">
+              <div class="icon">📈</div>
+              <h4>Invest</h4>
+              <p>Start earning profit</p>
+            </button>
+            <button class="action-btn" onclick="showSection('deposit')">
+              <div class="icon">💰</div>
+              <h4>Deposit</h4>
+              <p>Add funds to wallet</p>
+            </button>
+            <button class="action-btn" onclick="showSection('withdraw')">
+              <div class="icon">💸</div>
+              <h4>Withdraw</h4>
+              <p>Withdraw earnings</p>
+            </button>
+            <button class="action-btn" onclick="showSection('transfer')">
+              <div class="icon">🔄</div>
+              <h4>Transfer</h4>
+              <p>Send to another user</p>
+            </button>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h2>📋 Recent Transactions</h2>
+          <div class="transaction-list" id="recentTransactions">
+            <p style="color: var(--text-muted); text-align: center; padding: 20px;">No transactions yet</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVEST SECTION -->
+      <div class="section-content" id="investSection" style="display: none;">
+        <div class="section-card">
+          <h2>💼 Choose an Investment Plan</h2>
+          <div class="plans-grid">
+            <div class="plan-card">
+              <h3>🚀 Startup Plan</h3>
+              <div class="plan-price">$100 <span>min</span></div>
+              <div class="plan-profit">10% Profit</div>
+              <ul class="plan-features">
+                <li>Invest: $100 - $999</li>
+                <li>Daily profit calculation</li>
+                <li>Instant withdrawal</li>
+                <li>24/7 Support</li>
+              </ul>
+              <button class="plan-btn" onclick="openInvestModal('startup', 100, 999, 10)">Invest Now</button>
+            </div>
+            <div class="plan-card popular">
+              <h3>⭐ Pro Plan</h3>
+              <div class="plan-price">$1,000 <span>min</span></div>
+              <div class="plan-profit">20% Profit</div>
+              <ul class="plan-features">
+                <li>Invest: $1,000 - $4,999</li>
+                <li>Daily profit calculation</li>
+                <li>Priority withdrawal</li>
+                <li>Dedicated support</li>
+              </ul>
+              <button class="plan-btn" onclick="openInvestModal('pro', 1000, 4999, 20)">Invest Now</button>
+            </div>
+            <div class="plan-card">
+              <h3>👑 Ultimate Plan</h3>
+              <div class="plan-price">$5,000 <span>min</span></div>
+              <div class="plan-profit">40% Profit</div>
+              <ul class="plan-features">
+                <li>Invest: $5,000+</li>
+                <li>Daily profit calculation</li>
+                <li>Instant VIP withdrawal</li>
+                <li>Personal account manager</li>
+              </ul>
+              <button class="plan-btn" onclick="openInvestModal('ultimate', 5000, 999999, 40)">Invest Now</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DEPOSIT SECTION -->
+      <div class="section-content" id="depositSection" style="display: none;">
+        <div class="section-card">
+          <h2>💰 Deposit Funds</h2>
+          <p style="color: var(--text-muted); margin-bottom: 20px;">Add money to your wallet to start investing.</p>
+          <div class="actions-grid">
+            <button class="action-btn" onclick="openDepositModal('bank')">
+              <div class="icon">🏦</div>
+              <h4>Bank Transfer</h4>
+              <p>Direct bank deposit</p>
+            </button>
+            <button class="action-btn" onclick="openDepositModal('crypto')">
+              <div class="icon">₿</div>
+              <h4>Cryptocurrency</h4>
+              <p>BTC, ETH, USDT</p>
+            </button>
+            <button class="action-btn" onclick="openDepositModal('card')">
+              <div class="icon">💳</div>
+              <h4>Credit Card</h4>
+              <p>Visa, Mastercard</p>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- WITHDRAW SECTION -->
+      <div class="section-content" id="withdrawSection" style="display: none;">
+        <div class="section-card">
+          <h2>💸 Withdraw Funds</h2>
+          <p style="color: var(--text-muted); margin-bottom: 20px;">Request a withdrawal. It will show in Pending until approved.</p>
+          <div class="actions-grid">
+            <button class="action-btn" onclick="openWithdrawModal('bank')">
+              <div class="icon">🏦</div>
+              <h4>Bank Transfer</h4>
+              <p>To your bank account</p>
+            </button>
+            <button class="action-btn" onclick="openWithdrawModal('crypto')">
+              <div class="icon">₿</div>
+              <h4>Cryptocurrency</h4>
+              <p>To your crypto wallet</p>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSFER SECTION -->
+      <div class="section-content" id="transferSection" style="display: none;">
+        <div class="section-card">
+          <h2>🔄 Transfer Funds</h2>
+          <p style="color: var(--text-muted); margin-bottom: 20px;">Send money to another ApexVault user instantly.</p>
+          <button class="btn-small btn-deposit" onclick="openTransferModal()" style="padding: 14px 28px; font-size: 1rem;">+ New Transfer</button>
+        </div>
+      </div>
+
+      <!-- REFERRAL SECTION -->
+      <div class="section-content" id="referralSection" style="display: none;">
+        <div class="section-card">
+          <h2>🎁 Referral Program</h2>
+          <div class="referral-box">
+            <h3>Invite Friends & Earn</h3>
+            <p>Share your referral link and earn 5% commission on every deposit your referrals make!</p>
+            <div class="referral-link">
+              <input type="text" id="referralLink" value="https://apexvault.com/ref/loading..." readonly>
+              <button onclick="copyReferral()">Copy</button>
+            </div>
+          </div>
+        </div>
+        <div class="section-card">
+          <h2>📊 Your Referral Stats</h2>
+          <div class="stats-grid" style="margin-bottom: 0;">
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <span>Total Referrals</span>
+                <div class="stat-icon blue">👥</div>
+              </div>
+              <h3 id="totalReferrals">0</h3>
+              <p>People joined</p>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <span>Total Earned</span>
+                <div class="stat-icon green">💎</div>
+              </div>
+              <h3 id="totalReferralEarned">$0.00</h3>
+              <p>Commission earned</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSACTIONS SECTION -->
+      <div class="section-content" id="transactionsSection" style="display: none;">
+        <div class="section-card">
+          <h2>📋 All Transactions</h2>
+          <div class="transaction-list" id="allTransactions">
+            <p style="color: var(--text-muted); text-align: center; padding: 20px;">No transactions yet</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PENDING SECTION -->
+      <div class="section-content" id="pendingSection" style="display: none;">
+        <div class="section-card">
+          <h2>⏳ Pending Withdrawals</h2>
+          <div class="pending-box" id="pendingWithdrawals">
+            <h4>No pending withdrawals</h4>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Your withdrawal requests will appear here.</p>
+          </div>
+        </div>
+        <div class="section-card">
+          <h2>⏳ Pending Deposits</h2>
+          <div class="pending-box" id="pendingDeposits">
+            <h4>No pending deposits</h4>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Your deposit requests will appear here.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ========== INVEST MODAL ========== -->
+  <div class="modal-overlay" id="investModal">
+    <div class="modal">
+      <h2 id="investModalTitle">Invest in Plan</h2>
+      <p id="investModalDesc">Enter the amount you want to invest.</p>
+      <form class="modal-form" onsubmit="submitInvest(event)">
+        <div class="form-group">
+          <label>Amount ($)</label>
+          <input type="number" id="investAmount" min="100" step="1" required>
+        </div>
+        <div class="form-group">
+          <label>Expected Profit</label>
+          <input type="text" id="expectedProfit" readonly style="color: var(--success);">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="closeModal('investModal')">Cancel</button>
+          <button type="submit" class="btn-confirm">Confirm Investment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========== DEPOSIT MODAL ========== -->
+  <div class="modal-overlay" id="depositModal">
+    <div class="modal">
+      <h2>Deposit Funds</h2>
+      <p>Enter the amount you want to deposit.</p>
+      <form class="modal-form" onsubmit="submitDeposit(event)">
+        <div class="form-group">
+          <label>Amount ($)</label>
+          <input type="number" id="depositAmount" min="10" step="1" required>
+        </div>
+        <div class="form-group">
+          <label>Payment Method</label>
+          <input type="text" id="depositMethod" readonly>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="closeModal('depositModal')">Cancel</button>
+          <button type="submit" class="btn-confirm">Submit Deposit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========== WITHDRAW MODAL ========== -->
+  <div class="modal-overlay" id="withdrawModal">
+    <div class="modal">
+      <h2>Withdraw Funds</h2>
+      <p>Enter the amount you want to withdraw.</p>
+      <form class="modal-form" onsubmit="submitWithdraw(event)">
+        <div class="form-group">
+          <label>Amount ($)</label>
+          <input type="number" id="withdrawAmount" min="10" step="1" required>
+        </div>
+        <div class="form-group">
+          <label>Withdrawal Method</label>
+          <input type="text" id="withdrawMethod" readonly>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="closeModal('withdrawModal')">Cancel</button>
+          <button type="submit" class="btn-confirm">Request Withdrawal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========== TRANSFER MODAL ========== -->
+  <div class="modal-overlay" id="transferModal">
+    <div class="modal">
+      <h2>Transfer Funds</h2>
+      <p>Send money to another ApexVault user.</p>
+      <form class="modal-form" onsubmit="submitTransfer(event)">
+        <div class="form-group">
+          <label>Recipient Email</label>
+          <input type="email" id="transferEmail" placeholder="recipient@email.com" required>
+        </div>
+        <div class="form-group">
+          <label>Amount ($)</label>
+          <input type="number" id="transferAmount" min="1" step="1" required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="closeModal('transferModal')">Cancel</button>
+          <button type="submit" class="btn-confirm">Send Transfer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module" src="dashboard.js"></script>
+
+</body>
+</html>'''
+          
