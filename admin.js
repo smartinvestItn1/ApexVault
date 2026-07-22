@@ -18,7 +18,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // ========== CONFIG ==========
-const ADMIN_PASSWORD = 'ApexVault2024!SecureAdmin'; // CHANGE THIS!
+const ADMIN_PASSWORD = 'Promise1234@@$$'; // CHANGE THIS!
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in ms
 const MAX_LOGIN_ATTEMPTS = 3;
 
