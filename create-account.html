@@ -385,8 +385,13 @@
       measurementId: "G-E5QQK8RBTN"
     };
 
+    console.log('🔥 Firebase config loaded');
+
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    
+    console.log('🔥 Firebase initialized:', app.name);
+    console.log('🔥 Database URL:', firebaseConfig.databaseURL);
 
     // Toggle password visibility
     window.togglePassword = function(inputId, btn) {
@@ -460,24 +465,29 @@
     }
     createParticles();
 
+    console.log('✅ DOM ready, form listener attaching...');
+
     // Form submission
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      console.log('📝 Form submitted!');
       
       const fullName = document.getElementById('fullName').value.trim();
       const email = document.getElementById('email').value.trim();
       const phone = document.getElementById('phone').value.trim();
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
-      const referralCode = document.getElementById('referralCode')?.value.trim() || '';
       const status = document.getElementById('status');
       const btn = document.getElementById('submitBtn');
+
+      console.log('📋 Form values:', { fullName, email, phone, passwordLength: password?.length });
 
       // Validate email
       if (!isValidEmail(email)) {
         showFieldError('email', 'emailError', true);
         status.className = 'status error';
         status.textContent = '❌ Please enter a valid email address!';
+        console.log('❌ Email validation failed');
         return;
       }
 
@@ -486,36 +496,49 @@
         showFieldError('confirmPassword', 'passwordError', true);
         status.className = 'status error';
         status.textContent = '❌ Passwords do not match!';
+        console.log('❌ Password mismatch');
         return;
       }
 
       if (password.length < 6) {
         status.className = 'status error';
         status.textContent = '❌ Password must be at least 6 characters!';
+        console.log('❌ Password too short');
         return;
       }
 
       btn.disabled = true;
       btn.innerHTML = '<span class="loading"></span> Creating account...';
+      status.className = '';
+      status.textContent = '';
+      status.style.display = 'none';
 
       try {
+        console.log('🔍 Checking if email exists...');
+        
         // Check if email already exists
         const snapshot = await get(ref(db, 'users'));
+        console.log('📊 Users snapshot received:', snapshot.exists());
+        
         const users = snapshot.val();
+        console.log('👥 Existing users count:', users ? Object.keys(users).length : 0);
         
         if (users) {
           for (const user of Object.values(users)) {
             if (user.email === email) {
               status.className = 'status error';
+              status.style.display = 'block';
               status.textContent = '❌ This email is already registered!';
               btn.disabled = false;
               btn.textContent = 'Create Account';
+              console.log('❌ Email already exists');
               return;
             }
           }
         }
 
         const userId = 'user_' + Date.now();
+        console.log('🆕 New user ID:', userId);
         
         // Build user data object with ALL required fields
         const userData = {
@@ -531,17 +554,11 @@
           status: 'active'
         };
 
-        // Handle referral code if provided
-        if (referralCode) {
-          // Extract user ID from referral link or use as-is
-          const refId = referralCode.includes('/ref/') 
-            ? referralCode.split('/ref/').pop() 
-            : referralCode;
-          userData.referredBy = refId;
-        }
-
+        console.log('💾 Saving to Firebase...', userData);
+        
         // Save to Firebase
         await set(ref(db, 'users/' + userId), userData);
+        console.log('✅ Firebase save successful!');
 
         // Save to sessionStorage for auto-login
         sessionStorage.setItem('apexvault_user', JSON.stringify({
@@ -549,23 +566,34 @@
           email: email,
           fullName: fullName
         }));
+        console.log('✅ sessionStorage saved');
 
         status.className = 'status success';
+        status.style.display = 'block';
         status.innerHTML = '✅ Account created successfully!<br>Redirecting to dashboard...';
+        
+        console.log('🚀 Redirecting in 1.5s...');
         
         setTimeout(() => {
           window.location.href = 'dashboard.html';
         }, 1500);
 
       } catch (error) {
-        console.error('Signup error:', error);
+        console.error('💥 SIGNUP ERROR:', error);
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error code:', error.code);
+        
         status.className = 'status error';
+        status.style.display = 'block';
         status.textContent = '❌ Error: ' + error.message;
         btn.disabled = false;
         btn.textContent = 'Create Account';
       }
     });
-</script>
+    
+    console.log('✅ Form listener attached successfully');
+                            </script>
   
 
 </body>
