@@ -45,7 +45,11 @@ function checkLogin() {
     window.location.href = 'login.html';
     return false;
   }
-  currentUser = JSON.parse(userJson);
+currentUser = JSON.parse(userJson);
+// Fix: ensure uid exists for Firebase Auth compatibility
+if (currentUser.id && !currentUser.uid) {
+  currentUser.uid = currentUser.id;
+}
   return true;
 }
 
@@ -65,12 +69,12 @@ function getTodayKey() {
 async function loadUserData() {
   if (!currentUser) return;
   
-  const snapshot = await get(ref(db, 'users/' + currentUser.id));
+const snapshot = await get(ref(db, 'users/' + currentUser.uid));
   userData = snapshot.val() || {};
   
   // Ensure user has balance field
   if (userData.balance === undefined) {
-    await update(ref(db, 'users/' + currentUser.id), { balance: 0 });
+    await update(ref(db, 'users/' + currentUser.uid), { balance: 0 });
     userData.balance = 0;
   }
   
@@ -92,7 +96,7 @@ async function loadUserData() {
   loadPending();
   
   // Update referral link
-  const refLink = 'https://apexvault.com/ref/' + currentUser.id;
+  const refLink = 'https://apexvault.com/ref/' + currentUser.uid;
   document.getElementById('referralLink').value = refLink;
   
   // Load referral stats
@@ -121,7 +125,7 @@ function updateDashboardStats() {
 // ========== WITHDRAW LIMIT DISPLAY ==========
 async function updateWithdrawLimitDisplay() {
   const todayKey = getTodayKey();
-  const dailyRef = ref(db, 'users/' + currentUser.id + '/dailyWithdrawals/' + todayKey);
+  const dailyRef = ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey);
   
   try {
     const snapshot = await get(dailyRef);
@@ -153,7 +157,7 @@ async function updateWithdrawLimitDisplay() {
 
 // ========== INVESTMENT LOCK ==========
 async function checkInvestmentLock() {
-  const snapshot = await get(ref(db, 'users/' + currentUser.id + '/investments'));
+  const snapshot = await get(ref(db, 'users/' + currentUser.uid + '/investments'));
   const investments = snapshot.val();
   
   const statusEl = document.getElementById('investmentStatus');
@@ -215,18 +219,18 @@ async function completeInvestment(investId) {
   
   const totalReturn = inv.amount + inv.expectedProfit;
   
-  await update(ref(db, 'users/' + currentUser.id + '/investments/' + investId), {
+  await update(ref(db, 'users/' + currentUser.uid + '/investments/' + investId), {
     status: 'completed',
     completedAt: new Date().toISOString()
   });
   
-  await update(ref(db, 'users/' + currentUser.id), {
+  await update(ref(db, 'users/' + currentUser.uid), {
     balance: (userData.balance || 0) + totalReturn,
     totalInvested: Math.max(0, (userData.totalInvested || 0) - inv.amount)
   });
   
   // Add to history
-  await push(ref(db, 'users/' + currentUser.id + '/history'), {
+  await push(ref(db, 'users/' + currentUser.uid + '/history'), {
     type: 'invest_return',
     amount: totalReturn,
     originalAmount: inv.amount,
@@ -365,7 +369,7 @@ window.submitInvest = async function(event) {
     const profit = amount * currentPlanProfit / 100;
     
     // Save investment
-    await set(ref(db, 'users/' + currentUser.id + '/investments/' + investId), {
+    await set(ref(db, 'users/' + currentUser.uid + '/investments/' + investId), {
       plan: currentPlan,
       amount: amount,
       profitPercent: currentPlanProfit,
@@ -377,13 +381,13 @@ window.submitInvest = async function(event) {
     });
     
     // Update balance
-    await update(ref(db, 'users/' + currentUser.id), {
+    await update(ref(db, 'users/' + currentUser.uid), {
       balance: balance - amount,
       totalInvested: (userData.totalInvested || 0) + amount
     });
     
     // Add to history
-    await push(ref(db, 'users/' + currentUser.id + '/history'), {
+    await push(ref(db, 'users/' + currentUser.uid + '/history'), {
       type: 'invest',
       amount: amount,
       plan: currentPlan,
@@ -450,7 +454,7 @@ window.submitDeposit = async function(event) {
     const depositId = 'deposit_' + Date.now();
     
     // Save as pending deposit
-    await set(ref(db, 'users/' + currentUser.id + '/pendingDeposits/' + depositId), {
+    await set(ref(db, 'users/' + currentUser.uid + '/pendingDeposits/' + depositId), {
       amount: amount,
       network: network,
       method: 'crypto',
@@ -461,7 +465,7 @@ window.submitDeposit = async function(event) {
     
     // Also save to global pending for admin
     await set(ref(db, 'pendingDeposits/' + depositId), {
-      userId: currentUser.id,
+      userId: currentUser.uid,
       userName: userData.fullName,
       userEmail: userData.email,
       amount: amount,
@@ -473,7 +477,7 @@ window.submitDeposit = async function(event) {
     });
     
     // Add to history
-    await push(ref(db, 'users/' + currentUser.id + '/history'), {
+    await push(ref(db, 'users/' + currentUser.uid + '/history'), {
       type: 'deposit',
       amount: amount,
       network: network,
@@ -552,7 +556,7 @@ window.submitWithdraw = async function(event) {
   
   // Check daily limit
   const todayKey = getTodayKey();
-  const dailySnapshot = await get(ref(db, 'users/' + currentUser.id + '/dailyWithdrawals/' + todayKey));
+  const dailySnapshot = await get(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey));
   const dailyUsed = dailySnapshot.exists() ? dailySnapshot.val() : 0;
   
   if ((dailyUsed + amount) > DAILY_WITHDRAW_LIMIT) {
@@ -564,7 +568,7 @@ window.submitWithdraw = async function(event) {
     const withdrawId = 'withdraw_' + Date.now();
     
     // Save as pending withdrawal
-    await set(ref(db, 'users/' + currentUser.id + '/pendingWithdrawals/' + withdrawId), {
+    await set(ref(db, 'users/' + currentUser.uid + '/pendingWithdrawals/' + withdrawId), {
       amount: amount,
       fee: fee,
       total: total,
@@ -578,7 +582,7 @@ window.submitWithdraw = async function(event) {
     
     // Also save to global pending for admin
     await set(ref(db, 'pendingWithdrawals/' + withdrawId), {
-      userId: currentUser.id,
+      userId: currentUser.uid,
       userName: userData.fullName,
       userEmail: userData.email,
       amount: amount,
@@ -593,15 +597,15 @@ window.submitWithdraw = async function(event) {
     });
     
     // Update daily usage
-    await update(ref(db, 'users/' + currentUser.id + '/dailyWithdrawals/' + todayKey), dailyUsed + amount);
+    await update(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey), dailyUsed + amount);
     
     // Deduct from balance immediately
-    await update(ref(db, 'users/' + currentUser.id), {
+    await update(ref(db, 'users/' + currentUser.uid), {
       balance: balance - total
     });
     
     // Add to history
-    await push(ref(db, 'users/' + currentUser.id + '/history'), {
+    await push(ref(db, 'users/' + currentUser.uid + '/history'), {
       type: 'withdraw',
       amount: amount,
       fee: fee,
@@ -679,7 +683,7 @@ window.submitTransfer = async function(event) {
     }
     
     // Update sender balance
-    await update(ref(db, 'users/' + currentUser.id), {
+    await update(ref(db, 'users/' + currentUser.uid), {
       balance: balance - amount
     });
     
@@ -689,7 +693,7 @@ window.submitTransfer = async function(event) {
     });
     
     // Add to sender history
-    await push(ref(db, 'users/' + currentUser.id + '/history'), {
+    await push(ref(db, 'users/' + currentUser.uid + '/history'), {
       type: 'transfer_out',
       amount: amount,
       to: recipientEmail,
@@ -720,7 +724,7 @@ window.submitTransfer = async function(event) {
 // ========== LOAD ACTIVE INVESTMENTS ==========
 async function loadActiveInvestments() {
   const container = document.getElementById('activeInvestments');
-  const snapshot = await get(ref(db, 'users/' + currentUser.id + '/investments'));
+  const snapshot = await get(ref(db, 'users/' + currentUser.uid + '/investments'));
   const investments = snapshot.val();
   
   if (!investments) {
@@ -764,7 +768,7 @@ async function loadActiveInvestments() {
 
 // ========== LOAD TRANSACTIONS ==========
 async function loadTransactions() {
-  const snapshot = await get(ref(db, 'users/' + currentUser.id + '/history'));
+  const snapshot = await get(ref(db, 'users/' + currentUser.uid + '/history'));
   const history = snapshot.val();
   
   const recentContainer = document.getElementById('recentTransactions');
@@ -775,7 +779,7 @@ async function loadTransactions() {
     return;
   }
   
-  allTransactions = Object.entries(history).map(([id, tx]) => ({ id, ...tx }))
+  allTransactions = Object.entries(history).map(([id, tx]) => ({ uid, ...tx }))
     .sort((a, b) => b.timestamp - a.timestamp);
   
   // Recent activity (last 5)
@@ -900,8 +904,8 @@ function renderHistory() {
 
 // ========== LOAD PENDING ==========
 async function loadPending() {
-  const withdrawSnapshot = await get(ref(db, 'users/' + currentUser.id + '/pendingWithdrawals'));
-  const depositSnapshot = await get(ref(db, 'users/' + currentUser.id + '/pendingDeposits'));
+  const withdrawSnapshot = await get(ref(db, 'users/' + currentUser.uid + '/pendingWithdrawals'));
+  const depositSnapshot = await get(ref(db, 'users/' + currentUser.uid + '/pendingDeposits'));
   
   const withdrawals = withdrawSnapshot.val();
   const deposits = depositSnapshot.val();
@@ -959,7 +963,7 @@ async function loadReferralStats() {
   let count = 0;
   
   for (const u of Object.values(users || {})) {
-    if (u.referredBy === currentUser.id) {
+    if (u.referredBy === currentUser.uid) {
       count++;
     }
   }
