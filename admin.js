@@ -47,7 +47,8 @@ function resetSessionTimer() {
   document.addEventListener(event, resetSessionTimer);
 });
  // ========== CHECK ADMIN LOGIN ==========
-async function checkAdmin() {
+
+        async function checkAdmin() {
   return new Promise((resolve) => {
     onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
@@ -61,6 +62,11 @@ async function checkAdmin() {
       // Layer 1: Check admin role in database
       const userSnap = await get(ref(db, 'users/' + userId));
       const userData = userSnap.val();
+
+      // Trim role to handle spaces
+      if (userData && userData.role) {
+        userData.role = userData.role.trim();
+      }
 
       if (!userData || userData.role !== 'admin') {
         alert('🚫 Access denied. Admin privileges required.');
@@ -77,10 +83,11 @@ async function checkAdmin() {
 
       // Layer 2: Password check with attempt limiting
       const attemptsSnap = await get(ref(db, 'adminSecurity/loginAttempts/' + userId));
-      const attempts = attemptsSnap.val() || 0;
+      const attemptsData = attemptsSnap.val();
+      const attempts = (attemptsData && attemptsData.count) ? attemptsData.count : 0;
 
       if (attempts >= MAX_LOGIN_ATTEMPTS) {
-        alert('🚫 Account locked due to too many failed attempts. Contact super admin.');
+        alert('🚫 Account locked due to too many failed attempts.');
         window.location.href = 'dashboard.html';
         resolve(false);
         return;
@@ -89,10 +96,8 @@ async function checkAdmin() {
       const password = prompt('🔐 Enter admin password:');
 
       if (password !== ADMIN_PASSWORD) {
-        // Log failed attempt
         await update(ref(db, 'adminSecurity/loginAttempts/' + userId), { count: (attempts + 1) });
 
-        // Log to audit
         await push(ref(db, 'adminAudit/loginAttempts'), {
           adminId: userId,
           adminEmail: userData.email,
@@ -114,9 +119,8 @@ async function checkAdmin() {
       }
 
       // Success — reset attempts
-      await set(ref(db, 'adminSecurity/loginAttempts/' + userId), 0);
+      await set(ref(db, 'adminSecurity/loginAttempts/' + userId), { count: 0 });
 
-      // Log successful login
       await push(ref(db, 'adminAudit/logins'), {
         adminId: userId,
         adminEmail: userData.email,
@@ -126,13 +130,12 @@ async function checkAdmin() {
         date: new Date().toISOString()
       });
 
-      // Start session timer
       resetSessionTimer();
-
       resolve(true);
     });
   });
-  }
+                                         }
+                       
 // ========== AUDIT LOG ==========
 async function logAdminAction(action, details) {
   await push(ref(db, 'adminAudit/actions'), {
