@@ -369,9 +369,9 @@
       By creating an account, you agree to our <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a>.
     </p>
   </div>
-
-<script type="module">
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
     import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -388,6 +388,7 @@
     console.log('🔥 Firebase config loaded');
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getDatabase(app);
     
     console.log('🔥 Firebase initialized:', app.name);
@@ -514,38 +515,19 @@
       status.style.display = 'none';
 
       try {
-        console.log('🔍 Checking if email exists...');
+        console.log('🔥 Creating Firebase Auth account...');
         
-        // Check if email already exists
-        const snapshot = await get(ref(db, 'users'));
-        console.log('📊 Users snapshot received:', snapshot.exists());
-        
-        const users = snapshot.val();
-        console.log('👥 Existing users count:', users ? Object.keys(users).length : 0);
-        
-        if (users) {
-          for (const user of Object.values(users)) {
-            if (user.email === email) {
-              status.className = 'status error';
-              status.style.display = 'block';
-              status.textContent = '❌ This email is already registered!';
-              btn.disabled = false;
-              btn.textContent = 'Create Account';
-              console.log('❌ Email already exists');
-              return;
-            }
-          }
-        }
+        // 1. CREATE AUTH ACCOUNT
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const firebaseUser = userCredential.user;
+        const userId = firebaseUser.uid;
+        console.log('✅ Auth account created, UID:', userId);
 
-        const userId = 'user_' + Date.now();
-        console.log('🆕 New user ID:', userId);
-        
-        // Build user data object with ALL required fields
+        // 2. SAVE PROFILE DATA TO DATABASE (NO PASSWORD!)
         const userData = {
           fullName: fullName,
           email: email,
           phone: phone,
-          password: password,
           balance: 0,
           totalInvested: 0,
           totalProfit: 0,
@@ -554,15 +536,13 @@
           status: 'active'
         };
 
-        console.log('💾 Saving to Firebase...', userData);
-        
-        // Save to Firebase
+        console.log('💾 Saving profile to database...', userData);
         await set(ref(db, 'users/' + userId), userData);
-        console.log('✅ Firebase save successful!');
+        console.log('✅ Profile saved to database');
 
-        // Save to sessionStorage for auto-login
+        // 3. Save to sessionStorage for auto-login
         sessionStorage.setItem('apexvault_user', JSON.stringify({
-          id: userId,
+          uid: userId,
           email: email,
           fullName: fullName
         }));
@@ -580,22 +560,31 @@
 
       } catch (error) {
         console.error('💥 SIGNUP ERROR:', error);
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
         console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        
+        let friendlyMessage = '❌ ' + error.message;
+        if (error.code === 'auth/email-already-in-use') {
+          friendlyMessage = '❌ This email is already registered!';
+        } else if (error.code === 'auth/invalid-email') {
+          friendlyMessage = '❌ Invalid email address!';
+        } else if (error.code === 'auth/weak-password') {
+          friendlyMessage = '❌ Password is too weak! Use at least 6 characters.';
+        } else if (error.code === 'auth/network-request-failed') {
+          friendlyMessage = '❌ Network error. Please check your internet connection.';
+        }
         
         status.className = 'status error';
         status.style.display = 'block';
-        status.textContent = '❌ Error: ' + error.message;
+        status.textContent = friendlyMessage;
         btn.disabled = false;
         btn.textContent = 'Create Account';
       }
     });
     
     console.log('✅ Form listener attached successfully');
-                            </script>
+  </script>
   
-
 </body>
   </html>
                                                     
