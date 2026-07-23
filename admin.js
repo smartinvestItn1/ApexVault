@@ -48,32 +48,46 @@ function resetSessionTimer() {
 });
  // ========== CHECK ADMIN LOGIN ==========
 
-        async function checkAdmin() {
+           // ========== CHECK ADMIN LOGIN (FIXED) ==========
+async function checkAdmin() {
   return new Promise((resolve) => {
-    onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      unsubscribe(); // Stop listening immediately
+      
+      // DEBUG: Show what we got
       if (!firebaseUser) {
+        alert('❌ Not logged in via Firebase Auth. Redirecting to login...');
         window.location.href = 'login.html';
         resolve(false);
         return;
       }
-
+      
+      alert('✅ Firebase user found: ' + firebaseUser.email);
+      
       const userId = firebaseUser.uid;
+      alert('📍 UID: ' + userId);
 
       // Layer 1: Check admin role in database
       const userSnap = await get(ref(db, 'users/' + userId));
       const userData = userSnap.val();
+      
+      alert('📊 userData: ' + JSON.stringify(userData));
 
-      // Trim role to handle spaces
-      if (userData && userData.role) {
-        userData.role = userData.role.trim();
-      }
-
-      if (!userData || userData.role !== 'admin') {
-        alert('🚫 Access denied. Admin privileges required.');
+      if (!userData) {
+        alert('❌ No user profile found in database for UID: ' + userId);
         window.location.href = 'dashboard.html';
         resolve(false);
         return;
       }
+
+      if (userData.role !== 'admin') {
+        alert('🚫 Access denied. Your role is: ' + userData.role);
+        window.location.href = 'dashboard.html';
+        resolve(false);
+        return;
+      }
+
+      alert('✅ Admin role confirmed!');
 
       currentAdmin = {
         uid: userId,
@@ -130,12 +144,12 @@ function resetSessionTimer() {
         date: new Date().toISOString()
       });
 
+      alert('✅ Admin login successful!');
       resetSessionTimer();
       resolve(true);
     });
   });
-                                         }
-                       
+    }                                  }                     
 // ========== AUDIT LOG ==========
 async function logAdminAction(action, details) {
   await push(ref(db, 'adminAudit/actions'), {
