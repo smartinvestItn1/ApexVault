@@ -416,7 +416,7 @@ window.rejectWithdrawal = async function(withdrawalId) {
     html += '<td>$' + (u.totalInvested || 0).toLocaleString() + '</td>';
     html += '<td style="color:var(--success);">$' + (u.totalProfit || 0).toLocaleString() + '</td>';
     html += '<td>' + (u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A') + '</td>';
-    html += '<td><button class="btn-action btn-view" onclick="viewUser(\'' + id + '\')">View</button></td></tr>';
+    html += '<td><button class="btn-action btn-view" onclick="viewUser(\'' + id + '\')">View</button><button class="btn-action btn-approve" style="margin-left:5px;" onclick="manageUserFeatures(\'' + id + '\')">Manage</button></td>';
   }
 
   html += '</tbody></table>';
@@ -442,6 +442,46 @@ window.viewUser = function(userId) {
   if (!u) return;
   alert('User: ' + (u.fullName || 'N/A') + '\nEmail: ' + (u.email || 'N/A') + '\nPhone: ' + (u.phone || 'N/A') + '\nBalance: $' + (u.balance || 0).toLocaleString() + '\nInvested: $' + (u.totalInvested || 0).toLocaleString() + '\nProfit: $' + (u.totalProfit || 0).toLocaleString());
 };
+
+// ========== MANAGE USER FEATURES ==========
+window.manageUserFeatures = async function(userId) {
+  const u = allUsers[userId];
+  if (!u) return;
+
+  const featuresSnap = await get(ref(db, 'users/' + userId + '/features'));
+  const features = featuresSnap.val() || {};
+
+  const investEnabled = features.investEnabled !== false;
+  const depositEnabled = features.depositEnabled !== false;
+  const withdrawEnabled = features.withdrawEnabled !== false;
+
+  const choice = prompt(
+    'User: ' + (u.fullName || 'N/A') + '\n\n' +
+    '1. Invest: ' + (investEnabled ? 'ENABLED' : 'BLOCKED') + '\n' +
+    '2. Deposit: ' + (depositEnabled ? 'ENABLED' : 'BLOCKED') + '\n' +
+    '3. Withdraw: ' + (withdrawEnabled ? 'ENABLED' : 'BLOCKED') + '\n\n' +
+    'Enter number to toggle, or Cancel to exit:'
+  );
+
+  if (!choice) return;
+
+  const num = parseInt(choice);
+  let featureKey, featureName;
+
+  if (num === 1) { featureKey = 'investEnabled'; featureName = 'Invest'; }
+  else if (num === 2) { featureKey = 'depositEnabled'; featureName = 'Deposit'; }
+  else if (num === 3) { featureKey = 'withdrawEnabled'; featureName = 'Withdraw'; }
+  else { alert('Invalid choice'); return; }
+
+  const currentValue = (num === 1 ? investEnabled : num === 2 ? depositEnabled : withdrawEnabled);
+  const newValue = !currentValue;
+
+  await update(ref(db, 'users/' + userId + '/features'), { [featureKey]: newValue });
+  await logAdminAction('toggle_user_feature', { userId, feature: featureName, enabled: newValue });
+  alert(featureName + ' is now ' + (newValue ? 'ENABLED' : 'BLOCKED') + ' for this user.');
+};
+
+                                                                                                                                   
 function renderTransactions() {
   const container = document.getElementById('transactionsTable');
   allTransactions = [];
@@ -525,5 +565,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadAllData();
   }, 1500);
 });
-    
     
