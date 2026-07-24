@@ -64,19 +64,8 @@ function checkLogin() {
 
 // ========== CHECK FEATURE BLOCKED ==========
 async function isFeatureBlocked(feature) {
-  try {
-    // Check global setting
-    const globalSnap = await get(ref(db, 'platformSettings/' + feature + 'Enabled'));
-    if (globalSnap.val() === false) return true;
-
-    // Check per-user setting
-    const userSnap = await get(ref(db, 'users/' + currentUser.uid + '/features/' + feature + 'Enabled'));
-    if (userSnap.val() === false) return true;
-
-    return false;
-  } catch (e) {
-    return false;
-  }
+  const snapshot = await get(ref(db, 'platformSettings/' + feature + 'Enabled'));
+  return snapshot.val() === false;
 }
 
 // ========== GET TODAY KEY ==========
