@@ -348,29 +348,6 @@ window.openInvestModal = async function(plan, min, max, profit) {
   
   openModal('investModal');
 };
-    
-  // Check if already has active investment
-  if (activeInvestment) {
-    alert('🔒 You already have an active investment. Please wait for it to complete.');
-    return;
-  }
-  
-  currentPlan = plan;
-  currentPlanMin = min;
-  currentPlanMax = max;
-  currentPlanProfit = profit;
-  
-  const planNames = { startup: 'Startup', pro: 'Pro', ultimate: 'Ultimate' };
-  document.getElementById('investModalTitle').textContent = 'Invest in ' + planNames[plan] + ' Plan';
-  document.getElementById('investModalDesc').textContent = 'Min: $' + min.toLocaleString() + ' | Max: $' + (max === 999999 ? 'Unlimited' : max.toLocaleString()) + ' | Profit: ' + profit + '%';
-  document.getElementById('investAmount').min = min;
-  document.getElementById('investAmount').max = max === 999999 ? '' : max;
-  document.getElementById('investAmount').value = '';
-  document.getElementById('expectedProfit').value = '';
-  
-  openModal('investModal');
-};
-
 // Calculate expected profit on input
 document.getElementById('investAmount').addEventListener('input', function() {
   const amount = parseFloat(this.value) || 0;
