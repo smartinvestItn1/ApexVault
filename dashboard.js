@@ -45,11 +45,16 @@ function checkLogin() {
     window.location.href = 'login.html';
     return false;
   }
-currentUser = JSON.parse(userJson);
-// Fix: ensure uid exists for Firebase Auth compatibility
-if (currentUser.id && !currentUser.uid) {
-  currentUser.uid = currentUser.id;
-}
+  currentUser = JSON.parse(userJson);
+  
+  // FIX: support both old (id) and new (uid) login formats
+  if (!currentUser.uid && currentUser.id) {
+    currentUser.uid = currentUser.id;
+  }
+  if (!currentUser.id && currentUser.uid) {
+    currentUser.id = currentUser.uid;
+  }
+  
   return true;
 }
 
