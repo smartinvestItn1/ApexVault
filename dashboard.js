@@ -37,6 +37,7 @@ let currentPlanProfit = 0;
 let allTransactions = [];
 let currentHistoryFilter = 'all';
 let activeInvestment = null;
+let uid;
 
 // ========== CHECK LOGIN ==========
 function checkLogin() {
@@ -47,7 +48,6 @@ function checkLogin() {
   }
   currentUser = JSON.parse(userJson);
   
-  // FIX: support both old (id) and new (uid) login formats
   if (!currentUser.uid && currentUser.id) {
     currentUser.uid = currentUser.id;
   }
@@ -55,8 +55,11 @@ function checkLogin() {
     currentUser.id = currentUser.uid;
   }
   
+  uid = currentUser.uid;   // ← THIS LINE IS THE FIX
+  
   return true;
 }
+
 
 // ========== CHECK FEATURE BLOCKED ==========
 async function isFeatureBlocked(feature) {
@@ -74,7 +77,9 @@ function getTodayKey() {
 async function loadUserData() {
   if (!currentUser) return;
   
-const snapshot = await get(ref(db, 'users/' + currentUser.uid));
+  uid = currentUser.uid;   // ← ADD THIS LINE ONLY ONCE
+  
+  const snapshot = await get(ref(db, 'users/' + currentUser.uid));
   userData = snapshot.val() || {};
   
   // Ensure user has balance field
@@ -82,6 +87,8 @@ const snapshot = await get(ref(db, 'users/' + currentUser.uid));
     await update(ref(db, 'users/' + currentUser.uid), { balance: 0 });
     userData.balance = 0;
   }
+  
+  // ... rest of the function continues as normal
   
   // Update sidebar
   document.getElementById('userName').textContent = userData.fullName || 'User';
