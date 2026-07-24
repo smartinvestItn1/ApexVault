@@ -34,6 +34,7 @@ let currentPlan = null;
 let currentPlanMin = 0;
 let currentPlanMax = 0;
 let currentPlanProfit = 0;
+let currentPlanDuration = 24; // hours
 let allTransactions = [];
 let currentHistoryFilter = 'all';
 let activeInvestment = null;
@@ -202,15 +203,17 @@ async function checkInvestmentLock() {
     plansGrid.style.display = 'none';
     
     // Calculate time remaining (30 days from creation)
+        // Calculate time remaining (using stored duration)
     const created = new Date(activeInv.createdAt);
-    const endDate = new Date(created.getTime() + (30 * 24 * 60 * 60 * 1000));
+    const durationMs = (activeInv.durationHours || 24) * 60 * 60 * 1000;
+    const endDate = new Date(created.getTime() + durationMs);
     const now = new Date();
     const diff = endDate - now;
     
     if (diff > 0) {
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      lockTimer.textContent = `Time remaining: ${days}d ${hours}h`;
+      const totalHours = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      lockTimer.textContent = `Time remaining: ${totalHours}h ${mins}m`;
     } else {
       // Investment completed - auto-release
       await completeInvestment(activeInv.id);
@@ -317,6 +320,35 @@ window.openInvestModal = async function(plan, min, max, profit) {
     return;
   }
   
+  if (activeInvestment) {
+    alert('🔒 You already have an active investment. Please wait for it to complete.');
+    return;
+  }
+  
+  // Plan durations in hours
+  const planDurations = {
+    startup: 24,
+    pro: 48,
+    ultimate: 72
+  };
+  
+  currentPlan = plan;
+  currentPlanMin = min;
+  currentPlanMax = max;
+  currentPlanProfit = profit;
+  currentPlanDuration = planDurations[plan] || 24; // hours
+  
+  const planNames = { startup: 'Startup', pro: 'Pro', ultimate: 'Ultimate' };
+  document.getElementById('investModalTitle').textContent = 'Invest in ' + planNames[plan] + ' Plan';
+  document.getElementById('investModalDesc').textContent = 'Min: $' + min.toLocaleString() + ' | Max: $' + (max === 999999 ? 'Unlimited' : max.toLocaleString()) + ' | Profit: ' + profit + '% | Lock: ' + currentPlanDuration + 'h';
+  document.getElementById('investAmount').min = min;
+  document.getElementById('investAmount').max = max === 999999 ? '' : max;
+  document.getElementById('investAmount').value = '';
+  document.getElementById('expectedProfit').value = '';
+  
+  openModal('investModal');
+};
+    
   // Check if already has active investment
   if (activeInvestment) {
     alert('🔒 You already have an active investment. Please wait for it to complete.');
@@ -388,9 +420,11 @@ window.submitInvest = async function(event) {
       expectedProfit: profit,
       earnedProfit: 0,
       status: 'active',
+      durationHours: currentPlanDuration,
       createdAt: new Date().toISOString(),
       lastProfitCalc: new Date().toISOString()
     });
+    
     
     // Update balance
     await update(ref(db, 'users/' + currentUser.uid), {
@@ -409,7 +443,7 @@ window.submitInvest = async function(event) {
     });
     
     closeModal('investModal');
-    alert('✅ Investment successful! Your funds are locked for 30 days.');
+    alert('✅ Investment successful! Your funds are locked for ' + currentPlanDuration + ' hours.');
     await loadUserData();
     showSection('overview');
     
