@@ -338,9 +338,18 @@ window.filterWithdrawals = function() {
 };
   window.approveWithdrawal = async function(withdrawalId) {
   if (!confirm('Approve this withdrawal?')) return;
+
   try {
     const withdrawal = allWithdrawals[withdrawalId];
     if (!withdrawal) return;
+
+    // Check user balance
+    const userSnap = await get(ref(db, 'users/' + withdrawal.userId));
+    const user = userSnap.val() || {};
+    if ((user.balance || 0) < (withdrawal.total || withdrawal.amount)) {
+      alert('❌ User has insufficient balance! Cannot approve.');
+      return;
+    }
 
     await update(ref(db, 'pendingWithdrawals/' + withdrawalId), { status: 'approved' });
     await update(ref(db, 'users/' + withdrawal.userId + '/pendingWithdrawals/' + withdrawalId), { status: 'approved' });
