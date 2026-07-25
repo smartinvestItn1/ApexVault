@@ -268,9 +268,10 @@ window.showSection = function(sectionName) {
   if (section) section.style.display = 'block';
   
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  if (event && event.target) {
+  if (typeof event !== 'undefined' && event && event.target && event.target.closest) {
     event.target.closest('.nav-item').classList.add('active');
-  }
+    }
+  
   
   const titles = {
     overview: 'Dashboard Overview',
@@ -620,8 +621,7 @@ window.submitWithdraw = async function(event) {
     });
     
     // Update daily usage
-    await update(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey), dailyUsed + amount);
-    
+    await set(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey), dailyUsed + amount);
     // Deduct from balance immediately
     await update(ref(db, 'users/' + currentUser.uid), {
       balance: balance - total
@@ -763,14 +763,15 @@ async function loadActiveInvestments() {
       
       // Calculate time remaining
       const created = new Date(inv.createdAt);
-      const endDate = new Date(created.getTime() + (30 * 24 * 60 * 60 * 1000));
+      const durationMs = (inv.durationHours || 24) * 60 * 60 * 1000;
+      const endDate = new Date(created.getTime() + durationMs);
       const now = new Date();
       const diff = endDate - now;
       let timeText = 'Completed';
       if (diff > 0) {
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        timeText = `${days}d ${hours}h remaining`;
+        const totalHours = Math.floor(diff / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        timeText = `${totalHours}h ${mins}m remaining`;
       }
       
       html += `
