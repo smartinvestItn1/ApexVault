@@ -3,198 +3,221 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ApexVault</title>
+  <title>ApexVault - Dashboard</title>
   <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
   <!-- ========== LOGIN OVERLAY ========== -->
   <div class="login-overlay" id="loginOverlay">
-    <div class="logo">🔥 ApexVault</div>
+    <div class="login-logo">🔥</div>
+    <div class="login-brand">ApexVault</div>
+    <div class="login-spinner"></div>
     <p>Loading your dashboard...</p>
-    <div class="loading-bar"></div>
   </div>
 
   <!-- ========== LOGOUT OVERLAY ========== -->
   <div class="logout-overlay" id="logoutOverlay">
-    <div class="logo">🔥 ApexVault</div>
+    <div class="login-logo">🔥</div>
+    <div class="login-brand">ApexVault</div>
     <p>Logging out...</p>
   </div>
-
-  <!-- ========== MOBILE HEADER ========== -->
+    <!-- ========== MOBILE HEADER ========== -->
   <header class="app-header">
-    <button class="header-btn" onclick="toggleMobileSidebar()">☰</button>
-    <div class="header-title">ApexVault</div>
-    <button class="header-btn profile-btn" onclick="showSection('overview')">
-      <span id="headerAvatar">U</span>
+    <button class="menu-btn" onclick="toggleMobileSidebar()">
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="header-title">Dashboard</div>
+    <button class="notif-btn">
+      <i class="fas fa-bell"></i>
+      <span class="notif-dot"></span>
     </button>
   </header>
 
-  <!-- ========== SIDEBAR (Drawer) ========== -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="logo">🔥 ApexVault</div>
-      <button class="close-sidebar" onclick="toggleMobileSidebar()">✕</button>
-    </div>
-
-    <div class="sidebar-user">
-      <div class="user-avatar" id="userAvatar">U</div>
-      <div class="user-info">
-        <h4 id="userName">User</h4>
-        <p id="userEmail">user@email.com</p>
+  <!-- ========== SIDEBAR DRAWER ========== -->
+  <aside class="sidebar-drawer" id="sidebar">
+    <div class="drawer-header">
+      <div class="drawer-user">
+        <div class="user-avatar-large" id="userAvatar">U</div>
+        <div>
+          <h4 id="userName">User</h4>
+          <p id="userEmail">user@email.com</p>
+        </div>
       </div>
+      <button class="drawer-close" onclick="toggleMobileSidebar()">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
-
-    <nav class="sidebar-nav">
-      <button class="nav-item active" onclick="showSection('overview'); toggleMobileSidebar()">
-        <span class="icon">📊</span> Overview
-      </button>
-      <button class="nav-item" onclick="showSection('invest'); toggleMobileSidebar()">
-        <span class="icon">📈</span> Invest
-      </button>
-      <button class="nav-item" onclick="showSection('deposit'); toggleMobileSidebar()">
-        <span class="icon">💰</span> Deposit
-      </button>
-      <button class="nav-item" onclick="showSection('withdraw'); toggleMobileSidebar()">
-        <span class="icon">💸</span> Withdraw
-      </button>
-      <button class="nav-item" onclick="showSection('transfer'); toggleMobileSidebar()">
-        <span class="icon">🔄</span> Transfer
-      </button>
-      <button class="nav-item" onclick="showSection('history'); toggleMobileSidebar()">
-        <span class="icon">📜</span> History
-      </button>
-      <button class="nav-item" onclick="showSection('referral'); toggleMobileSidebar()">
-        <span class="icon">🎁</span> Referral
-      </button>
-      <button class="nav-item" onclick="showSection('pending'); toggleMobileSidebar()">
-        <span class="icon">⏳</span> Pending
-      </button>
+    <nav class="drawer-nav">
+      <a class="drawer-link active" onclick="showSection('overview'); toggleMobileSidebar()">
+        <i class="fas fa-chart-pie"></i> Overview
+      </a>
+      <a class="drawer-link" onclick="showSection('invest'); toggleMobileSidebar()">
+        <i class="fas fa-rocket"></i> Invest
+      </a>
+      <a class="drawer-link" onclick="showSection('deposit'); toggleMobileSidebar()">
+        <i class="fas fa-wallet"></i> Deposit
+      </a>
+      <a class="drawer-link" onclick="showSection('withdraw'); toggleMobileSidebar()">
+        <i class="fas fa-money-bill-wave"></i> Withdraw
+      </a>
+      <a class="drawer-link" onclick="showSection('transfer'); toggleMobileSidebar()">
+        <i class="fas fa-exchange-alt"></i> Transfer
+      </a>
+      <a class="drawer-link" onclick="showSection('history'); toggleMobileSidebar()">
+        <i class="fas fa-history"></i> History
+      </a>
+      <a class="drawer-link" onclick="showSection('referral'); toggleMobileSidebar()">
+        <i class="fas fa-users"></i> Referral
+      </a>
+      <a class="drawer-link" onclick="showSection('pending'); toggleMobileSidebar()">
+        <i class="fas fa-clock"></i> Pending
+      </a>
     </nav>
-
-    <div class="sidebar-footer">
+    <div class="drawer-footer">
       <button class="logout-btn" onclick="logout()">
-        <span class="icon">🚪</span> Log Out
+        <i class="fas fa-sign-out-alt"></i> Log Out
       </button>
     </div>
   </aside>
+  <div class="drawer-overlay" id="drawerOverlay" onclick="toggleMobileSidebar()"></div>
 
-  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleMobileSidebar()"></div>
+  <!-- ========== MAIN APP ========== -->
+  <main class="app-main">
 
-  <!-- ========== MAIN CONTENT ========== -->
-  <main class="main-content" id="mainContent">
-
-    <!-- BALANCE CARD (Banking Style) -->
+    <!-- BALANCE CARD -->
     <div class="balance-card">
       <div class="balance-header">
         <span class="balance-label">Total Balance</span>
-        <button class="eye-toggle" id="eyeToggle" onclick="toggleBalanceVisibility()">🙈</button>
+        <button class="eye-btn" onclick="toggleBalance()" id="eyeBtn">
+          <i class="fas fa-eye"></i>
+        </button>
       </div>
       <div class="balance-amount" id="balanceWrapper">
         <h1 id="totalBalance">$0.00</h1>
       </div>
       <div class="balance-actions">
-        <button class="balance-btn" onclick="showSection('deposit')">
-          <span class="b-icon">⬇️</span>
-          <span>Add Money</span>
-        </button>
-        <button class="balance-btn" onclick="showSection('withdraw')">
-          <span class="b-icon">⬆️</span>
-          <span>Withdraw</span>
-        </button>
+        <div class="balance-stat">
+          <span class="stat-label">Invested</span>
+          <span class="stat-value" id="totalInvested">$0.00</span>
+        </div>
+        <div class="balance-stat">
+          <span class="stat-label">Profit</span>
+          <span class="stat-value green" id="totalProfit">$0.00</span>
+        </div>
+        <div class="balance-stat">
+          <span class="stat-label">Referral</span>
+          <span class="stat-value orange" id="referralEarnings">$0.00</span>
+        </div>
       </div>
-    </div>
-
-    <!-- QUICK ACTIONS GRID -->
+      </div>
+            <!-- QUICK ACTIONS -->
     <div class="quick-actions">
-      <button class="q-action" onclick="showSection('invest')">
-        <div class="q-icon" style="background: rgba(100,255,218,0.15);">📈</div>
-        <span>Invest</span>
-      </button>
-      <button class="q-action" onclick="showSection('deposit')">
-        <div class="q-icon" style="background: rgba(16,185,129,0.15);">💰</div>
+      <button class="action-pill" onclick="showSection('deposit')">
+        <div class="pill-icon deposit">
+          <i class="fas fa-plus"></i>
+        </div>
         <span>Deposit</span>
       </button>
-      <button class="q-action" onclick="showSection('withdraw')">
-        <div class="q-icon" style="background: rgba(239,68,68,0.15);">💸</div>
+      <button class="action-pill" onclick="showSection('withdraw')">
+        <div class="pill-icon withdraw">
+          <i class="fas fa-arrow-up"></i>
+        </div>
         <span>Withdraw</span>
       </button>
-      <button class="q-action" onclick="showSection('transfer')">
-        <div class="q-icon" style="background: rgba(0,168,232,0.15);">🔄</div>
+      <button class="action-pill" onclick="showSection('transfer')">
+        <div class="pill-icon transfer">
+          <i class="fas fa-exchange-alt"></i>
+        </div>
         <span>Transfer</span>
       </button>
+      <button class="action-pill" onclick="showSection('invest')">
+        <div class="pill-icon invest">
+          <i class="fas fa-rocket"></i>
+        </div>
+        <span>Invest</span>
+      </button>
+    </div>
+        <!-- ACTIVE INVESTMENT BANNER -->
+    <div class="invest-banner" id="investmentStatus" style="display: none;">
+      <div class="invest-banner-icon">
+        <i class="fas fa-lock"></i>
+      </div>
+      <div class="invest-banner-info">
+        <h4>Active Investment</h4>
+        <p id="lockTimer">Time remaining: calculating...</p>
+      </div>
+    </div>
+        <!-- RECENT ACTIVITY -->
+    <div class="section-block">
+      <div class="block-header">
+        <h3>Recent Activity</h3>
+        <a onclick="showSection('history')">See All</a>
+      </div>
+      <div class="activity-list" id="recentTransactions">
+        <div class="empty-state">
+          <i class="fas fa-receipt"></i>
+          <p>No activity yet</p>
+        </div>
+      </div>
     </div>
 
-    <!-- MINI STATS ROW -->
-    <div class="mini-stats">
-      <div class="mini-stat">
-        <span class="mini-label">Invested</span>
-        <span class="mini-value" id="miniInvested">$0.00</span>
-      </div>
-      <div class="mini-stat">
-        <span class="mini-label">Profit</span>
-        <span class="mini-value green" id="miniProfit">$0.00</span>
-      </div>
-      <div class="mini-stat">
-        <span class="mini-label">Referrals</span>
-        <span class="mini-value" id="miniReferral">$0.00</span>
-      </div>
-        </div>
-            </div>
   </main>
 
-  <!-- ========== BOTTOM NAVIGATION (Mobile App Style) ========== -->
-  <nav class="bottom-nav" id="bottomNav">
-    <button class="bottom-btn active" data-section="overview" onclick="showSection('overview')">
-      <span class="bnav-icon">🏠</span>
-      <span class="bnav-label">Home</span>
+  <!-- ========== BOTTOM NAVIGATION ========== -->
+  <nav class="bottom-nav">
+    <button class="nav-tab active" onclick="showSection('overview'); setActiveTab(this)">
+      <i class="fas fa-home"></i>
+      <span>Home</span>
     </button>
-    <button class="bottom-btn" data-section="invest" onclick="showSection('invest')">
-      <span class="bnav-icon">📈</span>
-      <span class="bnav-label">Invest</span>
+    <button class="nav-tab" onclick="showSection('history'); setActiveTab(this)">
+      <i class="fas fa-history"></i>
+      <span>History</span>
     </button>
-    <button class="bottom-btn center-btn" onclick="showSection('deposit')">
-      <span class="bnav-icon">+</span>
+    <div class="nav-fab" onclick="showSection('deposit')">
+      <i class="fas fa-plus"></i>
+    </div>
+    <button class="nav-tab" onclick="showSection('invest'); setActiveTab(this)">
+      <i class="fas fa-rocket"></i>
+      <span>Invest</span>
     </button>
-    <button class="bottom-btn" data-section="history" onclick="showSection('history')">
-      <span class="bnav-icon">📜</span>
-      <span class="bnav-label">History</span>
-    </button>
-    <button class="bottom-btn" data-section="pending" onclick="showSection('pending')">
-      <span class="bnav-icon">⏳</span>
-      <span class="bnav-label">Pending</span>
+    <button class="nav-tab" onclick="showSection('referral'); setActiveTab(this)">
+      <i class="fas fa-gift"></i>
+      <span>Earn</span>
     </button>
   </nav>
-
-  <!-- ========== MODALS (Keep all your existing modals exactly as they are) ========== -->
-  <!-- Paste your existing invest, deposit, withdraw, transfer modals here unchanged -->
-
-  <!-- ========== HIDE BALANCE SCRIPT ========== -->
+  <!-- ========== FLOATING CONTACTS ========== -->
+  <div class="floating-contacts">
+    <a href="mailto:support@apexvault.com" class="float-btn email-btn" title="Email Us">
+      <i class="fas fa-envelope"></i>
+    </a>
+    <a href="https://wa.me/447393659737" target="_blank" class="float-btn whatsapp-btn glow-pulse" title="WhatsApp">
+      <i class="fab fa-whatsapp"></i>
+    </a>
+  </div>
+  
+      <!-- ========== TAB HELPER ========== -->
   <script>
-    let balanceHidden = false;
-    let realBalance = '$0.00';
-
-    window.toggleBalanceVisibility = function() {
-      const wrapper = document.getElementById('balanceWrapper');
-      const eye = document.getElementById('eyeToggle');
-      const display = document.getElementById('totalBalance');
-      
-      balanceHidden = !balanceHidden;
-      
-      if (balanceHidden) {
-        realBalance = display.textContent;
-        display.textContent = '****';
-        wrapper.classList.add('balance-blur');
-        eye.textContent = '👁️';
+    window.setActiveTab = function(el) {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      if (el) el.classList.add('active');
+    };
+    window.toggleBalance = function() {
+      const bal = document.getElementById('totalBalance');
+      const btn = document.getElementById('eyeBtn');
+      const wrap = document.getElementById('balanceWrapper');
+      if (wrap.classList.contains('blurred')) {
+        wrap.classList.remove('blurred');
+        btn.innerHTML = '<i class="fas fa-eye"></i>';
       } else {
-        display.textContent = realBalance;
-        wrapper.classList.remove('balance-blur');
-        eye.textContent = '🙈';
+        wrap.classList.add('blurred');
+        btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
       }
     };
   </script>
 
-  <!-- ========== FIREBASE DASHBOARD SCRIPT ========== -->
+  <!--Firebase SDK -->
   <script type="module" src="dashboard.js"></script>
 </body>
 </html>
