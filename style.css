@@ -1039,4 +1039,73 @@ footer {
   font-size: 0.85rem;
   font-weight: 400;
   }
-  
+  /* ========== FLOATING CONTACT BUTTONS ========== */
+.floating-contacts {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.float-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.float-btn svg {
+  width: 26px;
+  height: 26px;
+  color: #fff;
+}
+
+.float-btn:hover {
+  transform: scale(1.15) translateY(-3px);
+}
+
+.email-btn {
+  background: linear-gradient(135deg, #00a8e8, #0077b6);
+}
+
+.whatsapp-btn {
+  background: linear-gradient(135deg, #25d366, #128c7e);
+}
+
+/* ========== GLOWING PULSE ANIMATION ========== */
+.glow-pulse {
+  animation: whatsappGlow 2s ease-in-out infinite;
+}
+
+@keyframes whatsappGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(37, 211, 102, 0.4), 0 0 30px rgba(37, 211, 102, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(37, 211, 102, 0.8), 0 0 50px rgba(37, 211, 102, 0.4), 0 0 70px rgba(37, 211, 102, 0.2);
+  }
+}
+
+@media (max-width: 768px) {
+  .floating-contacts {
+    bottom: 16px;
+    right: 16px;
+  }
+  .float-btn {
+    width: 50px;
+    height: 50px;
+  }
+  .float-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
