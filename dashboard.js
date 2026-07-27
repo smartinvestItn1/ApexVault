@@ -1,7 +1,7 @@
 // ========== APEXVAULT DASHBOARD JAVASCRIPT ==========
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, push, onValue } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBt77e2QQCtOyCVCupw-6jIJ8MVyHf3UKY",
@@ -19,14 +19,12 @@ const db = getDatabase(app);
 
 // ========== CONFIG ==========
 const DAILY_WITHDRAW_LIMIT = 10000;
-const WITHDRAW_FEE_RATE = 0.02; // 2% fee
+const WITHDRAW_FEE_RATE = 0.02;
 
-// Admin deposit addresses - UPDATE THESE WITH YOUR REAL ADDRESSES
 const DEPOSIT_ADDRESSES = {
   USDT_BEP20: "0x681ef5FF6d9e2FD31ce87Cd256d09a0e4755F9d9",
   USDT_TRC20: "TBdkLH7z9d6p6NKk3pZcoDdMzwoSxTfcQA"
 };
-
 // ========== GLOBAL STATE ==========
 let currentUser = null;
 let userData = null;
@@ -34,7 +32,7 @@ let currentPlan = null;
 let currentPlanMin = 0;
 let currentPlanMax = 0;
 let currentPlanProfit = 0;
-let currentPlanDuration = 24; // hours
+let currentPlanDuration = 24;
 let allTransactions = [];
 let currentHistoryFilter = 'all';
 let activeInvestment = null;
@@ -56,12 +54,9 @@ function checkLogin() {
     currentUser.id = currentUser.uid;
   }
   
-  uid = currentUser.uid;   // ← THIS LINE IS THE FIX
-  
+  uid = currentUser.uid;
   return true;
 }
-
-
 // ========== CHECK FEATURE BLOCKED ==========
 async function isFeatureBlocked(feature) {
   const snapshot = await get(ref(db, 'platformSettings/' + feature + 'Enabled'));
@@ -73,66 +68,58 @@ function getTodayKey() {
   const d = new Date();
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
-
 // ========== LOAD USER DATA ==========
 async function loadUserData() {
   if (!currentUser) return;
   
-  uid = currentUser.uid;   // ← ADD THIS LINE ONLY ONCE
+  uid = currentUser.uid;
   
   const snapshot = await get(ref(db, 'users/' + currentUser.uid));
   userData = snapshot.val() || {};
   
-  // Ensure user has balance field
   if (userData.balance === undefined) {
     await update(ref(db, 'users/' + currentUser.uid), { balance: 0 });
     userData.balance = 0;
   }
   
-  // ... rest of the function continues as normal
+  // Update drawer user info
+  const userNameEl = document.getElementById('userName');
+  const userEmailEl = document.getElementById('userEmail');
+  const userAvatarEl = document.getElementById('userAvatar');
   
-  // Update sidebar
-  document.getElementById('userName').textContent = userData.fullName || 'User';
-  document.getElementById('userEmail').textContent = userData.email || '';
-  document.getElementById('userAvatar').textContent = (userData.fullName || 'U').charAt(0).toUpperCase();
+  if (userNameEl) userNameEl.textContent = userData.fullName || 'User';
+  if (userEmailEl) userEmailEl.textContent = userData.email || '';
+  if (userAvatarEl) userAvatarEl.textContent = (userData.fullName || 'U').charAt(0).toUpperCase();
   
-  // Update stats
   updateDashboardStats();
-  
-  // Load active investments
   await loadActiveInvestments();
-  
-  // Load transactions
   await loadTransactions();
-  
-  // Load pending
   loadPending();
   
-  // Update referral link
   const refLink = 'https://apexvault.com/ref/' + currentUser.uid;
-  document.getElementById('referralLink').value = refLink;
+  const refLinkEl = document.getElementById('referralLink');
+  if (refLinkEl) refLinkEl.value = refLink;
   
-  // Load referral stats
   loadReferralStats();
-  
-  // Update withdraw limit display
   updateWithdrawLimitDisplay();
-  
-  // Check investment lock
   checkInvestmentLock();
 }
-
-// ========== UPDATE DASHBOARD STATS ==========
+ // ========== UPDATE DASHBOARD STATS ==========
 function updateDashboardStats() {
   const balance = userData.balance || 0;
   const invested = userData.totalInvested || 0;
   const profit = userData.totalProfit || 0;
   const refEarned = userData.referralEarnings || 0;
   
-  document.getElementById('totalBalance').textContent = '$' + balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-  document.getElementById('totalInvested').textContent = '$' + invested.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-  document.getElementById('totalProfit').textContent = '$' + profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-  document.getElementById('referralEarnings').textContent = '$' + refEarned.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const balEl = document.getElementById('totalBalance');
+  const invEl = document.getElementById('totalInvested');
+  const profEl = document.getElementById('totalProfit');
+  const refEl = document.getElementById('referralEarnings');
+  
+  if (balEl) balEl.textContent = '$' + balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  if (invEl) invEl.textContent = '$' + invested.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  if (profEl) profEl.textContent = '$' + profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  if (refEl) refEl.textContent = '$' + refEarned.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
 // ========== WITHDRAW LIMIT DISPLAY ==========
@@ -146,7 +133,6 @@ async function updateWithdrawLimitDisplay() {
     const remaining = Math.max(0, DAILY_WITHDRAW_LIMIT - dailyUsed);
     const percentage = (dailyUsed / DAILY_WITHDRAW_LIMIT) * 100;
     
-    // Update banner
     const bannerAmount = document.getElementById('dailyLimitAmount');
     const bannerFill = document.getElementById('dailyLimitFill');
     const modalRemaining = document.getElementById('withdrawRemaining');
@@ -166,9 +152,8 @@ async function updateWithdrawLimitDisplay() {
   } catch (err) {
     console.error("Error loading daily limit:", err);
   }
-}
-
-// ========== INVESTMENT LOCK ==========
+    }
+   // ========== INVESTMENT LOCK ==========
 async function checkInvestmentLock() {
   const snapshot = await get(ref(db, 'users/' + currentUser.uid + '/investments'));
   const investments = snapshot.val();
@@ -178,13 +163,12 @@ async function checkInvestmentLock() {
   const lockTimer = document.getElementById('lockTimer');
   
   if (!investments) {
-    statusEl.style.display = 'none';
-    plansGrid.style.display = 'grid';
+    if (statusEl) statusEl.style.display = 'none';
+    if (plansGrid) plansGrid.style.display = 'grid';
     activeInvestment = null;
     return;
   }
   
-  // Find active investment
   let hasActive = false;
   let activeInv = null;
   
@@ -199,11 +183,9 @@ async function checkInvestmentLock() {
   
   if (hasActive && activeInv) {
     activeInvestment = activeInv;
-    statusEl.style.display = 'block';
-    plansGrid.style.display = 'none';
+    if (statusEl) statusEl.style.display = 'flex';
+    if (plansGrid) plansGrid.style.display = 'none';
     
-    // Calculate time remaining (30 days from creation)
-        // Calculate time remaining (using stored duration)
     const created = new Date(activeInv.createdAt);
     const durationMs = (activeInv.durationHours || 24) * 60 * 60 * 1000;
     const endDate = new Date(created.getTime() + durationMs);
@@ -213,17 +195,16 @@ async function checkInvestmentLock() {
     if (diff > 0) {
       const totalHours = Math.floor(diff / (1000 * 60 * 60));
       const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      lockTimer.textContent = `Time remaining: ${totalHours}h ${mins}m`;
+      if (lockTimer) lockTimer.textContent = `Time remaining: ${totalHours}h ${mins}m`;
     } else {
-      // Investment completed - auto-release
       await completeInvestment(activeInv.id);
-      statusEl.style.display = 'none';
-      plansGrid.style.display = 'grid';
+      if (statusEl) statusEl.style.display = 'none';
+      if (plansGrid) plansGrid.style.display = 'grid';
       activeInvestment = null;
     }
   } else {
-    statusEl.style.display = 'none';
-    plansGrid.style.display = 'grid';
+    if (statusEl) statusEl.style.display = 'none';
+    if (plansGrid) plansGrid.style.display = 'grid';
     activeInvestment = null;
   }
 }
@@ -244,7 +225,6 @@ async function completeInvestment(investId) {
     totalInvested: Math.max(0, (userData.totalInvested || 0) - inv.amount)
   });
   
-  // Add to history
   await push(ref(db, 'users/' + currentUser.uid + '/history'), {
     type: 'invest_return',
     amount: totalReturn,
@@ -259,7 +239,6 @@ async function completeInvestment(investId) {
   alert('🎉 Your investment has matured! $' + totalReturn.toLocaleString() + ' has been added to your balance.');
   await loadUserData();
 }
-
 // ========== SECTION NAVIGATION ==========
 window.showSection = function(sectionName) {
   document.querySelectorAll('.section-content').forEach(s => s.style.display = 'none');
@@ -269,12 +248,12 @@ window.showSection = function(sectionName) {
   
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (typeof event !== 'undefined' && event && event.target && event.target.closest) {
-    event.target.closest('.nav-item').classList.add('active');
-    }
-  
+    const navItem = event.target.closest('.nav-item');
+    if (navItem) navItem.classList.add('active');
+  }
   
   const titles = {
-    overview: 'Dashboard Overview',
+    overview: 'Dashboard',
     invest: 'Investment Plans',
     deposit: 'Deposit Funds',
     withdraw: 'Withdraw Funds',
@@ -283,11 +262,15 @@ window.showSection = function(sectionName) {
     referral: 'Referral Program',
     pending: 'Pending Requests'
   };
-  document.getElementById('pageTitle').textContent = titles[sectionName] || 'Dashboard';
   
-  document.getElementById('sidebar').classList.remove('open');
+  const pageTitle = document.getElementById('pageTitle');
+  if (pageTitle) pageTitle.textContent = titles[sectionName] || 'Dashboard';
   
-  // Refresh data when visiting sections
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('drawerOverlay');
+  if (sidebar) sidebar.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
+  
   if (sectionName === 'withdraw') updateWithdrawLimitDisplay();
   if (sectionName === 'history') renderHistory();
   if (sectionName === 'invest') checkInvestmentLock();
@@ -295,25 +278,28 @@ window.showSection = function(sectionName) {
 
 // ========== MOBILE SIDEBAR ==========
 window.toggleMobileSidebar = function() {
-  document.getElementById('sidebar').classList.toggle('open');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('drawerOverlay');
+  if (sidebar) sidebar.classList.toggle('open');
+  if (overlay) overlay.classList.toggle('open');
 };
 
 // ========== MODAL FUNCTIONS ==========
 window.openModal = function(modalId) {
-  document.getElementById(modalId).classList.add('show');
+  const el = document.getElementById(modalId);
+  if (el) el.classList.add('show');
 };
 
 window.closeModal = function(modalId) {
-  document.getElementById(modalId).classList.remove('show');
+  const el = document.getElementById(modalId);
+  if (el) el.classList.remove('show');
 };
 
-// Close modal on overlay click
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) overlay.classList.remove('show');
   });
 });
-
 // ========== INVEST MODAL ==========
 window.openInvestModal = async function(plan, min, max, profit) {
   if (await isFeatureBlocked('invest')) {
@@ -326,34 +312,34 @@ window.openInvestModal = async function(plan, min, max, profit) {
     return;
   }
   
-  // Plan durations in hours
-  const planDurations = {
-    startup: 24,
-    pro: 48,
-    ultimate: 72
-  };
+  const planDurations = { startup: 24, pro: 48, ultimate: 72 };
   
   currentPlan = plan;
   currentPlanMin = min;
   currentPlanMax = max;
   currentPlanProfit = profit;
-  currentPlanDuration = planDurations[plan] || 24; // hours
+  currentPlanDuration = planDurations[plan] || 24;
   
   const planNames = { startup: 'Startup', pro: 'Pro', ultimate: 'Ultimate' };
-  document.getElementById('investModalTitle').textContent = 'Invest in ' + planNames[plan] + ' Plan';
-  document.getElementById('investModalDesc').textContent = 'Min: $' + min.toLocaleString() + ' | Max: $' + (max === 999999 ? 'Unlimited' : max.toLocaleString()) + ' | Profit: ' + profit + '% | Lock: ' + currentPlanDuration + 'h';
-  document.getElementById('investAmount').min = min;
-  document.getElementById('investAmount').max = max === 999999 ? '' : max;
-  document.getElementById('investAmount').value = '';
-  document.getElementById('expectedProfit').value = '';
+  const titleEl = document.getElementById('investModalTitle');
+  const descEl = document.getElementById('investModalDesc');
+  const amountEl = document.getElementById('investAmount');
+  const profitEl = document.getElementById('expectedProfit');
+  
+  if (titleEl) titleEl.textContent = 'Invest in ' + planNames[plan] + ' Plan';
+  if (descEl) descEl.textContent = 'Min: $' + min.toLocaleString() + ' | Max: $' + (max === 999999 ? 'Unlimited' : max.toLocaleString()) + ' | Profit: ' + profit + '% | Lock: ' + currentPlanDuration + 'h';
+  if (amountEl) { amountEl.min = min; amountEl.max = max === 999999 ? '' : max; amountEl.value = ''; }
+  if (profitEl) profitEl.value = '';
   
   openModal('investModal');
 };
+
 // Calculate expected profit on input
 document.getElementById('investAmount').addEventListener('input', function() {
   const amount = parseFloat(this.value) || 0;
   const profit = (amount * currentPlanProfit / 100).toFixed(2);
-  document.getElementById('expectedProfit').value = '$' + profit + ' (' + currentPlanProfit + '%)';
+  const el = document.getElementById('expectedProfit');
+  if (el) el.value = '$' + profit + ' (' + currentPlanProfit + '%)';
 });
 
 window.submitInvest = async function(event) {
@@ -387,10 +373,9 @@ window.submitInvest = async function(event) {
   }
   
   try {
-        const investId = 'invest_' + Date.now();
+    const investId = 'invest_' + Date.now();
     const profit = amount * currentPlanProfit / 100;
     
-    // Save investment
     await set(ref(db, 'users/' + currentUser.uid + '/investments/' + investId), {
       plan: currentPlan,
       amount: amount,
@@ -403,14 +388,11 @@ window.submitInvest = async function(event) {
       lastProfitCalc: new Date().toISOString()
     });
     
-    
-    // Update balance
     await update(ref(db, 'users/' + currentUser.uid), {
       balance: balance - amount,
       totalInvested: (userData.totalInvested || 0) + amount
     });
     
-    // Add to history
     await push(ref(db, 'users/' + currentUser.uid + '/history'), {
       type: 'invest',
       amount: amount,
@@ -429,35 +411,41 @@ window.submitInvest = async function(event) {
     alert('❌ Error: ' + error.message);
   }
 };
-
 // ========== DEPOSIT MODAL ==========
 window.openDepositModal = function() {
-  document.getElementById('depositAmount').value = '';
-  document.getElementById('depositNetwork').value = '';
-  document.getElementById('depositAddressGroup').style.display = 'none';
-  document.getElementById('depositAddress').value = '';
-  document.getElementById('addressHint').textContent = '';
+  const amountEl = document.getElementById('depositAmount');
+  const networkEl = document.getElementById('depositNetwork');
+  const groupEl = document.getElementById('depositAddressGroup');
+  const addressEl = document.getElementById('depositAddress');
+  const hintEl = document.getElementById('addressHint');
+  
+  if (amountEl) amountEl.value = '';
+  if (networkEl) networkEl.value = '';
+  if (groupEl) groupEl.style.display = 'none';
+  if (addressEl) addressEl.value = '';
+  if (hintEl) hintEl.textContent = '';
+  
   openModal('depositModal');
 };
 
-// Show address when network selected
 document.getElementById('depositNetwork').addEventListener('change', function() {
   const network = this.value;
-  const addressGroup = document.getElementById('depositAddressGroup');
-  const addressInput = document.getElementById('depositAddress');
-  const hint = document.getElementById('addressHint');
+  const groupEl = document.getElementById('depositAddressGroup');
+  const addressEl = document.getElementById('depositAddress');
+  const hintEl = document.getElementById('addressHint');
   
   if (network && DEPOSIT_ADDRESSES[network]) {
-    addressGroup.style.display = 'block';
-    addressInput.value = DEPOSIT_ADDRESSES[network];
-    hint.textContent = `Send only ${network.replace('_', ' ')} to this address. Other networks will be lost.`;
+    if (groupEl) groupEl.style.display = 'block';
+    if (addressEl) addressEl.value = DEPOSIT_ADDRESSES[network];
+    if (hintEl) hintEl.textContent = `Send only ${network.replace('_', ' ')} to this address. Other networks will be lost.`;
   } else {
-    addressGroup.style.display = 'none';
+    if (groupEl) groupEl.style.display = 'none';
   }
 });
 
 window.copyDepositAddress = function() {
   const input = document.getElementById('depositAddress');
+  if (!input) return;
   input.select();
   navigator.clipboard.writeText(input.value);
   alert('Address copied to clipboard!');
@@ -477,7 +465,6 @@ window.submitDeposit = async function(event) {
   try {
     const depositId = 'deposit_' + Date.now();
     
-    // Save as pending deposit
     await set(ref(db, 'users/' + currentUser.uid + '/pendingDeposits/' + depositId), {
       amount: amount,
       network: network,
@@ -487,7 +474,6 @@ window.submitDeposit = async function(event) {
       timestamp: Date.now()
     });
     
-    // Also save to global pending for admin
     await set(ref(db, 'pendingDeposits/' + depositId), {
       userId: currentUser.uid,
       userName: userData.fullName,
@@ -500,7 +486,6 @@ window.submitDeposit = async function(event) {
       timestamp: Date.now()
     });
     
-    // Add to history
     await push(ref(db, 'users/' + currentUser.uid + '/history'), {
       type: 'deposit',
       amount: amount,
@@ -520,7 +505,6 @@ window.submitDeposit = async function(event) {
     alert('❌ Error: ' + error.message);
   }
 };
-
 // ========== WITHDRAW MODAL ==========
 window.openWithdrawModal = async function() {
   if (await isFeatureBlocked('withdraw')) {
@@ -528,23 +512,30 @@ window.openWithdrawModal = async function() {
     return;
   }
   
-  document.getElementById('withdrawAmount').value = '';
-  document.getElementById('withdrawWalletAddress').value = '';
-  document.getElementById('withdrawNetwork').value = '';
-  document.getElementById('withdrawFee').textContent = '$0.00';
-  document.getElementById('withdrawTotal').textContent = '$0.00';
+  const amountEl = document.getElementById('withdrawAmount');
+  const walletEl = document.getElementById('withdrawWalletAddress');
+  const networkEl = document.getElementById('withdrawNetwork');
+  const feeEl = document.getElementById('withdrawFee');
+  const totalEl = document.getElementById('withdrawTotal');
+  
+  if (amountEl) amountEl.value = '';
+  if (walletEl) walletEl.value = '';
+  if (networkEl) networkEl.value = '';
+  if (feeEl) feeEl.textContent = '$0.00';
+  if (totalEl) totalEl.textContent = '$0.00';
   
   await updateWithdrawLimitDisplay();
   openModal('withdrawModal');
 };
 
-// Calculate fee on input
 document.getElementById('withdrawAmount').addEventListener('input', function() {
   const amount = parseFloat(this.value) || 0;
   const fee = amount * WITHDRAW_FEE_RATE;
   const total = amount + fee;
-  document.getElementById('withdrawFee').textContent = '$' + fee.toFixed(2);
-  document.getElementById('withdrawTotal').textContent = '$' + total.toFixed(2);
+  const feeEl = document.getElementById('withdrawFee');
+  const totalEl = document.getElementById('withdrawTotal');
+  if (feeEl) feeEl.textContent = '$' + fee.toFixed(2);
+  if (totalEl) totalEl.textContent = '$' + total.toFixed(2);
 });
 
 window.submitWithdraw = async function(event) {
@@ -563,22 +554,10 @@ window.submitWithdraw = async function(event) {
   const fee = amount * WITHDRAW_FEE_RATE;
   const total = amount + fee;
   
-  if (!network) {
-    alert('Please select a network');
-    return;
-  }
+  if (!network) { alert('Please select a network'); return; }
+  if (!walletAddress) { alert('Please enter your wallet address'); return; }
+  if (amount > balance) { alert('Insufficient balance!'); return; }
   
-  if (!walletAddress) {
-    alert('Please enter your wallet address');
-    return;
-  }
-  
-  if (amount > balance) {
-    alert('Insufficient balance!');
-    return;
-  }
-  
-  // Check daily limit
   const todayKey = getTodayKey();
   const dailySnapshot = await get(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey));
   const dailyUsed = dailySnapshot.exists() ? dailySnapshot.val() : 0;
@@ -591,7 +570,6 @@ window.submitWithdraw = async function(event) {
   try {
     const withdrawId = 'withdraw_' + Date.now();
     
-    // Save as pending withdrawal
     await set(ref(db, 'users/' + currentUser.uid + '/pendingWithdrawals/' + withdrawId), {
       amount: amount,
       fee: fee,
@@ -604,7 +582,6 @@ window.submitWithdraw = async function(event) {
       timestamp: Date.now()
     });
     
-    // Also save to global pending for admin
     await set(ref(db, 'pendingWithdrawals/' + withdrawId), {
       userId: currentUser.uid,
       userName: userData.fullName,
@@ -620,14 +597,12 @@ window.submitWithdraw = async function(event) {
       timestamp: Date.now()
     });
     
-    // Update daily usage
     await set(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey), dailyUsed + amount);
-    // Deduct from balance immediately
+    
     await update(ref(db, 'users/' + currentUser.uid), {
       balance: balance - total
     });
     
-    // Add to history
     await push(ref(db, 'users/' + currentUser.uid + '/history'), {
       type: 'withdraw',
       amount: amount,
@@ -649,7 +624,6 @@ window.submitWithdraw = async function(event) {
     alert('❌ Error: ' + error.message);
   }
 };
-
 // ========== TRANSFER ==========
 window.openTransferModal = async function() {
   if (await isFeatureBlocked('transfer')) {
@@ -657,8 +631,11 @@ window.openTransferModal = async function() {
     return;
   }
   
-  document.getElementById('transferEmail').value = '';
-  document.getElementById('transferAmount').value = '';
+  const emailEl = document.getElementById('transferEmail');
+  const amountEl = document.getElementById('transferAmount');
+  if (emailEl) emailEl.value = '';
+  if (amountEl) amountEl.value = '';
+  
   openModal('transferModal');
 };
 
@@ -675,18 +652,10 @@ window.submitTransfer = async function(event) {
   const amount = parseFloat(document.getElementById('transferAmount').value);
   const balance = userData.balance || 0;
   
-  if (amount > balance) {
-    alert('Insufficient balance!');
-    return;
-  }
-  
-  if (recipientEmail === userData.email) {
-    alert('Cannot transfer to yourself!');
-    return;
-  }
+  if (amount > balance) { alert('Insufficient balance!'); return; }
+  if (recipientEmail === userData.email) { alert('Cannot transfer to yourself!'); return; }
   
   try {
-    // Find recipient
     const usersSnapshot = await get(ref(db, 'users'));
     const users = usersSnapshot.val();
     let recipientId = null;
@@ -700,22 +669,16 @@ window.submitTransfer = async function(event) {
       }
     }
     
-    if (!recipientId) {
-      alert('Recipient not found!');
-      return;
-    }
+    if (!recipientId) { alert('Recipient not found!'); return; }
     
-    // Update sender balance
     await update(ref(db, 'users/' + currentUser.uid), {
       balance: balance - amount
     });
     
-    // Update recipient balance
     await update(ref(db, 'users/' + recipientId), {
       balance: (recipientData.balance || 0) + amount
     });
     
-    // Add to sender history
     await push(ref(db, 'users/' + currentUser.uid + '/history'), {
       type: 'transfer_out',
       amount: amount,
@@ -725,7 +688,6 @@ window.submitTransfer = async function(event) {
       timestamp: Date.now()
     });
     
-    // Add to recipient history
     await push(ref(db, 'users/' + recipientId + '/history'), {
       type: 'transfer_in',
       amount: amount,
@@ -743,15 +705,14 @@ window.submitTransfer = async function(event) {
     alert('❌ Error: ' + error.message);
   }
 };
-
-// ========== LOAD ACTIVE INVESTMENTS ==========
+  // ========== LOAD ACTIVE INVESTMENTS ==========
 async function loadActiveInvestments() {
   const container = document.getElementById('activeInvestments');
   const snapshot = await get(ref(db, 'users/' + currentUser.uid + '/investments'));
   const investments = snapshot.val();
   
-  if (!investments) {
-    container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">No active investments yet. Choose a plan!</p>';
+  if (!investments || !container) {
+    if (container) container.innerHTML = '<div class="empty-state"><i class="fas fa-chart-line"></i><p>No active investments yet. Choose a plan!</p></div>';
     return;
   }
   
@@ -761,7 +722,6 @@ async function loadActiveInvestments() {
       const planNames = { startup: 'Startup', pro: 'Pro', ultimate: 'Ultimate' };
       const earned = inv.earnedProfit || 0;
       
-      // Calculate time remaining
       const created = new Date(inv.createdAt);
       const durationMs = (inv.durationHours || 24) * 60 * 60 * 1000;
       const endDate = new Date(created.getTime() + durationMs);
@@ -787,9 +747,8 @@ async function loadActiveInvestments() {
     }
   }
   
-  container.innerHTML = html || '<p style="color: var(--text-muted); text-align: center; padding: 20px;">No active investments</p>';
+  container.innerHTML = html || '<div class="empty-state"><i class="fas fa-chart-line"></i><p>No active investments</p></div>';
 }
-
 // ========== LOAD TRANSACTIONS ==========
 async function loadTransactions() {
   const snapshot = await get(ref(db, 'users/' + currentUser.uid + '/history'));
@@ -798,60 +757,68 @@ async function loadTransactions() {
   const recentContainer = document.getElementById('recentTransactions');
   
   if (!history) {
-    recentContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">No activity yet</p>';
+    if (recentContainer) recentContainer.innerHTML = '<div class="empty-state"><i class="fas fa-receipt"></i><p>No activity yet</p></div>';
     allTransactions = [];
     return;
   }
   
-  allTransactions = Object.entries(history).map(([id, tx]) => ({ uid, ...tx }))
+  allTransactions = Object.entries(history).map(([id, tx]) => ({ id, ...tx }))
     .sort((a, b) => b.timestamp - a.timestamp);
   
-  // Recent activity (last 5)
-  recentContainer.innerHTML = allTransactions.slice(0, 5).map(formatTransaction).join('');
+  if (recentContainer) {
+    recentContainer.innerHTML = allTransactions.slice(0, 5).map(formatTransaction).join('');
+  }
   
-  // Render full history
   renderHistory();
 }
 
 function formatTransaction(tx) {
   const typeLabels = { 
     invest: 'Investment', 
-    invest_return: 'Investment Return',
+    invest_return: 'Invest Return',
     deposit: 'Deposit', 
     withdraw: 'Withdrawal', 
     transfer_out: 'Transfer Sent', 
     transfer_in: 'Transfer Received' 
   };
-  const typeColors = { 
-    invest: 'invest', 
-    invest_return: 'deposit',
+  const typeIcons = { 
     deposit: 'deposit', 
     withdraw: 'withdraw', 
-    transfer_out: 'withdraw', 
-    transfer_in: 'deposit' 
+    invest: 'invest', 
+    invest_return: 'invest',
+    transfer_out: 'transfer', 
+    transfer_in: 'transfer' 
   };
-  const sign = tx.type === 'withdraw' || tx.type === 'transfer_out' ? '-' : '+';
+  const iconEmoji = {
+    deposit: '💰',
+    withdraw: '💸',
+    invest: '📈',
+    invest_return: '📈',
+    transfer_out: '📤',
+    transfer_in: '📥'
+  };
+  const sign = tx.type === 'withdraw' || tx.type === 'transfer_out' || tx.type === 'invest' ? '-' : '+';
+  const isPositive = tx.type === 'deposit' || tx.type === 'transfer_in' || tx.type === 'invest_return';
   const isPending = tx.status === 'pending';
   
   return `
     <div class="transaction-item">
-      <div class="transaction-info">
+      <div class="tx-icon ${typeIcons[tx.type] || 'deposit'}">${iconEmoji[tx.type] || '📋'}</div>
+      <div class="tx-details">
         <h4>${typeLabels[tx.type] || tx.type}</h4>
         <p>${new Date(tx.date).toLocaleDateString()}</p>
       </div>
-      <div class="transaction-amount ${typeColors[tx.type] || ''}">
-        <h4>${sign}$${tx.amount.toLocaleString()}</h4>
-        <span class="transaction-status ${isPending ? 'status-pending' : 'status-completed'}">${tx.status}</span>
+      <div class="tx-amount">
+        <h4 class="${isPositive ? 'positive' : 'negative'}">${sign}$${tx.amount.toLocaleString()}</h4>
+        <span class="tx-status ${isPending ? 'pending' : 'completed'}">${tx.status}</span>
       </div>
     </div>
   `;
-}
-
+    }
 // ========== HISTORY SECTION ==========
 window.filterHistory = function(filter) {
   currentHistoryFilter = filter;
   
-  // Update buttons
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.filter === filter);
   });
@@ -861,9 +828,10 @@ window.filterHistory = function(filter) {
 
 function renderHistory() {
   const container = document.getElementById('historyList');
+  if (!container) return;
   
   if (!allTransactions.length) {
-    container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 40px;">No transactions yet</p>';
+    container.innerHTML = '<div class="empty-state"><i class="fas fa-receipt"></i><p>No transactions yet</p></div>';
     return;
   }
   
@@ -879,53 +847,12 @@ function renderHistory() {
   }
   
   if (!filtered.length) {
-    container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 40px;">No transactions in this category</p>';
+    container.innerHTML = '<div class="empty-state"><i class="fas fa-receipt"></i><p>No transactions in this category</p></div>';
     return;
   }
   
-  const typeIcons = {
-    deposit: '💰',
-    withdraw: '💸',
-    invest: '📈',
-    invest_return: '🎉',
-    transfer_out: '📤',
-    transfer_in: '📥'
-  };
-  
-  const typeLabels = {
-    deposit: 'Deposit',
-    withdraw: 'Withdrawal',
-    invest: 'Investment',
-    invest_return: 'Investment Return',
-    transfer_out: 'Transfer Sent',
-    transfer_in: 'Transfer Received'
-  };
-  
-  container.innerHTML = filtered.map(tx => {
-    const isPositive = tx.type === 'deposit' || tx.type === 'transfer_in' || tx.type === 'invest_return';
-    const isNegative = tx.type === 'withdraw' || tx.type === 'transfer_out' || tx.type === 'invest';
-    
-    return `
-      <div class="history-item">
-        <div style="display: flex; align-items: center;">
-          <div class="history-icon ${tx.type}">${typeIcons[tx.type] || '📋'}</div>
-          <div class="history-details">
-            <h4>${typeLabels[tx.type] || tx.type}</h4>
-            <p>${new Date(tx.date).toLocaleDateString()} • ${new Date(tx.date).toLocaleTimeString()}</p>
-            ${tx.network ? `<p style="font-size: 0.7rem; color: var(--accent);">${tx.network.replace('_', ' ')}</p>` : ''}
-          </div>
-        </div>
-        <div class="history-meta">
-          <div class="amount ${isPositive ? 'positive' : isNegative ? 'negative' : 'neutral'}">
-            ${isPositive ? '+' : isNegative ? '-' : ''}$${tx.amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-          </div>
-          <span class="status ${tx.status}">${tx.status}</span>
-        </div>
-      </div>
-    `;
-  }).join('');
+  container.innerHTML = filtered.map(formatTransaction).join('');
 }
-
 // ========== LOAD PENDING ==========
 async function loadPending() {
   const withdrawSnapshot = await get(ref(db, 'users/' + currentUser.uid + '/pendingWithdrawals'));
@@ -938,43 +865,55 @@ async function loadPending() {
   const dContainer = document.getElementById('pendingDeposits');
   
   if (!withdrawals) {
-    wContainer.innerHTML = '<h4>No pending withdrawals</h4><p style="color: var(--text-muted); font-size: 0.85rem;">Your withdrawal requests will appear here.</p>';
+    if (wContainer) wContainer.innerHTML = '<h4>No pending withdrawals</h4><p style="color: var(--text-muted); font-size: 0.85rem;">Your withdrawal requests will appear here.</p>';
   } else {
     let html = '<h4>Pending Withdrawals</h4>';
     for (const [id, w] of Object.entries(withdrawals)) {
       if (w.status === 'pending') {
         html += `
-          <div class="pending-item">
-            <span style="color: var(--text-light);">$${w.amount.toLocaleString()} ${w.network ? '(' + w.network.replace('_', ' ') + ')' : ''}</span>
-            <span class="transaction-status status-pending">PENDING</span>
+          <div class="transaction-item" style="padding-left:0; padding-right:0;">
+            <div class="tx-details">
+              <h4>Withdrawal</h4>
+              <p>${w.network ? w.network.replace('_', ' ') : (w.method || 'N/A')}</p>
+            </div>
+            <div class="tx-amount">
+              <h4 class="negative">-$${w.amount.toLocaleString()}</h4>
+              <span class="tx-status pending">${w.status.toUpperCase()}</span>
+            </div>
           </div>
         `;
       }
     }
-    wContainer.innerHTML = html;
+    if (wContainer) wContainer.innerHTML = html;
   }
   
   if (!deposits) {
-    dContainer.innerHTML = '<h4>No pending deposits</h4><p style="color: var(--text-muted); font-size: 0.85rem;">Your deposit requests will appear here.</p>';
+    if (dContainer) dContainer.innerHTML = '<h4>No pending deposits</h4><p style="color: var(--text-muted); font-size: 0.85rem;">Your deposit requests will appear here.</p>';
   } else {
     let html = '<h4>Pending Deposits</h4>';
     for (const [id, d] of Object.entries(deposits)) {
       if (d.status === 'pending') {
         html += `
-          <div class="pending-item">
-            <span style="color: var(--text-light);">$${d.amount.toLocaleString()} ${d.network ? '(' + d.network.replace('_', ' ') + ')' : ''}</span>
-            <span class="transaction-status status-pending">PENDING</span>
+          <div class="transaction-item" style="padding-left:0; padding-right:0;">
+            <div class="tx-details">
+              <h4>Deposit</h4>
+              <p>${d.network ? d.network.replace('_', ' ') : (d.method || 'N/A')}</p>
+            </div>
+            <div class="tx-amount">
+              <h4 class="positive">+$${d.amount.toLocaleString()}</h4>
+              <span class="tx-status pending">${d.status.toUpperCase()}</span>
+            </div>
           </div>
         `;
       }
     }
-    dContainer.innerHTML = html;
+    if (dContainer) dContainer.innerHTML = html;
   }
-}
-
+   }
 // ========== REFERRAL ==========
 window.copyReferral = function() {
   const input = document.getElementById('referralLink');
+  if (!input) return;
   input.select();
   navigator.clipboard.writeText(input.value);
   alert('Referral link copied!');
@@ -992,13 +931,16 @@ async function loadReferralStats() {
     }
   }
   
-  document.getElementById('totalReferrals').textContent = count;
-  document.getElementById('totalReferralEarned').textContent = '$' + (userData.referralEarnings || 0).toLocaleString();
+  const totalRefEl = document.getElementById('totalReferrals');
+  const totalEarnedEl = document.getElementById('totalReferralEarned');
+  
+  if (totalRefEl) totalRefEl.textContent = count;
+  if (totalEarnedEl) totalEarnedEl.textContent = '$' + (userData.referralEarnings || 0).toLocaleString();
 }
-
 // ========== LOGOUT ==========
 window.logout = function() {
-  document.getElementById('logoutOverlay').classList.add('show');
+  const overlay = document.getElementById('logoutOverlay');
+  if (overlay) overlay.classList.add('show');
   
   setTimeout(() => {
     sessionStorage.removeItem('apexvault_user');
@@ -1010,9 +952,9 @@ window.logout = function() {
 document.addEventListener('DOMContentLoaded', async () => {
   if (!checkLogin()) return;
   
-  // Show login animation for 1.5 seconds
   setTimeout(async () => {
-    document.getElementById('loginOverlay').classList.add('hidden');
+    const loginOverlay = document.getElementById('loginOverlay');
+    if (loginOverlay) loginOverlay.classList.add('hidden');
     await loadUserData();
   }, 1500);
 });
