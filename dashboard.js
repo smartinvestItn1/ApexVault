@@ -967,11 +967,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   try {
     await loadUserData();
+    showSection('overview');   // ← ADD THIS LINE
+    
   } catch (error) {
     console.error('Dashboard init error:', error);
     alert('Error loading dashboard. Please refresh.');
   } finally {
-    // Always hide spinner, success or failure
     setTimeout(() => {
       const loginOverlay = document.getElementById('loginOverlay');
       if (loginOverlay) loginOverlay.classList.add('hidden');
