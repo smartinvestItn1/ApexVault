@@ -48,16 +48,7 @@ function checkLogin() {
   currentUser = JSON.parse(userJson);
   
   if (!currentUser.uid && currentUser.id) {
-    currentUser.uid = currentUser.id;
-  }
-  if (!currentUser.id && currentUser.uid) {
-    currentUser.id = currentUser.uid;
-  }
-  
-  uid = currentUser.uid;
-  return true;
-}
-// ========== CHECK FEATURE BLOCKED ==========
+  // ========== CHECK FEATURE BLOCKED ==========
 async function isFeatureBlocked(feature) {
   const snapshot = await get(ref(db, 'platformSettings/' + feature + 'Enabled'));
   return snapshot.val() === false;
@@ -67,6 +58,15 @@ async function isFeatureBlocked(feature) {
 function getTodayKey() {
   const d = new Date();
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    }
+    currentUser.uid = currentUser.id;
+  }
+  if (!currentUser.id && currentUser.uid) {
+    currentUser.id = currentUser.uid;
+  }
+  
+  uid = currentUser.uid;
+  return true;
 }
 // ========== LOAD USER DATA ==========
 async function loadUserData() {
@@ -104,7 +104,7 @@ async function loadUserData() {
   updateWithdrawLimitDisplay();
   checkInvestmentLock();
 }
- // ========== UPDATE DASHBOARD STATS ==========
+// ========== UPDATE DASHBOARD STATS ==========
 function updateDashboardStats() {
   const balance = userData.balance || 0;
   const invested = userData.totalInvested || 0;
@@ -153,7 +153,7 @@ async function updateWithdrawLimitDisplay() {
     console.error("Error loading daily limit:", err);
   }
     }
-   // ========== INVESTMENT LOCK ==========
+  // ========== INVESTMENT LOCK ==========
 async function checkInvestmentLock() {
   const snapshot = await get(ref(db, 'users/' + currentUser.uid + '/investments'));
   const investments = snapshot.val();
@@ -238,8 +238,8 @@ async function completeInvestment(investId) {
   
   alert('🎉 Your investment has matured! $' + totalReturn.toLocaleString() + ' has been added to your balance.');
   await loadUserData();
-}
-// ========== SECTION NAVIGATION ==========
+      }
+        // ========== SECTION NAVIGATION ==========
 window.showSection = function(sectionName) {
   document.querySelectorAll('.section-content').forEach(s => s.style.display = 'none');
   
@@ -589,42 +589,7 @@ window.submitWithdraw = async function(event) {
       amount: amount,
       fee: fee,
       total: total,
-      network: network,
-      walletAddress: walletAddress,
-      method: 'crypto',
-      status: 'pending',
-      date: new Date().toISOString(),
-      timestamp: Date.now()
-    });
-    
-    await set(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey), dailyUsed + amount);
-    
-    await update(ref(db, 'users/' + currentUser.uid), {
-      balance: balance - total
-    });
-    
-    await push(ref(db, 'users/' + currentUser.uid + '/history'), {
-      type: 'withdraw',
-      amount: amount,
-      fee: fee,
-      total: total,
-      network: network,
-      walletAddress: walletAddress,
-      status: 'pending',
-      date: new Date().toISOString(),
-      timestamp: Date.now()
-    });
-    
-    closeModal('withdrawModal');
-    alert('✅ Withdrawal request submitted! Pending admin approval.');
-    await loadUserData();
-    showSection('pending');
-    
-  } catch (error) {
-    alert('❌ Error: ' + error.message);
-  }
-};
-// ========== TRANSFER ==========
+  // ========== TRANSFER ==========
 window.openTransferModal = async function() {
   if (await isFeatureBlocked('transfer')) {
     alert('🚫 Transfers are currently disabled by admin.');
@@ -705,7 +670,43 @@ window.submitTransfer = async function(event) {
     alert('❌ Error: ' + error.message);
   }
 };
-  // ========== LOAD ACTIVE INVESTMENTS ==========
+  network: network,
+      walletAddress: walletAddress,
+      method: 'crypto',
+      status: 'pending',
+      date: new Date().toISOString(),
+      timestamp: Date.now()
+    });
+    
+    await set(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey), dailyUsed + amount);
+    
+    await update(ref(db, 'users/' + currentUser.uid), {
+      balance: balance - total
+    });
+    
+    await push(ref(db, 'users/' + currentUser.uid + '/history'), {
+      type: 'withdraw',
+      amount: amount,
+      fee: fee,
+      total: total,
+      network: network,
+      walletAddress: walletAddress,
+      status: 'pending',
+      date: new Date().toISOString(),
+      timestamp: Date.now()
+    });
+    
+    closeModal('withdrawModal');
+    alert('✅ Withdrawal request submitted! Pending admin approval.');
+    await loadUserData();
+    showSection('pending');
+    
+  } catch (error) {
+    alert('❌ Error: ' + error.message);
+  }
+};
+
+// ========== LOAD ACTIVE INVESTMENTS ==========
 async function loadActiveInvestments() {
   const container = document.getElementById('activeInvestments');
   const snapshot = await get(ref(db, 'users/' + currentUser.uid + '/investments'));
@@ -748,7 +749,8 @@ async function loadActiveInvestments() {
   }
   
   container.innerHTML = html || '<div class="empty-state"><i class="fas fa-chart-line"></i><p>No active investments</p></div>';
-}
+    }
+
 // ========== LOAD TRANSACTIONS ==========
 async function loadTransactions() {
   const snapshot = await get(ref(db, 'users/' + currentUser.uid + '/history'));
@@ -814,8 +816,8 @@ function formatTransaction(tx) {
       </div>
     </div>
   `;
-    }
-// ========== HISTORY SECTION ==========
+      }
+    // ========== HISTORY SECTION ==========
 window.filterHistory = function(filter) {
   currentHistoryFilter = filter;
   
@@ -909,8 +911,8 @@ async function loadPending() {
     }
     if (dContainer) dContainer.innerHTML = html;
   }
-   }
-// ========== REFERRAL ==========
+}
+ // ========== REFERRAL ==========
 window.copyReferral = function() {
   const input = document.getElementById('referralLink');
   if (!input) return;
@@ -958,3 +960,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadUserData();
   }, 1500);
 });
+          
+
