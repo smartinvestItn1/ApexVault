@@ -48,17 +48,6 @@ function checkLogin() {
   currentUser = JSON.parse(userJson);
   
   if (!currentUser.uid && currentUser.id) {
-  // ========== CHECK FEATURE BLOCKED ==========
-async function isFeatureBlocked(feature) {
-  const snapshot = await get(ref(db, 'platformSettings/' + feature + 'Enabled'));
-  return snapshot.val() === false;
-}
-
-// ========== GET TODAY KEY ==========
-function getTodayKey() {
-  const d = new Date();
-  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-    }
     currentUser.uid = currentUser.id;
   }
   if (!currentUser.id && currentUser.uid) {
@@ -68,6 +57,19 @@ function getTodayKey() {
   uid = currentUser.uid;
   return true;
 }
+
+// ========== CHECK FEATURE BLOCKED ==========
+async function isFeatureBlocked(feature) {
+  const snapshot = await get(ref(db, 'platformSettings/' + feature + 'Enabled'));
+  return snapshot.val() === false;
+}
+
+// ========== GET TODAY KEY ==========
+function getTodayKey() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
 // ========== LOAD USER DATA ==========
 async function loadUserData() {
   if (!currentUser) return;
@@ -152,7 +154,7 @@ async function updateWithdrawLimitDisplay() {
   } catch (err) {
     console.error("Error loading daily limit:", err);
   }
-    }
+ }
   // ========== INVESTMENT LOCK ==========
 async function checkInvestmentLock() {
   const snapshot = await get(ref(db, 'users/' + currentUser.uid + '/investments'));
