@@ -507,6 +507,8 @@ window.submitDeposit = async function(event) {
     alert('❌ Error: ' + error.message);
   }
 };
+
+
 // ========== WITHDRAW MODAL ==========
 window.openWithdrawModal = async function() {
   if (await isFeatureBlocked('withdraw')) {
@@ -591,7 +593,43 @@ window.submitWithdraw = async function(event) {
       amount: amount,
       fee: fee,
       total: total,
-  // ========== TRANSFER ==========
+      network: network,
+      walletAddress: walletAddress,
+      method: 'crypto',
+      status: 'pending',
+      date: new Date().toISOString(),
+      timestamp: Date.now()
+    });
+    
+    await set(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey), dailyUsed + amount);
+    
+    await update(ref(db, 'users/' + currentUser.uid), {
+      balance: balance - total
+    });
+    
+    await push(ref(db, 'users/' + currentUser.uid + '/history'), {
+      type: 'withdraw',
+      amount: amount,
+      fee: fee,
+      total: total,
+      network: network,
+      walletAddress: walletAddress,
+      status: 'pending',
+      date: new Date().toISOString(),
+      timestamp: Date.now()
+    });
+    
+    closeModal('withdrawModal');
+    alert('✅ Withdrawal request submitted! Pending admin approval.');
+    await loadUserData();
+    showSection('pending');
+    
+  } catch (error) {
+    alert('❌ Error: ' + error.message);
+  }
+};
+
+// ========== TRANSFER ==========
 window.openTransferModal = async function() {
   if (await isFeatureBlocked('transfer')) {
     alert('🚫 Transfers are currently disabled by admin.');
@@ -672,43 +710,9 @@ window.submitTransfer = async function(event) {
     alert('❌ Error: ' + error.message);
   }
 };
-  network: network,
-      walletAddress: walletAddress,
-      method: 'crypto',
-      status: 'pending',
-      date: new Date().toISOString(),
-      timestamp: Date.now()
-    });
-    
-    await set(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey), dailyUsed + amount);
-    
-    await update(ref(db, 'users/' + currentUser.uid), {
-      balance: balance - total
-    });
-    
-    await push(ref(db, 'users/' + currentUser.uid + '/history'), {
-      type: 'withdraw',
-      amount: amount,
-      fee: fee,
-      total: total,
-      network: network,
-      walletAddress: walletAddress,
-      status: 'pending',
-      date: new Date().toISOString(),
-      timestamp: Date.now()
-    });
-    
-    closeModal('withdrawModal');
-    alert('✅ Withdrawal request submitted! Pending admin approval.');
-    await loadUserData();
-    showSection('pending');
-    
-  } catch (error) {
-    alert('❌ Error: ' + error.message);
-  }
-};
 
 // ========== LOAD ACTIVE INVESTMENTS ==========
+                   
 async function loadActiveInvestments() {
   const container = document.getElementById('activeInvestments');
   const snapshot = await get(ref(db, 'users/' + currentUser.uid + '/investments'));
