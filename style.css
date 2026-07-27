@@ -970,3 +970,73 @@ footer {
   .right-sidebar { width: 100%; right: -100%; }
   .sidebar-toggle.active { right: 20px; }
 }
+
+/* ========== LOCATION BADGE ========== */
+.location-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(100, 255, 218, 0.08);
+  border: 1px solid rgba(100, 255, 218, 0.25);
+  border-radius: 50px;
+  margin-left: 16px;
+}
+
+.location-flag {
+  font-size: 1rem;
+}
+
+.location-text {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* ========== UK SECTION (if you want a full section) ========== */
+.uk-section {
+  padding: 80px 40px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.uk-section h2 {
+  font-size: 2rem;
+  color: var(--text-white);
+  margin-bottom: 12px;
+}
+
+.uk-section p {
+  color: var(--text-muted);
+  max-width: 500px;
+  margin: 0 auto 24px;
+}
+
+.uk-badge-large {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  font-size: 1.2rem;
+}
+
+.uk-badge-large .flag {
+  font-size: 2rem;
+}
+
+.uk-badge-large .text {
+  color: var(--text-white);
+  font-weight: 700;
+}
+
+.uk-badge-large .sub {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+  }
+  
