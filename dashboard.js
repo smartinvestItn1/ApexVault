@@ -949,16 +949,23 @@ window.logout = function() {
     window.location.href = 'login.html';
   }, 1500);
 };
-
 // ========== INIT ==========
 document.addEventListener('DOMContentLoaded', async () => {
   if (!checkLogin()) return;
   
-  setTimeout(async () => {
-    const loginOverlay = document.getElementById('loginOverlay');
-    if (loginOverlay) loginOverlay.classList.add('hidden');
+  try {
     await loadUserData();
-  }, 1500);
+    
+    // Hide login overlay after data loads
+    setTimeout(() => {
+      const loginOverlay = document.getElementById('loginOverlay');
+      if (loginOverlay) loginOverlay.classList.add('hidden');
+    }, 800);
+    
+  } catch (error) {
+    console.error('Dashboard init error:', error);
+    alert('Error loading dashboard. Please refresh.');
+  }
 });
-          
+
 
