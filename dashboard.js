@@ -337,13 +337,15 @@ window.openInvestModal = async function(plan, min, max, profit) {
 };
 
 // Calculate expected profit on input
-document.getElementById('investAmount').addEventListener('input', function() {
-  const amount = parseFloat(this.value) || 0;
-  const profit = (amount * currentPlanProfit / 100).toFixed(2);
-  const el = document.getElementById('expectedProfit');
-  if (el) el.value = '$' + profit + ' (' + currentPlanProfit + '%)';
-});
-
+const investAmountInput = document.getElementById('investAmount');
+if (investAmountInput) {
+  investAmountInput.addEventListener('input', function() {
+    const amount = parseFloat(this.value) || 0;
+    const profit = (amount * currentPlanProfit / 100).toFixed(2);
+    const el = document.getElementById('expectedProfit');
+    if (el) el.value = '$' + profit + ' (' + currentPlanProfit + '%)';
+  });
+}
 window.submitInvest = async function(event) {
   event.preventDefault();
   
@@ -429,21 +431,23 @@ window.openDepositModal = function() {
   
   openModal('depositModal');
 };
-
-document.getElementById('depositNetwork').addEventListener('change', function() {
-  const network = this.value;
-  const groupEl = document.getElementById('depositAddressGroup');
-  const addressEl = document.getElementById('depositAddress');
-  const hintEl = document.getElementById('addressHint');
-  
-  if (network && DEPOSIT_ADDRESSES[network]) {
-    if (groupEl) groupEl.style.display = 'block';
-    if (addressEl) addressEl.value = DEPOSIT_ADDRESSES[network];
-    if (hintEl) hintEl.textContent = `Send only ${network.replace('_', ' ')} to this address. Other networks will be lost.`;
-  } else {
-    if (groupEl) groupEl.style.display = 'none';
-  }
-});
+const depositNetworkSelect = document.getElementById('depositNetwork');
+if (depositNetworkSelect) {
+  depositNetworkSelect.addEventListener('change', function() {
+    const network = this.value;
+    const groupEl = document.getElementById('depositAddressGroup');
+    const addressEl = document.getElementById('depositAddress');
+    const hintEl = document.getElementById('addressHint');
+    
+    if (network && DEPOSIT_ADDRESSES[network]) {
+      if (groupEl) groupEl.style.display = 'block';
+      if (addressEl) addressEl.value = DEPOSIT_ADDRESSES[network];
+      if (hintEl) hintEl.textContent = `Send only ${network.replace('_', ' ')} to this address. Other networks will be lost.`;
+    } else {
+      if (groupEl) groupEl.style.display = 'none';
+    }
+  });
+}
 
 window.copyDepositAddress = function() {
   const input = document.getElementById('depositAddress');
@@ -532,16 +536,18 @@ window.openWithdrawModal = async function() {
   openModal('withdrawModal');
 };
 
-document.getElementById('withdrawAmount').addEventListener('input', function() {
-  const amount = parseFloat(this.value) || 0;
-  const fee = amount * WITHDRAW_FEE_RATE;
-  const total = amount + fee;
-  const feeEl = document.getElementById('withdrawFee');
-  const totalEl = document.getElementById('withdrawTotal');
-  if (feeEl) feeEl.textContent = '$' + fee.toFixed(2);
-  if (totalEl) totalEl.textContent = '$' + total.toFixed(2);
-});
-
+const withdrawAmountInput = document.getElementById('withdrawAmount');
+if (withdrawAmountInput) {
+  withdrawAmountInput.addEventListener('input', function() {
+    const amount = parseFloat(this.value) || 0;
+    const fee = amount * WITHDRAW_FEE_RATE;
+    const total = amount + fee;
+    const feeEl = document.getElementById('withdrawFee');
+    const totalEl = document.getElementById('withdrawTotal');
+    if (feeEl) feeEl.textContent = '$' + fee.toFixed(2);
+    if (totalEl) totalEl.textContent = '$' + total.toFixed(2);
+  });
+  }
 window.submitWithdraw = async function(event) {
   event.preventDefault();
   
@@ -961,17 +967,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   try {
     await loadUserData();
-    
-    // Hide login overlay after data loads
+  } catch (error) {
+    console.error('Dashboard init error:', error);
+    alert('Error loading dashboard. Please refresh.');
+  } finally {
+    // Always hide spinner, success or failure
     setTimeout(() => {
       const loginOverlay = document.getElementById('loginOverlay');
       if (loginOverlay) loginOverlay.classList.add('hidden');
     }, 800);
-    
-  } catch (error) {
-    console.error('Dashboard init error:', error);
-    alert('Error loading dashboard. Please refresh.');
   }
 });
-
-
