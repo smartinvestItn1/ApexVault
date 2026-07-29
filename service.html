@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Services - ApexVault</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --bg-light: #111827;
+      --card-bg: rgba(17, 24, 39, 0.7);
+      --accent: #00d4aa;
+      --accent-light: #00f5c4;
+      --text: #f0f4f8;
+      --text-muted: #94a3b8;
+      --gradient-start: #00d4aa;
+      --gradient-end: #0077ff;
+      --danger: #ef4444;
+      --success: #22c55e;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ========== PARTICLES ========== */
+    .particles-container {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute; width: 4px; height: 4px;
+      background: var(--accent); border-radius: 50%;
+      opacity: 0; animation: float-up linear infinite;
+    }
+    @keyframes float-up {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    /* ========== FADE IN ========== */
+    .fade-in {
+      opacity: 0; transform: translateY(30px);
+      animation: fadeInUp 0.8s ease forwards;
+    }
+    .fade-in-delay-1 { animation-delay: 0.2s; }
+    .fade-in-delay-2 { animation-delay: 0.4s; }
+    .fade-in-delay-3 { animation-delay: 0.6s; }
+    .fade-in-delay-4 { animation-delay: 0.8s; }
+    .fade-in-delay-5 { animation-delay: 1.0s; }
+    @keyframes fadeInUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ========== PULSE GLOW ========== */
+    .pulse-glow {
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 170, 0.2); }
+      50% { box-shadow: 0 0 40px rgba(0, 212, 170, 0.4); }
+    }
+
+    /* ========== HEADER ========== */
+    .header {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(10, 14, 26, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 1rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-size: 1.4rem; font-weight: 700; color: var(--accent);
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+    .nav-links {
+      display: flex; gap: 1.5rem; align-items: center;
+    }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none;
+      font-size: 0.9rem; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+    .mobile-menu-btn {
+      display: none; background: none; border: none;
+      color: var(--text); font-size: 1.3rem; cursor: pointer;
+    }
+
+    /* ========== HERO ========== */
+    .hero {
+      position: relative; z-index: 1;
+      padding: 8rem 1.5rem 4rem;
+      text-align: center;
+      max-width: 800px; margin: 0 auto;
+    }
+    .hero-badge {
+      display: inline-block; padding: 0.4rem 1rem;
+      background: rgba(0, 212, 170, 0.1); border: 1px solid rgba(0, 212, 170, 0.2);
+      border-radius: 50px; color: var(--accent); font-size: 0.8rem;
+      font-weight: 600; margin-bottom: 1.5rem; letter-spacing: 0.5px;
+    }
+    .hero h1 {
+      font-size: 2.4rem; line-height: 1.2;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      color: var(--text-muted); font-size: 1.05rem;
+      max-width: 600px; margin: 0 auto 2rem;
+    }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.85rem 2rem;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      border: none; border-radius: 12px; color: #fff;
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 212, 170, 0.3);
+    }
+
+    /* ========== SECTIONS ========== */
+    .section {
+      position: relative; z-index: 1;
+      padding: 4rem 1.5rem;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .section-title {
+      font-size: 1.8rem; margin-bottom: 0.5rem;
+      text-align: center;
+    }
+    .section-subtitle {
+      color: var(--text-muted); text-align: center;
+      margin-bottom: 3rem; font-size: 0.95rem;
+    }
+
+    /* ========== HOW IT WORKS STEPS ========== */
+    .steps {
+      display: flex; flex-direction: column; gap: 2rem;
+      max-width: 700px; margin: 0 auto;
+    }
+    .step {
+      display: flex; gap: 1.5rem; align-items: flex-start;
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 1.8rem;
+      backdrop-filter: blur(10px);
+    }
+    .step-num {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .step h3 { font-size: 1.15rem; margin-bottom: 0.4rem; }
+    .step p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; }
+
+    /* ========== PLANS ========== */
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .plan-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px; padding: 2rem;
+      backdrop-filter: blur(10px);
+      text-align: center;
+      transition: transform 0.3s, border-color 0.3s;
+      position: relative; overflow: hidden;
+    }
+    .plan-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(0, 212, 170, 0.3);
+    }
+    .plan-card.featured {
+      border-color: rgba(0, 212, 170, 0.3);
+      background: linear-gradient(180deg, rgba(0,212,170,0.08), var(--card-bg));
+    }
+    .featured-badge {
+      position: absolute; top: 0; right: 0;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      color: #fff; font-size: 0.7rem; font-weight: 700;
+      padding: 0.3rem 0.9rem; border-bottom-left-radius: 12px;
+    }
+    .plan-card h3 { font-size: 1.3rem; margin-bottom: 0.5rem; }
+    .plan-card .profit {
+      font-size: 2.5rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--gradient-end));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin: 1rem 0;
+    }
+    .plan-card .range {
+      color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;
+    }
+    .plan-features {
+      list-style: none; text-align: left; margin-bottom: 1.5rem;
+    }
+    .plan-features li {
+      padding: 0.4rem 0; color: var(--text-muted); font-size: 0.85rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .plan-features li::before {
+      content: "✓"; color: var(--accent); font-weight: 700;
+    }
+
+    /* ========== FEATURES GRID ========== */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 1.8rem;
+      backdrop-filter: blur(10px);
+      transition: transform 0.3s;
+    }
+    .feature-card:hover { transform: translateY(-5px); }
+    .feature-card .icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; margin-bottom: 1rem;
+    }
+    .feature-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .feature-card p { color: var(--text-muted); font-size: 0.88rem; line-height: 1.6; }
+
+    /* ========== FOOTER ========== */
+    .footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 3rem 1.5rem 2rem;
+      margin-top: 2rem;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 2rem; max-width: 1100px; margin: 0 auto 2rem;
+    }
+    .footer-col h4 {
+      font-size: 0.85rem; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--text);
+      margin-bottom: 1.2rem;
+    }
+    .footer-col a {
+      display: block; color: var(--text-muted);
+      text-decoration: none; font-size: 0.9rem;
+      margin-bottom: 0.7rem; transition: color 0.2s;
+    }
+    .footer-col a:hover { color: var(--accent); }
+    .footer-bottom {
+      text-align: center; color: var(--text-muted);
+      font-size: 0.8rem; padding-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      max-width: 1100px; margin: 0 auto;
+    }
+
+    /* ========== MOBILE ========== */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .mobile-menu-btn { display: block; }
+      .hero h1 { font-size: 1.8rem; }
+      .step { flex-direction: column; align-items: center; text-align: center; }
+      .section { padding: 3rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Particles -->
+  <div class="particles-container" id="particles"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <a href="index.html" class="logo">
+      <div class="logo-icon">🔥</div>
+      ApexVault
+    </a>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="about.html">About Us</a>
+      <a href="services.html" class="active">Services</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html">Login</a>
+    </nav>
+    <button class="mobile-menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-badge fade-in">WHAT WE OFFER</div>
+    <h1 class="fade-in fade-in-delay-1">How ApexVault Works</h1>
+    <p class="fade-in fade-in-delay-2">
+      We have simplified wealth-building into three powerful steps. Deposit, invest, and watch your portfolio grow with industry-leading returns and zero complexity.
+    </p>
+    <a href="login.html" class="btn-primary fade-in fade-in-delay-3">
+      Start Investing <i class="fas fa-arrow-right"></i>
+    </a>
+  </section>
+
+  <!-- How It Works -->
+  <section class="section">
+    <h2 class="section-title fade-in">How It Works</h2>
+    <p class="section-subtitle fade-in">From signup to profit in three simple steps.</p>
+    <div class="steps">
+      <div class="step fade-in fade-in-delay-1">
+        <div class="step-num">1</div>
+        <div>
+          <h3>Create Your Account</h3>
+          <p>Sign up in under 60 seconds. No lengthy verification. Just your email, a secure password, and you are ready to access the dashboard.</p>
+        </div>
+      </div>
+      <div class="step fade-in fade-in-delay-2">
+        <div class="step-num">2</div>
+        <div>
+          <h3>Deposit Funds</h3>
+          <p>Fund your wallet using USDT on BEP20 or TRC20 networks. Your deposit is reviewed by our admin team and credited to your balance within minutes.</p>
+        </div>
+      </div>
+      <div class="step fade-in fade-in-delay-3">
+        <div class="step-num">3</div>
+        <div>
+          <h3>Invest & Earn</h3>
+          <p>Choose a plan that fits your goals. Your capital is locked for the plan duration, then returned with profit automatically. Withdraw anytime after maturity.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Investment Plans -->
+  <section class="section">
+    <h2 class="section-title fade-in">Investment Plans</h2>
+    <p class="section-subtitle fade-in">Tailored plans for every level of investor.</p>
+    <div class="plans-grid">
+      <div class="plan-card fade-in fade-in-delay-1">
+        <h3>Startup</h3>
+        <div class="profit">10%</div>
+        <div class="range">$100 – $999</div>
+        <ul class="plan-features">
+          <li>24-hour lock period</li>
+          <li>Instant profit credit</li>
+          <li>Full capital return</li>
+          <li>Email support</li>
+        </ul>
+        <a href="login.html" class="btn-primary" style="width:100%; justify-content:center;">Choose Plan</a>
+      </div>
+      <div class="plan-card featured fade-in fade-in-delay-2">
+        <div class="featured-badge">POPULAR</div>
+        <h3>Pro</h3>
+        <div class="profit">20%</div>
+        <div class="range">$1,000 – $4,999</div>
+        <ul class="plan-features">
+          <li>48-hour lock period</li>
+          <li>Instant profit credit</li>
+          <li>Full capital return</li>
+          <li>Priority support</li>
+        </ul>
+        <a href="login.html" class="btn-primary pulse-glow" style="width:100%; justify-content:center;">Choose Plan</a>
+      </div>
+      <div class="plan-card fade-in fade-in-delay-3">
+        <h3>Ultimate</h3>
+        <div class="profit">40%</div>
+        <div class="range">$5,000 – Unlimited</div>
+        <ul class="plan-features">
+          <li>72-hour lock period</li>
+          <li>Instant profit credit</li>
+          <li>Full capital return</li>
+          <li>VIP support + insights</li>
+        </ul>
+        <a href="login.html" class="btn-primary" style="width:100%; justify-content:center;">Choose Plan</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section">
+    <h2 class="section-title fade-in">Platform Features</h2>
+    <p class="section-subtitle fade-in">Everything you need to manage and grow your wealth.</p>
+    <div class="features-grid">
+      <div class="feature-card fade-in fade-in-delay-1">
+        <div class="icon">💰</div>
+        <h3>Crypto Deposits</h3>
+        <p>Fund your account instantly with USDT on BEP20 or TRC20. Secure wallet addresses generated per transaction.</p>
+      </div>
+      <div class="feature-card fade-in fade-in-delay-2">
+        <div class="icon">📤</div>
+        <h3>Fast Withdrawals</h3>
+        <p>Request withdrawals to any wallet address. Admin-reviewed for security, processed within 24 hours.</p>
+      </div>
+      <div class="feature-card fade-in fade-in-delay-3">
+        <div class="icon">🔄</div>
+        <h3>User Transfers</h3>
+        <p>Send funds instantly to other ApexVault users using just their registered email. Zero fees.</p>
+      </div>
+      <div class="feature-card fade-in fade-in-delay-1">
+        <div class="icon">📈</div>
+        <h3>Profit Tracking</h3>
+        <p>Real-time dashboard showing your balance, active investments, earned profit, and full transaction history.</p>
+      </div>
+      <div class="feature-card fade-in fade-in-delay-2">
+        <div class="icon">🎁</div>
+        <h3>Referral Program</h3>
+        <p>Earn bonuses by inviting friends. Share your unique link and grow your network alongside your wealth.</p>
+      </div>
+      <div class="feature-card fade-in fade-in-delay-3">
+        <div class="icon">🔔</div>
+        <h3>Live Notifications</h3>
+        <p>Stay informed with instant alerts for deposits, withdrawals, investment maturity, and platform updates.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="about.html">About Us</a>
+        <a href="#">Careers</a>
+        <a href="#">Press</a>
+        <a href="#">Blog</a>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <a href="#">Help Center</a>
+        <a href="#">Market Data</a>
+        <a href="#">API Docs</a>
+        <a href="#">Security</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">Cookie Policy</a>
+        <a href="#">Disclosures</a>
+      </div>
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="services.html">Services</a>
+        <a href="contact.html">Contact Us</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      © 2026 ApexVault. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    // Particles
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (6 + Math.random() * 10) + 's';
+      p.style.animationDelay = (Math.random() * 8) + 's';
+      p.style.width = (2 + Math.random() * 4) + 'px';
+      p.style.height = p.style.width;
+      container.appendChild(p);
+    }
+
+    function toggleMenu() {
+      const nav = document.querySelector('.nav-links');
+      nav.style.display = nav.style.display === 'flex' ? 'none' : 'flex';
+      nav.style.position = 'absolute';
+      nav.style.top = '60px';
+      nav.style.right = '1rem';
+      nav.style.flexDirection = 'column';
+      nav.style.background = 'var(--card-bg)';
+      nav.style.padding = '1rem';
+      nav.style.borderRadius = '12px';
+      nav.style.border = '1px solid rgba(255,255,255,0.08)';
+      nav.style.backdropFilter = 'blur(12px)';
+      nav.style.zIndex = '200';
+    }
+  </script>
+</body>
+    </html>
