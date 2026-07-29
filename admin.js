@@ -317,7 +317,7 @@ window.rejectDeposit = async function(depositId) {
     html += '<tr><td><div class="user-cell"><div class="user-avatar">' + (w.userName || 'U').charAt(0) + '</div><div>' + (w.userName || 'Unknown') + '<br><small>' + (w.userEmail || '') + '</small></div></div></td>';
     html += '<td style="color:var(--danger);font-weight:600;">-$' + w.amount.toLocaleString() + '</td>';
     html += '<td>' + (w.network ? w.network.replace('_', ' ') : (w.method || 'N/A')) + '</td>';
-    html += '<td><small style="font-family:monospace;">' + (w.walletAddress ? w.walletAddress.substring(0, 12) + '...' : 'N/A') + '</small></td>';
+    html += '<td style="max-width:180px; word-break:break-all;"><small style="font-family:monospace; line-height:1.4; display:block; margin-bottom:4px;">' + (w.walletAddress || 'N/A') + '</small><button onclick="navigator.clipboard.writeText(\'' + (w.walletAddress || '') + '\'); alert(\'Address copied!\')" style="padding:3px 10px; background:var(--accent); border:none; border-radius:5px; color:#fff; font-size:0.7rem; cursor:pointer;">📋 Copy</button></td>';
     html += '<td>' + new Date(w.date).toLocaleDateString() + '</td>';
     html += '<td><span class="badge ' + statusClass + '">' + w.status.toUpperCase() + '</span></td>';
     html += '<td>' + actions + '</td></tr>';
