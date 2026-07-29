@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>About Us - ApexVault</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --bg-light: #111827;
+      --card-bg: rgba(17, 24, 39, 0.7);
+      --accent: #00d4aa;
+      --accent-light: #00f5c4;
+      --text: #f0f4f8;
+      --text-muted: #94a3b8;
+      --gradient-start: #00d4aa;
+      --gradient-end: #0077ff;
+      --danger: #ef4444;
+      --success: #22c55e;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ========== PARTICLES ========== */
+    .particles-container {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute; width: 4px; height: 4px;
+      background: var(--accent); border-radius: 50%;
+      opacity: 0; animation: float-up linear infinite;
+    }
+    @keyframes float-up {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    /* ========== FADE IN ========== */
+    .fade-in {
+      opacity: 0; transform: translateY(30px);
+      animation: fadeInUp 0.8s ease forwards;
+    }
+    .fade-in-delay-1 { animation-delay: 0.2s; }
+    .fade-in-delay-2 { animation-delay: 0.4s; }
+    .fade-in-delay-3 { animation-delay: 0.6s; }
+    .fade-in-delay-4 { animation-delay: 0.8s; }
+    .fade-in-delay-5 { animation-delay: 1.0s; }
+    @keyframes fadeInUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ========== PULSE GLOW ========== */
+    .pulse-glow {
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 170, 0.2); }
+      50% { box-shadow: 0 0 40px rgba(0, 212, 170, 0.4); }
+    }
+
+    /* ========== HEADER ========== */
+    .header {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(10, 14, 26, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 1rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-size: 1.4rem; font-weight: 700; color: var(--accent);
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+    .nav-links {
+      display: flex; gap: 1.5rem; align-items: center;
+    }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none;
+      font-size: 0.9rem; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+    .mobile-menu-btn {
+      display: none; background: none; border: none;
+      color: var(--text); font-size: 1.3rem; cursor: pointer;
+    }
+
+    /* ========== HERO ========== */
+    .hero {
+      position: relative; z-index: 1;
+      padding: 8rem 1.5rem 4rem;
+      text-align: center;
+      max-width: 800px; margin: 0 auto;
+    }
+    .hero-badge {
+      display: inline-block; padding: 0.4rem 1rem;
+      background: rgba(0, 212, 170, 0.1); border: 1px solid rgba(0, 212, 170, 0.2);
+      border-radius: 50px; color: var(--accent); font-size: 0.8rem;
+      font-weight: 600; margin-bottom: 1.5rem; letter-spacing: 0.5px;
+    }
+    .hero h1 {
+      font-size: 2.4rem; line-height: 1.2;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      color: var(--text-muted); font-size: 1.05rem;
+      max-width: 600px; margin: 0 auto 2rem;
+    }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.85rem 2rem;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      border: none; border-radius: 12px; color: #fff;
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 212, 170, 0.3);
+    }
+
+    /* ========== SECTIONS ========== */
+    .section {
+      position: relative; z-index: 1;
+      padding: 4rem 1.5rem;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .section-title {
+      font-size: 1.8rem; margin-bottom: 0.5rem;
+      text-align: center;
+    }
+    .section-subtitle {
+      color: var(--text-muted); text-align: center;
+      margin-bottom: 3rem; font-size: 0.95rem;
+    }
+
+    /* ========== CARDS ========== */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 1.8rem;
+      backdrop-filter: blur(10px);
+      transition: transform 0.3s, border-color 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(0, 212, 170, 0.2);
+    }
+    .card-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; margin-bottom: 1.2rem;
+    }
+    .card h3 { font-size: 1.15rem; margin-bottom: 0.6rem; }
+    .card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; }
+
+    /* ========== STATS ========== */
+    .stats-bar {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem; max-width: 900px; margin: 0 auto;
+      padding: 2rem; background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px; backdrop-filter: blur(10px);
+    }
+    .stat-item { text-align: center; }
+    .stat-item h2 {
+      font-size: 2rem; color: var(--accent);
+      margin-bottom: 0.3rem;
+    }
+    .stat-item p { color: var(--text-muted); font-size: 0.85rem; }
+
+    /* ========== MISSION ========== */
+    .mission-box {
+      background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(0,119,255,0.08));
+      border: 1px solid rgba(0,212,170,0.15);
+      border-radius: 20px; padding: 2.5rem;
+      text-align: center; max-width: 700px; margin: 0 auto;
+    }
+    .mission-box h3 {
+      font-size: 1.4rem; margin-bottom: 1rem;
+      color: var(--accent-light);
+    }
+    .mission-box p { color: var(--text-muted); font-size: 1rem; line-height: 1.8; }
+
+    /* ========== FOOTER ========== */
+    .footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 3rem 1.5rem 2rem;
+      margin-top: 2rem;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 2rem; max-width: 1100px; margin: 0 auto 2rem;
+    }
+    .footer-col h4 {
+      font-size: 0.85rem; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--text);
+      margin-bottom: 1.2rem;
+    }
+    .footer-col a {
+      display: block; color: var(--text-muted);
+      text-decoration: none; font-size: 0.9rem;
+      margin-bottom: 0.7rem; transition: color 0.2s;
+    }
+    .footer-col a:hover { color: var(--accent); }
+    .footer-bottom {
+      text-align: center; color: var(--text-muted);
+      font-size: 0.8rem; padding-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      max-width: 1100px; margin: 0 auto;
+    }
+
+    /* ========== MOBILE ========== */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .mobile-menu-btn { display: block; }
+      .hero h1 { font-size: 1.8rem; }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .section { padding: 3rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Particles -->
+  <div class="particles-container" id="particles"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <a href="index.html" class="logo">
+      <div class="logo-icon">🔥</div>
+      ApexVault
+    </a>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="about.html" class="active">About Us</a>
+      <a href="services.html">Services</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html">Login</a>
+    </nav>
+    <button class="mobile-menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-badge fade-in">OUR STORY</div>
+    <h1 class="fade-in fade-in-delay-1">Building the Future of Digital Wealth</h1>
+    <p class="fade-in fade-in-delay-2">
+      ApexVault was born from a simple belief: everyone deserves access to powerful, transparent, and secure investment tools. We are not just a platform — we are a movement toward financial freedom.
+    </p>
+    <a href="services.html" class="btn-primary fade-in fade-in-delay-3">
+      Explore Our Services <i class="fas fa-arrow-right"></i>
+    </a>
+  </section>
+
+  <!-- Stats -->
+  <section class="section">
+    <div class="stats-bar fade-in">
+      <div class="stat-item">
+        <h2>50K+</h2>
+        <p>Active Investors</p>
+      </div>
+      <div class="stat-item">
+        <h2>$120M+</h2>
+        <p>Assets Managed</p>
+      </div>
+      <div class="stat-item">
+        <h2>99.9%</h2>
+        <p>Uptime Guarantee</p>
+      </div>
+      <div class="stat-item">
+        <h2>150+</h2>
+        <p>Countries Served</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Choose Us -->
+  <section class="section">
+    <h2 class="section-title fade-in">Why Choose ApexVault?</h2>
+    <p class="section-subtitle fade-in">We combine cutting-edge technology with human-centered design to deliver an unmatched investment experience.</p>
+    <div class="cards-grid">
+      <div class="card fade-in fade-in-delay-1">
+        <div class="card-icon">🛡️</div>
+        <h3>Bank-Grade Security</h3>
+        <p>Your funds are protected by military-grade encryption, multi-signature wallets, and real-time threat monitoring. We never compromise on safety.</p>
+      </div>
+      <div class="card fade-in fade-in-delay-2">
+        <div class="card-icon">⚡</div>
+        <h3>Lightning-Fast Execution</h3>
+        <p>Our infrastructure processes transactions in milliseconds. Deposit, invest, and withdraw with zero friction and absolute speed.</p>
+      </div>
+      <div class="card fade-in fade-in-delay-3">
+        <div class="card-icon">📊</div>
+        <h3>Smart Analytics</h3>
+        <p>Real-time profit tracking, predictive insights, and detailed portfolio breakdowns help you make informed decisions every step of the way.</p>
+      </div>
+      <div class="card fade-in fade-in-delay-4">
+        <div class="card-icon">🌍</div>
+        <h3>Global Accessibility</h3>
+        <p>Invest from anywhere in the world. Our platform supports multiple currencies and networks, breaking down borders in finance.</p>
+      </div>
+      <div class="card fade-in fade-in-delay-1">
+        <div class="card-icon">🤝</div>
+        <h3>24/7 Human Support</h3>
+        <p>Our dedicated support team is available around the clock via live chat, email, and WhatsApp to assist you with anything you need.</p>
+      </div>
+      <div class="card fade-in fade-in-delay-2">
+        <div class="card-icon">🔒</div>
+        <h3>Full Transparency</h3>
+        <p>No hidden fees. No fine print. Every charge, every profit, and every transaction is visible to you in real-time. Trust is our currency.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mission -->
+  <section class="section">
+    <div class="mission-box fade-in">
+      <h3>Our Mission</h3>
+      <p>
+        To democratize wealth-building by creating the most intuitive, secure, and rewarding investment platform on the planet. We envision a world where financial growth is not a privilege — it is a right.
+      </p>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section" style="text-align:center;">
+    <h2 class="section-title fade-in">Ready to Start Your Journey?</h2>
+    <p class="section-subtitle fade-in">Join thousands of investors who trust ApexVault to grow their wealth.</p>
+    <a href="login.html" class="btn-primary pulse-glow fade-in fade-in-delay-1">Get Started Now</a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="about.html">About Us</a>
+        <a href="#">Careers</a>
+        <a href="#">Press</a>
+        <a href="#">Blog</a>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <a href="#">Help Center</a>
+        <a href="#">Market Data</a>
+        <a href="#">API Docs</a>
+        <a href="#">Security</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">Cookie Policy</a>
+        <a href="#">Disclosures</a>
+      </div>
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="services.html">Services</a>
+        <a href="contact.html">Contact Us</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      © 2026 ApexVault. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    // Particles
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (6 + Math.random() * 10) + 's';
+      p.style.animationDelay = (Math.random() * 8) + 's';
+      p.style.width = (2 + Math.random() * 4) + 'px';
+      p.style.height = p.style.width;
+      container.appendChild(p);
+    }
+
+    // Mobile menu toggle (basic)
+    function toggleMenu() {
+      const nav = document.querySelector('.nav-links');
+      nav.style.display = nav.style.display === 'flex' ? 'none' : 'flex';
+      nav.style.position = 'absolute';
+      nav.style.top = '60px';
+      nav.style.right = '1rem';
+      nav.style.flexDirection = 'column';
+      nav.style.background = 'var(--card-bg)';
+      nav.style.padding = '1rem';
+      nav.style.borderRadius = '12px';
+      nav.style.border = '1px solid rgba(255,255,255,0.08)';
+      nav.style.backdropFilter = 'blur(12px)';
+      nav.style.zIndex = '200';
+    }
+  </script>
+</body>
+  </html>
