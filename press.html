@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Press - ApexVault</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --card-bg: rgba(17, 24, 39, 0.7);
+      --accent: #00d4aa;
+      --gradient-start: #00d4aa;
+      --gradient-end: #0077ff;
+      --text: #f0f4f8;
+      --text-muted: #94a3b8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .particles-container {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    .particle {
+      position: absolute; width: 4px; height: 4px;
+      background: var(--accent); border-radius: 50%;
+      opacity: 0; animation: float-up linear infinite;
+    }
+    @keyframes float-up {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+    .fade-in {
+      opacity: 0; transform: translateY(20px);
+      animation: fadeInUp 0.7s ease forwards;
+    }
+    .fade-in-delay-1 { animation-delay: 0.2s; }
+    .fade-in-delay-2 { animation-delay: 0.4s; }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+    .header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(10, 14, 26, 0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 1rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      font-size: 1.5rem; font-weight: 800;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; text-decoration: none;
+      cursor: pointer; transition: transform 0.3s;
+    }
+    .logo:hover { transform: scale(1.05); }
+    .back-btn {
+      color: var(--text-muted); text-decoration: none;
+      font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;
+      transition: color 0.2s;
+    }
+    .back-btn:hover { color: var(--accent); }
+
+    .main {
+      position: relative; z-index: 1;
+      padding: 7rem 1.5rem 4rem;
+      max-width: 720px; margin: 0 auto;
+    }
+    .page-title {
+      font-size: 2rem; margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #fff, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .page-subtitle {
+      color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;
+    }
+    .content-box {
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 2rem;
+      backdrop-filter: blur(10px);
+    }
+    .content-box h3 {
+      font-size: 1.1rem; color: var(--accent);
+      margin: 1.5rem 0 0.6rem;
+    }
+    .content-box h3:first-child { margin-top: 0; }
+    .content-box p {
+      color: var(--text-muted); font-size: 0.92rem;
+      margin-bottom: 1rem;
+    }
+    .content-box ul {
+      color: var(--text-muted); font-size: 0.92rem;
+      padding-left: 1.2rem; margin-bottom: 1rem;
+    }
+    .content-box li { margin-bottom: 0.4rem; }
+    .content-box a { color: var(--accent); text-decoration: none; }
+    .content-box a:hover { text-decoration: underline; }
+
+    .footer {
+      position: relative; z-index: 1;
+      text-align: center; padding: 2rem 1rem;
+      color: var(--text-muted); font-size: 0.8rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    
+  </style>
+</head>
+<body>
+  <div class="particles-container" id="particles"></div>
+
+  <header class="header">
+    <a href="index.html" class="logo">ApexVault</a>
+    <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+  </header>
+
+  <main class="main">
+    <h1 class="page-title fade-in">Press & Media</h1>
+    <p class="page-subtitle fade-in fade-in-delay-1">ApexVault Platform</p>
+    <div class="content-box fade-in fade-in-delay-2">
+      <h3>Media Inquiries</h3>
+<p>For press kits, interview requests, and media partnerships, please contact our communications team.</p>
+
+<h3>Recent Coverage</h3>
+<p><strong>July 2026</strong> — ApexVault surpasses $120M in managed assets across 150+ countries.</p>
+<p><strong>June 2026</strong> — ApexVault launches new Pro and Ultimate investment tiers with up to 40% returns.</p>
+<p><strong>May 2026</strong> — ApexVault featured in Fintech Weekly as a top emerging wealth platform.</p>
+
+<h3>Brand Assets</h3>
+<p>Our official logo, color palette, and brand guidelines are available upon request. Please email <a href="mailto:press@apexvault.com">press@apexvault.com</a> for access.</p>
+
+<h3>Press Contact</h3>
+<p>Email: <a href="mailto:press@apexvault.com">press@apexvault.com</a><br>Response time: within 24 hours</p>
+    </div>
+  </main>
+
+  <footer class="footer">
+    © 2026 ApexVault. All rights reserved.
+  </footer>
+
+  <script>
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 25; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (6 + Math.random() * 10) + 's';
+      p.style.animationDelay = (Math.random() * 8) + 's';
+      p.style.width = (2 + Math.random() * 4) + 'px';
+      p.style.height = p.style.width;
+      container.appendChild(p);
+    }
+  </script>
+</body>
+</html>
