@@ -248,11 +248,23 @@ window.showSection = function(sectionName) {
   const section = document.getElementById(sectionName + 'Section');
   if (section) section.style.display = 'block';
   
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  if (typeof event !== 'undefined' && event && event.target && event.target.closest) {
-    const navItem = event.target.closest('.nav-item');
-    if (navItem) navItem.classList.add('active');
-  }
+  // FIX: Update sidebar active state (.drawer-link)
+  document.querySelectorAll('.drawer-link').forEach(link => link.classList.remove('active'));
+  document.querySelectorAll('.drawer-link').forEach(link => {
+    const onclickStr = link.getAttribute('onclick') || '';
+    if (onclickStr.includes("showSection('" + sectionName + "')")) {
+      link.classList.add('active');
+    }
+  });
+  
+  // FIX: Update bottom nav active state (.nav-tab)
+  document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    const onclickStr = tab.getAttribute('onclick') || '';
+    if (onclickStr.includes("showSection('" + sectionName + "')")) {
+      tab.classList.add('active');
+    }
+  });
   
   const titles = {
     overview: 'Dashboard',
@@ -415,6 +427,10 @@ window.submitInvest = async function(event) {
     alert('❌ Error: ' + error.message);
   }
 };
+window.openNotifications = function() {
+  alert('🔔 No new notifications');
+};
+
 // ========== DEPOSIT MODAL ==========
 window.openDepositModal = function() {
   const amountEl = document.getElementById('depositAmount');
