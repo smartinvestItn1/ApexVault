@@ -90,7 +90,7 @@
       <button class="nav-btn" onclick="window.location.href='login.html'">Login</button>
     </div>
   </nav>
-
+  
   <!-- ========== HERO ========== -->
   <section class="hero" id="home">
     <div class="hero-content">
@@ -102,6 +102,16 @@
         <button class="btn-secondary" onclick="window.location.href='dashboard.html'">View Dashboard</button>
       </div>
     </div>
+  </section> 
+  <section class="trust-bar fade-in">
+  <p>Trusted by investors worldwide</p>
+  <div class="trust-logos">
+    <div class="trust-item"><i class="fas fa-shield-alt"></i><span>256-bit SSL</span></div>
+    <div class="trust-item"><i class="fas fa-lock"></i><span>Bank-Grade</span></div>
+    <div class="trust-item"><i class="fas fa-user-shield"></i><span>KYC Verified</span></div>
+    <div class="trust-item"><i class="fas fa-globe"></i><span>150+ Countries</span></div>
+    <div class="trust-item"><i class="fas fa-headset"></i><span>24/7 Support</span></div>
+  </div>
   </section>
   <!-- TOP MARKET TICKER -->
 <div class="market-ticker-wrap">
@@ -435,6 +445,14 @@
       </div>
     </div>
   </section>
+  <section class="section">
+  <div class="stats-row fade-in">
+    <div class="stat-box"><h2 class="counter" data-target="50000">0</h2><p>Active Investors</p></div>
+    <div class="stat-box"><h2 class="counter" data-target="120">0</h2><p>$ Million Managed</p></div>
+    <div class="stat-box"><h2 class="counter" data-target="150">0</h2><p>Countries Served</p></div>
+    <div class="stat-box"><h2 class="counter" data-target="99">0</h2><p>% Uptime</p></div>
+  </div>
+  </section>
   <!-- LIVE MARKET CHART SECTION -->
 <section class="market-section">
   <h2>Live Market Overview</h2>
@@ -472,7 +490,25 @@
       <button class="btn-primary" onclick="window.location.href='create-account.html'">Create Free Account</button>
     </div>
   </section>
-
+  <section class="live-feed-section fade-in">
+  <h3>Live Platform Activity</h3>
+  <div class="live-feed" id="liveFeed">
+  </div>
+  </section>
+  <section class="section" style="text-align:center;">
+  <h2 class="section-title fade-in">Trade Anywhere</h2>
+  <p class="section-subtitle fade-in">Download the ApexVault app for iOS and Android.</p>
+  <div class="app-badges fade-in">
+    <a href="#" class="app-badge">
+      <i class="fab fa-apple"></i>
+      <div><small>Download on the</small><strong>App Store</strong></div>
+    </a>
+    <a href="#" class="app-badge">
+      <i class="fab fa-google-play"></i>
+      <div><small>Get it on</small><strong>Google Play</strong></div>
+    </a>
+  </div>
+  </section>
   <!-- ========== FOOTER ========== -->
   <footer>
     <div class="footer-inner">
@@ -655,7 +691,57 @@ window.toggleFaq = function(el) {
     icon.textContent = '−';
   }
 };
-    
+  const names = ['Alex M.', 'Sarah K.', 'James L.', 'Maria G.', 'David R.', 'Emma T.', 'Ryan B.', 'Lisa W.'];
+const actions = [
+  { type: 'deposit', text: 'deposited', min: 500, max: 5000 },
+  { type: 'withdraw', text: 'withdrew', min: 200, max: 2000 },
+  { type: 'deposit', text: 'invested', min: 1000, max: 10000 }
+];
+
+function addFeedItem() {
+  const feed = document.getElementById('liveFeed');
+  const name = names[Math.floor(Math.random() * names.length)];
+  const action = actions[Math.floor(Math.random() * actions.length)];
+  const amount = (Math.random() * (action.max - action.min) + action.min).toFixed(2);
+  
+  const div = document.createElement('div');
+  div.className = 'feed-item';
+  div.innerHTML = `<span class="feed-user">${name} ${action.text}</span><span class="feed-amount ${action.type}">$${amount}</span>`;
+  
+  feed.insertBefore(div, feed.firstChild);
+  if (feed.children.length > 5) feed.removeChild(feed.lastChild);
+}
+
+// Initial fill
+for (let i = 0; i < 5; i++) addFeedItem();
+// Add new item every 4 seconds
+setInterval(addFeedItem, 4000);
+// Animated counters
+const counters = document.querySelectorAll('.counter');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const counter = entry.target;
+      const target = +counter.getAttribute('data-target');
+      const duration = 2000;
+      const increment = target / (duration / 16);
+      let current = 0;
+      const update = () => {
+        current += increment;
+        if (current < target) {
+          counter.textContent = Math.floor(current).toLocaleString();
+          requestAnimationFrame(update);
+        } else {
+          counter.textContent = target.toLocaleString() + (target === 99 ? '' : '+');
+        }
+      };
+      update();
+      observer.unobserve(counter);
+    }
+  });
+}, { threshold: 0.5 });
+counters.forEach(c => observer.observe(c));
+  
 // ========== START EVERYTHING ==========
 document.addEventListener('DOMContentLoaded', () => {
   createParticles();
