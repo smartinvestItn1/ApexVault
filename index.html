@@ -104,7 +104,7 @@
     </div>
   </section> 
   <section class="trust-bar fade-in">
-  <p>Trusted by investors worldwide</p>
+  <p style = "color: lightblue; text-align: center;">Trusted by investors worldwide</p>
   <div class="trust-logos">
     <div class="trust-item"><i class="fas fa-shield-alt"></i><span>256-bit SSL</span></div>
     <div class="trust-item"><i class="fas fa-lock"></i><span>Bank-Grade</span></div>
@@ -447,8 +447,8 @@
   </section>
   <section class="section">
   <div class="stats-row fade-in">
-    <div class="stat-box"><h2 class="counter" data-target="50000">0</h2><p>Active Investors</p></div>
-    <div class="stat-box"><h2 class="counter" data-target="120">0</h2><p>$ Million Managed</p></div>
+    <div class="stat-box"><h2 class="counter" data-target="10000000">0</h2><p>Active Investors</p></div>
+    <div class="stat-box"><h2 class="counter" data-target="2.4">0</h2><p>$ billions Managed</p></div>
     <div class="stat-box"><h2 class="counter" data-target="150">0</h2><p>Countries Served</p></div>
     <div class="stat-box"><h2 class="counter" data-target="99">0</h2><p>% Uptime</p></div>
   </div>
@@ -691,7 +691,21 @@ window.toggleFaq = function(el) {
     icon.textContent = '−';
   }
 };
-  const names = ['Alex M.', 'Sarah K.', 'James L.', 'Maria G.', 'David R.', 'Emma T.', 'Ryan B.', 'Lisa W.'];
+const names = [
+  'Alex M.', 'Sarah K.', 'James L.', 'Maria G.', 'David R.', 'Emma T.', 'Ryan B.', 'Lisa W.',
+  'John D.', 'Sophie N.', 'Michael C.', 'Olivia H.', 'Daniel P.', 'Chloe A.', 'Matthew F.', 'Grace J.',
+  'Andrew S.', 'Zoe W.', 'Christopher B.', 'Mia V.', 'Joshua K.', 'Lily X.', 'Joseph Y.', 'Hannah Z.',
+  'Kevin Q.', 'Abigail R.', 'Brian T.', 'Madison U.', 'Jason I.', 'Ella O.', 'Justin G.', 'Avery E.',
+  'Tyler N.', 'Sofia M.', 'Brandon L.', 'Victoria K.', 'Aaron J.', 'Scarlett H.', 'Eric G.', 'Aria F.',
+  'Stephen D.', 'Layla C.', 'Dylan B.', 'Zoey A.', 'Adam V.', 'Nora W.', 'Nathan T.', 'Camila S.',
+  'Samuel R.', 'Riley Q.', 'Patrick P.', 'Stella O.', 'Benjamin N.', 'Lucy M.', 'Jack L.', 'Paisley K.',
+  'Henry J.', 'Penelope I.', 'Owen H.', 'Natalie G.', 'Gabriel F.', 'Ruby E.', 'Caleb D.', 'Eva C.',
+  'Zachary B.', 'Claire A.', 'Christian Z.', 'Violet Y.', 'Jonathan X.', 'Aubrey W.', 'Isaiah V.', 'Genesis U.',
+  'Charles T.', 'Bella S.', 'Thomas R.', 'Skylar Q.', 'Robert P.', 'Savannah O.', 'Elijah N.', 'Allison M.',
+  'Luke L.', 'Brooklyn K.', 'Anthony J.', 'Naomi I.', 'Isaac H.', 'Alice G.', 'Leo F.', 'Hailey E.',
+  'Julian D.', 'Samantha C.', 'Connor B.', 'Maya A.', 'Dominic Z.', 'Eleanor Y.', 'Adrian X.', 'Gabriella W.',
+  'Hunter V.', 'masoud U.', 'Cameron T.', 'Addison S.', 'Jordan R.', 'Luna Q.', 'Ian P.', 'Leah O.'
+];
 const actions = [
   { type: 'deposit', text: 'deposited', min: 500, max: 5000 },
   { type: 'withdraw', text: 'withdrew', min: 200, max: 2000 },
