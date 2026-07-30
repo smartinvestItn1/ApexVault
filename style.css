@@ -1108,4 +1108,113 @@ footer {
     height: 22px;
   }
 }
+/* ========== LIVE MARKET TICKER ========== */
+.market-ticker-wrap {
+  width: 100%;
+  overflow: hidden;
+  background: rgba(0, 212, 170, 0.06);
+  border-top: 1px solid rgba(0, 212, 170, 0.12);
+  border-bottom: 1px solid rgba(0, 212, 170, 0.12);
+  padding: 0.7rem 0;
+  position: relative;
+}
+
+.market-ticker-wrap::before,
+.market-ticker-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 60px;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.market-ticker-wrap::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--bg), transparent);
+}
+
+.market-ticker-wrap::after {
+  right: 0;
+  background: linear-gradient(-90deg, var(--bg), transparent);
+}
+
+.market-ticker {
+  display: flex;
+  gap: 3rem;
+  width: max-content;
+  animation: ticker-scroll 30s linear infinite;
+}
+
+.market-ticker:hover {
+  animation-play-state: paused;
+}
+
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.ticker-item .coin {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ticker-item .price {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.ticker-item .change {
+  font-size: 0.8rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.ticker-item .change.up {
+  color: var(--success);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.ticker-item .change.down {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* ========== LIVE MARKET IFRAME SECTION ========== */
+.market-section {
+  padding: 3rem 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.market-section h2 {
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.market-section p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.market-iframe-wrap {
+  background: var(--card-bg);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  }
 
