@@ -69,34 +69,35 @@ function getTodayKey() {
   const d = new Date();
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
-
-// ========== LOAD USER DATA ==========
 async function loadUserData() {
   if (!currentUser) return;
-  
   uid = currentUser.uid;
-  
-  const snapshot = await get(ref(db, 'users/' + currentUser.uid));
-  userData = snapshot.val() || {};
-  
-  if (userData.balance === undefined) {
-    await update(ref(db, 'users/' + currentUser.uid), { balance: 0 });
-    userData.balance = 0;
-  }
-  
-  // Update drawer user info
-  const userNameEl = document.getElementById('userName');
-  const userEmailEl = document.getElementById('userEmail');
-  const userAvatarEl = document.getElementById('userAvatar');
-  
-  if (userNameEl) userNameEl.textContent = userData.fullName || 'User';
-  if (userEmailEl) userEmailEl.textContent = userData.email || '';
-  if (userAvatarEl) userAvatarEl.textContent = (userData.fullName || 'U').charAt(0).toUpperCase();
-  
-  updateDashboardStats();
+
+  // Real-time listener so balance updates instantly when referral bonus hits
+  onValue(ref(db, 'users/' + currentUser.uid), (snapshot) => {
+    userData = snapshot.val() || {};
+    
+    if (userData.balance === undefined) {
+      update(ref(db, 'users/' + currentUser.uid), { balance: 0 });
+      userData.balance = 0;
+    }
+    
+    // Update drawer user info
+    const userNameEl = document.getElementById('userName');
+    const userEmailEl = document.getElementById('userEmail');
+    const userAvatarEl = document.getElementById('userAvatar');
+    
+    if (userNameEl) userNameEl.textContent = userData.fullName || 'User';
+    if (userEmailEl) userEmailEl.textContent = userData.email || '';
+    if (userAvatarEl) userAvatarEl.textContent = (userData.fullName || 'U').charAt(0).toUpperCase();
+    
+    updateDashboardStats();
+  });
+
   await loadActiveInvestments();
   await loadTransactions();
   loadPending();
+  
   const refLink = 'https://smartinvestitn1.github.io/ApexVault/create-account.html?ref=' + currentUser.uid;
   const refLinkEl = document.getElementById('referralLink');
   if (refLinkEl) refLinkEl.value = refLink;
@@ -105,6 +106,7 @@ async function loadUserData() {
   updateWithdrawLimitDisplay();
   checkInvestmentLock();
 }
+
 // ========== UPDATE DASHBOARD STATS ==========
 function updateDashboardStats() {
   const balance = userData.balance || 0;
@@ -222,9 +224,10 @@ async function completeInvestment(investId) {
   });
   
   await update(ref(db, 'users/' + currentUser.uid), {
-    balance: (userData.balance || 0) + totalReturn,
-    totalInvested: Math.max(0, (userData.totalInvested || 0) - inv.amount)
-  });
+  balance: (userData.balance || 0) + totalReturn,
+  totalInvested: Math.max(0, (userData.totalInvested || 0) - inv.amount),
+  totalProfit: (userData.totalProfit || 0) + inv.expectedProfit  // ← ADD THIS
+});
   
   await push(ref(db, 'users/' + currentUser.uid + '/history'), {
     type: 'invest_return',
@@ -407,8 +410,8 @@ window.submitInvest = async function(event) {
       balance: balance - amount,
       totalInvested: (userData.totalInvested || 0) + amount
     });
-    // ========== REFERRAL BONUS ==========
-if (userData.referredBy) {
+  // ========== REFERRAL BONUS (FIRST INVESTMENT ONLY) ==========
+if (userData.referredBy && !userData.referralBonusPaid) {
   const bonus = amount * (REFERRAL_BONUS_PERCENT / 100);
   
   try {
@@ -430,6 +433,11 @@ if (userData.referredBy) {
         status: 'completed',
         date: new Date().toISOString(),
         timestamp: Date.now()
+      });
+      
+      // Mark bonus as paid so it never triggers again
+      await update(ref(db, 'users/' + currentUser.uid), {
+        referralBonusPaid: true
       });
     }
   } catch (err) {
