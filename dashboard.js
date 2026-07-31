@@ -1,7 +1,6 @@
 // ========== APEXVAULT DASHBOARD JAVASCRIPT ==========
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, push, onValue } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBt77e2QQCtOyCVCupw-6jIJ8MVyHf3UKY",
@@ -70,6 +69,23 @@ function getTodayKey() {
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
 
+// ========== UPDATE DASHBOARD STATS ==========
+function updateDashboardStats() {
+  const balance = userData.balance || 0;
+  const invested = userData.totalInvested || 0;
+  const profit = userData.totalProfit || 0;
+  const refEarned = userData.referralEarnings || 0;
+  
+  const balEl = document.getElementById('totalBalance');
+  const invEl = document.getElementById('totalInvested');
+  const profEl = document.getElementById('totalProfit');
+  const refEl = document.getElementById('referralEarnings');
+  
+  if (balEl) balEl.textContent = '$' + balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  if (invEl) invEl.textContent = '$' + invested.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  if (profEl) profEl.textContent = '$' + profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  if (refEl) refEl.textContent = '$' + refEarned.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
 async function loadUserData() {
   if (!currentUser) return;
   
@@ -83,7 +99,6 @@ async function loadUserData() {
     userData.balance = 0;
   }
   
-  // Update drawer user info
   const userNameEl = document.getElementById('userName');
   const userEmailEl = document.getElementById('userEmail');
   const userAvatarEl = document.getElementById('userAvatar');
@@ -105,25 +120,6 @@ async function loadUserData() {
   updateWithdrawLimitDisplay();
   checkInvestmentLock();
 }
-  
-// ========== UPDATE DASHBOARD STATS ==========
-function updateDashboardStats() {
-  const balance = userData.balance || 0;
-  const invested = userData.totalInvested || 0;
-  const profit = userData.totalProfit || 0;
-  const refEarned = userData.referralEarnings || 0;
-  
-  const balEl = document.getElementById('totalBalance');
-  const invEl = document.getElementById('totalInvested');
-  const profEl = document.getElementById('totalProfit');
-  const refEl = document.getElementById('referralEarnings');
-  
-  if (balEl) balEl.textContent = '$' + balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-  if (invEl) invEl.textContent = '$' + invested.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-  if (profEl) profEl.textContent = '$' + profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-  if (refEl) refEl.textContent = '$' + refEarned.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-}
-
 // ========== WITHDRAW LIMIT DISPLAY ==========
 async function updateWithdrawLimitDisplay() {
   const todayKey = getTodayKey();
@@ -1019,16 +1015,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await loadUserData();
     showSection('overview');
-    
-    // Real-time listener for balance/profit/referral updates ONLY
-    // This runs AFTER initial load so it won't crash anything
-    onValue(ref(db, 'users/' + currentUser.uid), (snapshot) => {
-      const freshData = snapshot.val();
-      if (freshData) {
-        userData = freshData;
-        updateDashboardStats();
-      }
-    });
     
   } catch (error) {
     console.error('Dashboard init error:', error);
