@@ -97,7 +97,7 @@ async function loadUserData() {
   await loadActiveInvestments();
   await loadTransactions();
   loadPending();
-  const refLink = 'https://smartinvestitn1.github.io/create-account.html?ref=' + currentUser.uid;                                           
+  const refLink = 'https://smartinvestitn1.github.io/ApexVault/create-account.html?ref=' + currentUser.uid;
   const refLinkEl = document.getElementById('referralLink');
   if (refLinkEl) refLinkEl.value = refLink;
   
