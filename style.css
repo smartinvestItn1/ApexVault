@@ -10,8 +10,8 @@
   --text-muted: #8892b0;
   --text-light: #ccd6f6;
   --text-white: #ffffff;
-  --danger: #ef4444;
-  --success: #10b981;
+  --success: #22c55e;   /* ← ADD THIS */
+  --danger: #ef4444;    /* ← ADD THIS */
   --sidebar-width: 280px;
 }
 
@@ -1290,6 +1290,8 @@ footer {
   justify-content: space-between;
   align-items: center;
 }
+.feed-amount.deposit { color: #22c55e; }
+.feed-amount.withdraw { color: #ef4444; }
 .trust-bar {
   text-align: center;
   padding: 1.8rem 1rem;
