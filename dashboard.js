@@ -20,7 +20,7 @@ const db = getDatabase(app);
 // ========== CONFIG ==========
 const DAILY_WITHDRAW_LIMIT = 10000;
 const WITHDRAW_FEE_RATE = 0.02;
-
+const REFERRAL_BONUS_PERCENT = 5; // Referrer earns 5% of investment
 const DEPOSIT_ADDRESSES = {
   USDT_BEP20: "0x681ef5FF6d9e2FD31ce87Cd256d09a0e4755F9d9",
   USDT_TRC20: "TBdkLH7z9d6p6NKk3pZcoDdMzwoSxTfcQA"
@@ -407,6 +407,35 @@ window.submitInvest = async function(event) {
       balance: balance - amount,
       totalInvested: (userData.totalInvested || 0) + amount
     });
+    // ========== REFERRAL BONUS ==========
+if (userData.referredBy) {
+  const bonus = amount * (REFERRAL_BONUS_PERCENT / 100);
+  
+  try {
+    const referrerRef = ref(db, 'users/' + userData.referredBy);
+    const referrerSnap = await get(referrerRef);
+    const referrerData = referrerSnap.val();
+    
+    if (referrerData) {
+      await update(referrerRef, {
+        balance: (referrerData.balance || 0) + bonus,
+        referralEarnings: (referrerData.referralEarnings || 0) + bonus
+      });
+      
+      await push(ref(db, 'users/' + userData.referredBy + '/history'), {
+        type: 'referral_bonus',
+        amount: bonus,
+        fromUser: currentUser.uid,
+        fromName: userData.fullName || 'User',
+        status: 'completed',
+        date: new Date().toISOString(),
+        timestamp: Date.now()
+      });
+    }
+  } catch (err) {
+    console.error('Referral bonus failed:', err);
+  }
+}
     
     await push(ref(db, 'users/' + currentUser.uid + '/history'), {
       type: 'invest',
