@@ -393,12 +393,12 @@
     
     console.log('🔥 Firebase initialized:', app.name);
     console.log('🔥 Database URL:', firebaseConfig.databaseURL);
-    // Capture referral code from URL
-const urlParams = new URLSearchParams(window.location.search);
+   const urlParams = new URLSearchParams(window.location.search);
 const refCode = urlParams.get('ref');
 if (refCode) {
   sessionStorage.setItem('apexvault_ref', refCode);
-}
+    }
+    
    // Toggle password visibility
     window.togglePassword = function(inputId, btn) {
       const input = document.getElementById(inputId);
@@ -530,17 +530,18 @@ if (refCode) {
 
         // 2. SAVE PROFILE DATA TO DATABASE (NO PASSWORD!)
         const userData = {
-          fullName: fullName,
-          email: email,
-          phone: phone,
-          balance: 0,
-          totalInvested: 0,
-          totalProfit: 0,
-          referralEarnings: 0,
-          createdAt: new Date().toISOString(),
-          status: 'active'
-        };
-
+      fullName: fullName,
+      email: email,
+      phone: phone,
+      balance: 0,
+      totalInvested: 0,
+      totalProfit: 0,
+      referralEarnings: 0,
+      referredBy: sessionStorage.getItem('apexvault_ref') || null,  // ← ADD THIS
+      createdAt: new Date().toISOString(),
+      status: 'active'
+      };
+          
         console.log('💾 Saving profile to database...', userData);
         await set(ref(db, 'users/' + userId), userData);
         console.log('✅ Profile saved to database');
