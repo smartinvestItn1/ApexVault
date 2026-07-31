@@ -393,8 +393,13 @@
     
     console.log('🔥 Firebase initialized:', app.name);
     console.log('🔥 Database URL:', firebaseConfig.databaseURL);
-
-    // Toggle password visibility
+    // Capture referral code from URL
+const urlParams = new URLSearchParams(window.location.search);
+const refCode = urlParams.get('ref');
+if (refCode) {
+  sessionStorage.setItem('apexvault_ref', refCode);
+}
+   // Toggle password visibility
     window.togglePassword = function(inputId, btn) {
       const input = document.getElementById(inputId);
       if (input.type === 'password') {
