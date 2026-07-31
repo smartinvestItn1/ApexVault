@@ -98,7 +98,7 @@ async function loadUserData() {
   await loadTransactions();
   loadPending();
   
-  const refLink = 'https://apexvault.com/ref/' + currentUser.uid;
+  const refLink = 'https://martinvestitn1.github.io/signup.html?ref=' + currentUser.uid;                  
   const refLinkEl = document.getElementById('referralLink');
   if (refLinkEl) refLinkEl.value = refLink;
   
