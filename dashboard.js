@@ -1,7 +1,7 @@
 // ========== APEXVAULT DASHBOARD JAVASCRIPT ==========
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+import { getDatabase, ref, set, get, update, push, onValue } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBt77e2QQCtOyCVCupw-6jIJ8MVyHf3UKY",
@@ -69,31 +69,30 @@ function getTodayKey() {
   const d = new Date();
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
+
 async function loadUserData() {
   if (!currentUser) return;
+  
   uid = currentUser.uid;
-
-  // Real-time listener so balance updates instantly when referral bonus hits
-  onValue(ref(db, 'users/' + currentUser.uid), (snapshot) => {
-    userData = snapshot.val() || {};
-    
-    if (userData.balance === undefined) {
-      update(ref(db, 'users/' + currentUser.uid), { balance: 0 });
-      userData.balance = 0;
-    }
-    
-    // Update drawer user info
-    const userNameEl = document.getElementById('userName');
-    const userEmailEl = document.getElementById('userEmail');
-    const userAvatarEl = document.getElementById('userAvatar');
-    
-    if (userNameEl) userNameEl.textContent = userData.fullName || 'User';
-    if (userEmailEl) userEmailEl.textContent = userData.email || '';
-    if (userAvatarEl) userAvatarEl.textContent = (userData.fullName || 'U').charAt(0).toUpperCase();
-    
-    updateDashboardStats();
-  });
-
+  
+  const snapshot = await get(ref(db, 'users/' + currentUser.uid));
+  userData = snapshot.val() || {};
+  
+  if (userData.balance === undefined) {
+    await update(ref(db, 'users/' + currentUser.uid), { balance: 0 });
+    userData.balance = 0;
+  }
+  
+  // Update drawer user info
+  const userNameEl = document.getElementById('userName');
+  const userEmailEl = document.getElementById('userEmail');
+  const userAvatarEl = document.getElementById('userAvatar');
+  
+  if (userNameEl) userNameEl.textContent = userData.fullName || 'User';
+  if (userEmailEl) userEmailEl.textContent = userData.email || '';
+  if (userAvatarEl) userAvatarEl.textContent = (userData.fullName || 'U').charAt(0).toUpperCase();
+  
+  updateDashboardStats();
   await loadActiveInvestments();
   await loadTransactions();
   loadPending();
@@ -106,7 +105,7 @@ async function loadUserData() {
   updateWithdrawLimitDisplay();
   checkInvestmentLock();
 }
-
+  
 // ========== UPDATE DASHBOARD STATS ==========
 function updateDashboardStats() {
   const balance = userData.balance || 0;
@@ -1019,7 +1018,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   try {
     await loadUserData();
-    showSection('overview');   // ← ADD THIS LINE
+    showSection('overview');
+    
+    // Real-time listener for balance/profit/referral updates ONLY
+    // This runs AFTER initial load so it won't crash anything
+    onValue(ref(db, 'users/' + currentUser.uid), (snapshot) => {
+      const freshData = snapshot.val();
+      if (freshData) {
+        userData = freshData;
+        updateDashboardStats();
+      }
+    });
     
   } catch (error) {
     console.error('Dashboard init error:', error);
