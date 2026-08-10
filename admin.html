@@ -15,6 +15,7 @@
     <div class="logo">🔥 ApexVault</div>
     <p>Loading admin panel...</p>
     <div class="loading-bar"></div>
+    <button id="skipLoadingBtn" onclick="skipLoading()" style="display:none; margin-top:30px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px 24px; border-radius:10px; cursor:pointer; font-size:0.85rem; font-weight:600;">Skip Loading</button>
   </div>
 
   <!-- ========== MOBILE TOGGLE ========== -->
@@ -473,6 +474,17 @@
   </main>
 
   <!-- Firebase SDK -->
+  <script>
+    window.skipLoading = function() {
+      const overlay = document.getElementById('loginOverlay');
+      if (overlay) overlay.classList.add('hidden');
+    };
+    // Show skip button after 4 seconds
+    setTimeout(() => {
+      const btn = document.getElementById('skipLoadingBtn');
+      if (btn) btn.style.display = 'inline-block';
+    }, 4000);
+  </script>
   <script type="module" src="admin.js"></script>
 
 </body>
