@@ -1,7 +1,6 @@
 // ========== APEXVAULT DASHBOARD JAVASCRIPT ==========
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
-import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBt77e2QQCtOyCVCupw-6jIJ8MVyHf3UKY",
@@ -16,7 +15,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const storage = getStorage(app);
 
 // ========== CONFIG ==========
 const DAILY_WITHDRAW_LIMIT = 10000;
@@ -1111,6 +1109,13 @@ window.handleFileUpload = function(input, previewId, urlId) {
   const file = input.files[0];
   if (!file) return;
 
+  // Validate file size (max 2MB for base64 in DB)
+  if (file.size > 2000000) {
+    alert('Image is too large. Please choose an image under 2MB.');
+    input.value = '';
+    return;
+  }
+
   // Show preview
   const reader = new FileReader();
   reader.onload = function(e) {
@@ -1118,6 +1123,9 @@ window.handleFileUpload = function(input, previewId, urlId) {
     const img = previewDiv.querySelector('img');
     img.src = e.target.result;
     previewDiv.style.display = 'block';
+
+    // Store base64 in hidden input
+    document.getElementById(urlId).value = e.target.result;
 
     // Hide placeholder
     const box = input.closest('.file-upload-box');
@@ -1127,30 +1135,12 @@ window.handleFileUpload = function(input, previewId, urlId) {
   reader.readAsDataURL(file);
 };
 
-async function uploadFileToStorage(file, path, progressId, fillId) {
+async function fileToBase64(file) {
   return new Promise((resolve, reject) => {
-    const fileRef = storageRef(storage, path);
-    const uploadTask = uploadBytesResumable(fileRef, file);
-
-    const progressDiv = document.getElementById(progressId);
-    const fillDiv = document.getElementById(fillId);
-    if (progressDiv) progressDiv.style.display = 'block';
-
-    uploadTask.on('state_changed',
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        if (fillDiv) fillDiv.style.width = progress + '%';
-      },
-      (error) => {
-        if (progressDiv) progressDiv.style.display = 'none';
-        reject(error);
-      },
-      async () => {
-        if (progressDiv) progressDiv.style.display = 'none';
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        resolve(downloadURL);
-      }
-    );
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
 }
 
@@ -1169,66 +1159,43 @@ window.submitKYC = async function(event) {
   if (!idFrontFile) { alert('Please upload your ID front photo'); return; }
   if (!selfieFile) { alert('Please upload your selfie with ID'); return; }
 
-  submitBtn.disabled = true;
-  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+  // Check file sizes
+  if (idFrontFile.size > 2000000) { alert('ID photo is too large. Max 2MB.'); return; }
+  if (selfieFile.size > 2000000) { alert('Selfie is too large. Max 2MB.'); return; }
 
-  let idFrontUrl = '';
-  let selfieUrl = '';
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+  // Show progress
+  const idFrontProgress = document.getElementById('idFrontProgress');
+  const selfieProgress = document.getElementById('selfieProgress');
+  const idFrontFill = document.getElementById('idFrontFill');
+  const selfieFill = document.getElementById('selfieFill');
+
+  if (idFrontProgress) idFrontProgress.style.display = 'block';
+  if (idFrontFill) idFrontFill.style.width = '30%';
 
   try {
-    // Upload ID front
-    try {
-      idFrontUrl = await uploadFileToStorage(
-        idFrontFile, 
-        'kyc/' + currentUser.uid + '/idFront_' + Date.now(),
-        'idFrontProgress',
-        'idFrontFill'
-      );
-    } catch (uploadErr) {
-      console.error('ID front upload error:', uploadErr);
-      // Fallback: use base64 for small images
-      if (idFrontFile.size < 500000) { // under 500KB
-        idFrontUrl = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(idFrontFile);
-        });
-      } else {
-        throw new Error('ID photo upload failed: ' + (uploadErr.message || 'Storage may not be enabled. Please contact support.'));
-      }
-    }
+    // Convert ID front to base64
+    const idFrontBase64 = await fileToBase64(idFrontFile);
+    if (idFrontFill) idFrontFill.style.width = '100%';
 
-    // Upload selfie
-    try {
-      selfieUrl = await uploadFileToStorage(
-        selfieFile,
-        'kyc/' + currentUser.uid + '/selfie_' + Date.now(),
-        'selfieProgress',
-        'selfieFill'
-      );
-    } catch (uploadErr) {
-      console.error('Selfie upload error:', uploadErr);
-      // Fallback: use base64 for small images
-      if (selfieFile.size < 500000) { // under 500KB
-        selfieUrl = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(selfieFile);
-        });
-      } else {
-        throw new Error('Selfie upload failed: ' + (uploadErr.message || 'Storage may not be enabled. Please contact support.'));
-      }
-    }
+    if (selfieProgress) selfieProgress.style.display = 'block';
+    if (selfieFill) selfieFill.style.width = '30%';
 
-    // Save to database
+    // Convert selfie to base64
+    const selfieBase64 = await fileToBase64(selfieFile);
+    if (selfieFill) selfieFill.style.width = '100%';
+
+    // Save to database (base64 images stored directly)
     await set(ref(db, 'users/' + currentUser.uid + '/kyc'), {
       fullName: fullName,
       idNumber: idNumber,
       dob: dob,
       address: address,
       phone: phone,
-      idFront: idFrontUrl,
-      selfie: selfieUrl,
+      idFront: idFrontBase64,
+      selfie: selfieBase64,
       status: 'pending',
       submittedAt: new Date().toISOString(),
       timestamp: Date.now()
@@ -1243,8 +1210,8 @@ window.submitKYC = async function(event) {
       dob: dob,
       address: address,
       phone: phone,
-      idFront: idFrontUrl,
-      selfie: selfieUrl,
+      idFront: idFrontBase64,
+      selfie: selfieBase64,
       status: 'pending',
       submittedAt: new Date().toISOString(),
       timestamp: Date.now()
@@ -1254,10 +1221,12 @@ window.submitKYC = async function(event) {
     checkKYCStatus();
   } catch (error) {
     console.error('KYC submit error:', error);
-    alert('Error: ' + (error.message || 'Failed to submit KYC. Please try again or contact support.'));
+    alert('Error: ' + (error.message || 'Failed to submit KYC. Please try again.'));
   } finally {
     submitBtn.disabled = false;
     submitBtn.innerHTML = 'Submit KYC for Review';
+    if (idFrontProgress) idFrontProgress.style.display = 'none';
+    if (selfieProgress) selfieProgress.style.display = 'none';
   }
 };
 
