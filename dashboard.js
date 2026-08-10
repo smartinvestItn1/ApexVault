@@ -1172,22 +1172,53 @@ window.submitKYC = async function(event) {
   submitBtn.disabled = true;
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
 
+  let idFrontUrl = '';
+  let selfieUrl = '';
+
   try {
     // Upload ID front
-    const idFrontUrl = await uploadFileToStorage(
-      idFrontFile, 
-      'kyc/' + currentUser.uid + '/idFront_' + Date.now(),
-      'idFrontProgress',
-      'idFrontFill'
-    );
+    try {
+      idFrontUrl = await uploadFileToStorage(
+        idFrontFile, 
+        'kyc/' + currentUser.uid + '/idFront_' + Date.now(),
+        'idFrontProgress',
+        'idFrontFill'
+      );
+    } catch (uploadErr) {
+      console.error('ID front upload error:', uploadErr);
+      // Fallback: use base64 for small images
+      if (idFrontFile.size < 500000) { // under 500KB
+        idFrontUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(idFrontFile);
+        });
+      } else {
+        throw new Error('ID photo upload failed: ' + (uploadErr.message || 'Storage may not be enabled. Please contact support.'));
+      }
+    }
 
     // Upload selfie
-    const selfieUrl = await uploadFileToStorage(
-      selfieFile,
-      'kyc/' + currentUser.uid + '/selfie_' + Date.now(),
-      'selfieProgress',
-      'selfieFill'
-    );
+    try {
+      selfieUrl = await uploadFileToStorage(
+        selfieFile,
+        'kyc/' + currentUser.uid + '/selfie_' + Date.now(),
+        'selfieProgress',
+        'selfieFill'
+      );
+    } catch (uploadErr) {
+      console.error('Selfie upload error:', uploadErr);
+      // Fallback: use base64 for small images
+      if (selfieFile.size < 500000) { // under 500KB
+        selfieUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(selfieFile);
+        });
+      } else {
+        throw new Error('Selfie upload failed: ' + (uploadErr.message || 'Storage may not be enabled. Please contact support.'));
+      }
+    }
 
     // Save to database
     await set(ref(db, 'users/' + currentUser.uid + '/kyc'), {
@@ -1222,7 +1253,8 @@ window.submitKYC = async function(event) {
     showSuccessAnimation('KYC Submitted', 'Your verification is under review.', 'overview');
     checkKYCStatus();
   } catch (error) {
-    alert('❌ Error: ' + error.message);
+    console.error('KYC submit error:', error);
+    alert('Error: ' + (error.message || 'Failed to submit KYC. Please try again or contact support.'));
   } finally {
     submitBtn.disabled = false;
     submitBtn.innerHTML = 'Submit KYC for Review';
