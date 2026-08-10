@@ -103,24 +103,49 @@ async function logAdminAction(action, details) {
 
 // ========== LOAD ALL DATA ==========
 async function loadAllData() {
-  const usersSnap = await get(ref(db, 'users'));
-  allUsers = usersSnap.val() || {};
+  let usersSnap, settingsSnap, depositsSnap, withdrawalsSnap, kycSnap;
 
-  const settingsSnap = await get(ref(db, 'platformSettings'));
-  platformSettings = settingsSnap.val() || {
-    transferEnabled: true,
-    investEnabled: true,
-    withdrawEnabled: true
-  };
+  try {
+    usersSnap = await get(ref(db, 'users'));
+    allUsers = usersSnap.val() || {};
+  } catch (err) {
+    console.error('Error loading users:', err);
+    allUsers = {};
+  }
 
-  const depositsSnap = await get(ref(db, 'pendingDeposits'));
-  allDeposits = depositsSnap.val() || {};
+  try {
+    settingsSnap = await get(ref(db, 'platformSettings'));
+    platformSettings = settingsSnap.val() || { transferEnabled: true, investEnabled: true, withdrawEnabled: true };
+  } catch (err) {
+    console.error('Error loading settings:', err);
+    platformSettings = { transferEnabled: true, investEnabled: true, withdrawEnabled: true };
+  }
 
-  const withdrawalsSnap = await get(ref(db, 'pendingWithdrawals'));
-  allWithdrawals = withdrawalsSnap.val() || {};
+  try {
+    depositsSnap = await get(ref(db, 'pendingDeposits'));
+    allDeposits = depositsSnap.val() || {};
+  } catch (err) {
+    console.error('Error loading deposits:', err);
+    allDeposits = {};
+  }
 
-  const kycSnap = await get(ref(db, 'pendingKYC'));
-  allKYC = kycSnap.val() || {};
+  try {
+    withdrawalsSnap = await get(ref(db, 'pendingWithdrawals'));
+    allWithdrawals = withdrawalsSnap.val() || {};
+  } catch (err) {
+    console.error('Error loading withdrawals:', err);
+    allWithdrawals = {};
+  }
+
+  try {
+    kycSnap = await get(ref(db, 'pendingKYC'));
+    allKYC = kycSnap.val() || {};
+  } catch (err) {
+    console.error('Error loading KYC:', err);
+    allKYC = {};
+  }
+
+
 
   updateStats();
   updateToggles();
@@ -962,21 +987,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isAdmin = await checkAdmin();
     if (!isAdmin) return;
 
+    // Safety timeout - if loading takes too long, show error
+    const safetyTimeout = setTimeout(() => {
+      const overlay = document.getElementById('loginOverlay');
+      if (overlay && !overlay.classList.contains('hidden')) {
+        overlay.innerHTML = '<div style="text-align:center; padding:20px;"><div style="font-size:2rem; font-weight:800; background:linear-gradient(90deg, var(--gradient-start), var(--gradient-end)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:16px;">ApexVault</div><p style="color:var(--text-muted); margin-bottom:12px;">Loading is taking longer than expected.</p><p style="color:var(--danger); font-size:0.85rem; margin-bottom:16px;">This may be due to a network issue or Firebase rules.</p><button onclick="location.reload()" style="background:var(--accent); border:none; border-radius:10px; padding:12px 24px; color:var(--bg-deep); font-weight:700; cursor:pointer;">Retry</button><br><a href="login.html" style="color:var(--text-muted); font-size:0.8rem; margin-top:12px; display:inline-block;">Back to Login</a></div>';
+      }
+    }, 15000);
+
     setTimeout(async () => {
       try {
         const overlay = document.getElementById('loginOverlay');
-        if (overlay) overlay.classList.add('hidden');
         await loadAllData();
+        clearTimeout(safetyTimeout);
+        if (overlay) overlay.classList.add('hidden');
       } catch (err) {
+        clearTimeout(safetyTimeout);
         console.error('Load data error:', err);
-        alert('Error loading data. Please refresh.');
+        const overlay = document.getElementById('loginOverlay');
+        if (overlay) {
+          overlay.innerHTML = '<div style="text-align:center; padding:20px;"><div style="font-size:2rem; font-weight:800; background:linear-gradient(90deg, var(--gradient-start), var(--gradient-end)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:16px;">ApexVault</div><p style="color:var(--danger); margin-bottom:8px;">Error loading data</p><p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:16px;">' + (err.message || 'Unknown error') + '</p><button onclick="location.reload()" style="background:var(--accent); border:none; border-radius:10px; padding:12px 24px; color:var(--bg-deep); font-weight:700; cursor:pointer;">Retry</button></div>';
+        }
       }
     }, 1200);
   } catch (err) {
     console.error('Init error:', err);
     const overlay = document.getElementById('loginOverlay');
     if (overlay) {
-      overlay.innerHTML = '<div style="text-align:center;"><div style="font-size:2rem; margin-bottom:12px;">❌</div><p>Error loading admin panel</p><a href="login.html" style="color:var(--accent); margin-top:16px; display:inline-block;">Go to Login</a></div>';
+      overlay.innerHTML = '<div style="text-align:center; padding:20px;"><div style="font-size:2rem; font-weight:800; background:linear-gradient(90deg, var(--gradient-start), var(--gradient-end)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:16px;">ApexVault</div><p style="color:var(--danger); margin-bottom:8px;">Error loading admin panel</p><p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:16px;">' + (err.message || 'Please login again') + '</p><a href="login.html" style="background:var(--accent); border:none; border-radius:10px; padding:12px 24px; color:var(--bg-deep); font-weight:700; cursor:pointer; text-decoration:none; display:inline-block;">Go to Login</a></div>';
     }
   }
 });
