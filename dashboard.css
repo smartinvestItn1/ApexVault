@@ -37,6 +37,87 @@ body {
 ::-webkit-scrollbar-track { background: var(--bg-deep); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ========== SUCCESS ANIMATION OVERLAY ========== */
+.success-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 14, 26, 0.95);
+  backdrop-filter: blur(10px);
+  z-index: 5000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.success-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.success-checkmark {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  animation: successPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  transform: scale(0);
+  box-shadow: 0 0 40px rgba(0, 212, 170, 0.4);
+}
+
+.success-checkmark i {
+  font-size: 2.5rem;
+  color: var(--bg-deep);
+}
+
+.success-text {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-white);
+  margin-bottom: 8px;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.3s forwards;
+}
+
+.success-subtext {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.5s forwards;
+}
+
+@keyframes successPop {
+  to { transform: scale(1); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========== KYC BADGE ========== */
+.kyc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(100, 255, 218, 0.1);
+  border: 1px solid rgba(100, 255, 218, 0.3);
+  border-radius: 50px;
+  padding: 4px 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-left: auto;
+}
+
 /* ========== OVERLAYS ========== */
 .login-overlay, .logout-overlay {
   position: fixed;
@@ -90,6 +171,7 @@ body {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.1); opacity: 0.8; }
 }
+
 /* ========== APP HEADER ========== */
 .app-header {
   position: fixed;
@@ -106,7 +188,7 @@ body {
   padding: 0 20px;
   z-index: 100;
 }
-logout-overlay.show
+
 .menu-btn, .notif-btn {
   width: 40px;
   height: 40px;
@@ -288,8 +370,9 @@ logout-overlay.show
 .logout-btn:active {
   transform: scale(0.98);
   background: rgba(239, 68, 68, 0.2);
-  }
-  /* ========== MAIN CONTENT ========== */
+}
+
+/* ========== MAIN CONTENT ========== */
 .app-main {
   padding: calc(var(--header-height) + 16px) 16px 16px;
   max-width: 600px;
@@ -409,7 +492,8 @@ logout-overlay.show
 
 .stat-value.green { color: #065f46; }
 .stat-value.orange { color: #92400e; }
-  /* ========== QUICK ACTIONS ========== */
+
+/* ========== QUICK ACTIONS ========== */
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -490,7 +574,8 @@ logout-overlay.show
 .invest-banner-info p {
   color: var(--text-muted);
   font-size: 0.8rem;
-  }
+}
+
 /* ========== SECTION BLOCKS ========== */
 .section-block {
   margin-bottom: 20px;
@@ -612,8 +697,9 @@ logout-overlay.show
 .nav-fab:active {
   transform: scale(0.95);
   box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
-  }
-   /* ========== FLOATING CONTACTS ========== */
+}
+
+/* ========== FLOATING CONTACTS ========== */
 .floating-contacts {
   position: fixed;
   bottom: calc(var(--bottom-nav-height) + 16px);
@@ -818,7 +904,7 @@ logout-overlay.show
 .btn-cancel:active, .btn-confirm:active {
   transform: scale(0.97);
   opacity: 0.9;
-  }
+}
 
 /* ========== SECTION CONTENT ========== */
 .section-content {
@@ -1292,9 +1378,9 @@ logout-overlay.show
   .balance-amount h1 { font-size: 3rem; }
   .plans-grid { flex-direction: row; }
   .plan-card { flex: 1; }
-  .actions-grid { grid-template-columns: repeat(3, 1fr); 
-      }
-  }
+  .actions-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
 /* ========== HIDDEN CLASS ========== */
 .hidden {
   opacity: 0;
@@ -1375,5 +1461,4 @@ logout-overlay.show
 .login-overlay p, .logout-overlay p {
   color: var(--text-muted);
   font-size: 0.95rem;
-    }
-  
+}
