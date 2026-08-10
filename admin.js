@@ -43,44 +43,50 @@ function resetSessionTimer() {
 
 // ========== CHECK ADMIN (NO PASSWORD PROMPT) ==========
 async function checkAdmin() {
-  return new Promise((resolve) => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      unsubscribe();
+  try {
+    // Use sessionStorage (same as dashboard login)
+    const userJson = sessionStorage.getItem('apexvault_user');
+    if (!userJson) {
+      window.location.href = 'login.html';
+      return false;
+    }
 
-      if (!firebaseUser) {
-        window.location.href = 'login.html';
-        resolve(false);
-        return;
-      }
+    const user = JSON.parse(userJson);
+    if (!user || !user.uid) {
+      window.location.href = 'login.html';
+      return false;
+    }
 
-      const userId = firebaseUser.uid;
-      const userSnap = await get(ref(db, 'users/' + userId));
-      const userData = userSnap.val();
+    const userId = user.uid;
+    const userSnap = await get(ref(db, 'users/' + userId));
+    const userData = userSnap.val();
 
-      if (!userData) {
-        alert('Profile not found');
-        window.location.href = 'dashboard.html';
-        resolve(false);
-        return;
-      }
+    if (!userData) {
+      alert('Profile not found');
+      window.location.href = 'dashboard.html';
+      return false;
+    }
 
-      if (userData.role !== 'admin') {
-        alert('Access denied. Not admin.');
-        window.location.href = 'dashboard.html';
-        resolve(false);
-        return;
-      }
+    if (userData.role !== 'admin') {
+      alert('Access denied. Not admin.');
+      window.location.href = 'dashboard.html';
+      return false;
+    }
 
-      currentAdmin = {
-        uid: userId,
-        email: userData.email,
-        fullName: userData.fullName
-      };
+    currentAdmin = {
+      uid: userId,
+      email: userData.email,
+      fullName: userData.fullName
+    };
 
-      resetSessionTimer();
-      resolve(true);
-    });
-  });
+    resetSessionTimer();
+    return true;
+  } catch (err) {
+    console.error('Admin check error:', err);
+    alert('Error loading admin panel. Please login again.');
+    window.location.href = 'login.html';
+    return false;
+  }
 }
 
 async function logAdminAction(action, details) {
@@ -869,7 +875,7 @@ function renderKYC() {
       ? '<div class="action-btns"><button class="btn-action btn-approve" onclick="approveKYC('' + userId + '')">Approve</button><button class="btn-action btn-reject" onclick="rejectKYC('' + userId + '')">Reject</button></div>'
       : 'Completed';
 
-    const docs = '<a href="' + (k.idFront || '#') + '" target="_blank" style="color:var(--accent); font-size:0.8rem; display:block; margin-bottom:4px;">📎 ID Front</a><a href="' + (k.selfie || '#') + '" target="_blank" style="color:var(--accent); font-size:0.8rem;">📎 Selfie</a>';
+    const docs = '<div style="display:flex; gap:8px; flex-wrap:wrap;"><a href="' + (k.idFront || '#') + '" target="_blank" style="position:relative; display:inline-block;"><img src="' + (k.idFront || '') + '" style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid var(--border);" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span style="display:none; font-size:0.7rem; color:var(--accent);">ID Front</span></a><a href="' + (k.selfie || '#') + '" target="_blank" style="position:relative; display:inline-block;"><img src="' + (k.selfie || '') + '" style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid var(--border);" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span style="display:none; font-size:0.7rem; color:var(--accent);">Selfie</span></a></div>';
 
     html += '<tr data-status="' + k.status + '">';
     html += '<td><div class="user-cell"><div class="user-avatar">' + (k.userName || 'U').charAt(0) + '</div><div>' + (k.userName || 'Unknown') + '<br><small>' + (k.userEmail || '') + '</small></div></div></td>';
@@ -952,11 +958,25 @@ window.logout = function() {
 
 // ========== INIT ==========
 document.addEventListener('DOMContentLoaded', async () => {
-  const isAdmin = await checkAdmin();
-  if (!isAdmin) return;
+  try {
+    const isAdmin = await checkAdmin();
+    if (!isAdmin) return;
 
-  setTimeout(async () => {
-    document.getElementById('loginOverlay').classList.add('hidden');
-    await loadAllData();
-  }, 1500);
+    setTimeout(async () => {
+      try {
+        const overlay = document.getElementById('loginOverlay');
+        if (overlay) overlay.classList.add('hidden');
+        await loadAllData();
+      } catch (err) {
+        console.error('Load data error:', err);
+        alert('Error loading data. Please refresh.');
+      }
+    }, 1200);
+  } catch (err) {
+    console.error('Init error:', err);
+    const overlay = document.getElementById('loginOverlay');
+    if (overlay) {
+      overlay.innerHTML = '<div style="text-align:center;"><div style="font-size:2rem; margin-bottom:12px;">❌</div><p>Error loading admin panel</p><a href="login.html" style="color:var(--accent); margin-top:16px; display:inline-block;">Go to Login</a></div>';
+    }
+  }
 });
