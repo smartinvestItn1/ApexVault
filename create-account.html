@@ -145,8 +145,9 @@
       border: none;
       color: var(--text-muted);
       cursor: pointer;
-      font-size: 1.2rem;
-      padding: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 4px 8px;
       transition: color 0.3s;
     }
 
@@ -253,27 +254,46 @@
       text-decoration: underline;
     }
 
+    /* ========== SUCCESS MESSAGE - BOLD & BEAUTIFUL ========== */
     .status {
-      padding: 14px;
-      border-radius: 10px;
-      margin-top: 16px;
+      margin-top: 20px;
       text-align: center;
-      font-size: 0.9rem;
       display: none;
+      animation: fadeInUp 0.4s ease;
+    }
+
+    .status.show {
+      display: block;
     }
 
     .status.success {
-      background: rgba(16, 185, 129, 0.1);
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(0, 212, 170, 0.08));
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: 14px;
+      padding: 18px 24px;
+    }
+
+    .status.success-text {
       color: var(--success);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      display: block;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
 
     .status.error {
-      background: rgba(239, 68, 68, 0.1);
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 12px;
+      padding: 14px;
       color: var(--danger);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .loading {
@@ -305,6 +325,7 @@
       text-decoration: none;
     }
   </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -312,7 +333,7 @@
 
   <div class="signup-container">
     <a href="index.html" class="logo-link">
-      <div class="logo">🔥 ApexVault</div>
+      <div class="logo">ApexVault</div>
     </a>
 
     <h2>Create Your Account</h2>
@@ -339,7 +360,7 @@
         <label for="password">Password</label>
         <div class="password-wrapper">
           <input type="password" id="password" placeholder="Create a strong password (min 6 chars)" required>
-          <button type="button" class="toggle-password" onclick="togglePassword('password', this)">👁️</button>
+          <button type="button" class="toggle-password" onclick="togglePassword('password', this)">Show</button>
         </div>
       </div>
 
@@ -347,7 +368,7 @@
         <label for="confirmPassword">Confirm Password</label>
         <div class="password-wrapper">
           <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
-          <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword', this)">👁️</button>
+          <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword', this)">Show</button>
         </div>
         <div class="error-text" id="passwordError">Passwords do not match</div>
       </div>
@@ -369,10 +390,11 @@
       By creating an account, you agree to our <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a>.
     </p>
   </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
-    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBt77e2QQCtOyCVCupw-6jIJ8MVyHf3UKY",
@@ -385,39 +407,32 @@
       measurementId: "G-E5QQK8RBTN"
     };
 
-    console.log('🔥 Firebase config loaded');
-
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
-    
-    console.log('🔥 Firebase initialized:', app.name);
-    console.log('🔥 Database URL:', firebaseConfig.databaseURL);
-   const urlParams = new URLSearchParams(window.location.search);
-const refCode = urlParams.get('ref');
-if (refCode) {
-  sessionStorage.setItem('apexvault_ref', refCode);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+      sessionStorage.setItem('apexvault_ref', refCode);
     }
-    
-   // Toggle password visibility
+
     window.togglePassword = function(inputId, btn) {
       const input = document.getElementById(inputId);
       if (input.type === 'password') {
         input.type = 'text';
-        btn.textContent = '🙈';
+        btn.textContent = 'Hide';
       } else {
         input.type = 'password';
-        btn.textContent = '👁️';
+        btn.textContent = 'Show';
       }
     };
 
-    // Email validation
     function isValidEmail(email) {
       const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       return emailRegex.test(email);
     }
 
-    // Show/hide field error
     function showFieldError(inputId, errorId, show) {
       const input = document.getElementById(inputId);
       const error = document.getElementById(errorId);
@@ -430,7 +445,6 @@ if (refCode) {
       }
     }
 
-    // Real-time email validation
     document.getElementById('email').addEventListener('blur', function() {
       const email = this.value.trim();
       if (email && !isValidEmail(email)) {
@@ -444,7 +458,6 @@ if (refCode) {
       showFieldError('email', 'emailError', false);
     });
 
-    // Real-time password match check
     document.getElementById('confirmPassword').addEventListener('input', function() {
       const password = document.getElementById('password').value;
       const confirmPassword = this.value;
@@ -455,7 +468,6 @@ if (refCode) {
       }
     });
 
-    // Particles
     function createParticles() {
       const container = document.getElementById('particles');
       for (let i = 0; i < 25; i++) {
@@ -471,13 +483,9 @@ if (refCode) {
     }
     createParticles();
 
-    console.log('✅ DOM ready, form listener attaching...');
-
-    // Form submission
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      console.log('📝 Form submitted!');
-      
+
       const fullName = document.getElementById('fullName').value.trim();
       const email = document.getElementById('email').value.trim();
       const phone = document.getElementById('phone').value.trim();
@@ -486,30 +494,23 @@ if (refCode) {
       const status = document.getElementById('status');
       const btn = document.getElementById('submitBtn');
 
-      console.log('📋 Form values:', { fullName, email, phone, passwordLength: password?.length });
-
-      // Validate email
       if (!isValidEmail(email)) {
         showFieldError('email', 'emailError', true);
-        status.className = 'status error';
-        status.textContent = '❌ Please enter a valid email address!';
-        console.log('❌ Email validation failed');
+        status.className = 'status error show';
+        status.textContent = 'Please enter a valid email address';
         return;
       }
 
-      // Check password match
       if (password !== confirmPassword) {
         showFieldError('confirmPassword', 'passwordError', true);
-        status.className = 'status error';
-        status.textContent = '❌ Passwords do not match!';
-        console.log('❌ Password mismatch');
+        status.className = 'status error show';
+        status.textContent = 'Passwords do not match';
         return;
       }
 
       if (password.length < 6) {
-        status.className = 'status error';
-        status.textContent = '❌ Password must be at least 6 characters!';
-        console.log('❌ Password too short');
+        status.className = 'status error show';
+        status.textContent = 'Password must be at least 6 characters';
         return;
       }
 
@@ -517,80 +518,60 @@ if (refCode) {
       btn.innerHTML = '<span class="loading"></span> Creating account...';
       status.className = '';
       status.textContent = '';
-      status.style.display = 'none';
 
       try {
-        console.log('🔥 Creating Firebase Auth account...');
-        
-        // 1. CREATE AUTH ACCOUNT
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const firebaseUser = userCredential.user;
         const userId = firebaseUser.uid;
-        console.log('✅ Auth account created, UID:', userId);
 
-        // 2. SAVE PROFILE DATA TO DATABASE (NO PASSWORD!)
         const userData = {
-      fullName: fullName,
-      email: email,
-      phone: phone,
-      balance: 0,
-      totalInvested: 0,
-      totalProfit: 0,
-      referralEarnings: 0,
-      referredBy: sessionStorage.getItem('apexvault_ref') || null,  // ← ADD THIS
-      createdAt: new Date().toISOString(),
-      status: 'active'
-      };
-          
-        console.log('💾 Saving profile to database...', userData);
-        await set(ref(db, 'users/' + userId), userData);
-        console.log('✅ Profile saved to database');
+          fullName: fullName,
+          email: email,
+          phone: phone,
+          balance: 0,
+          totalInvested: 0,
+          totalProfit: 0,
+          referralEarnings: 0,
+          referredBy: sessionStorage.getItem('apexvault_ref') || null,
+          createdAt: new Date().toISOString(),
+          status: 'active'
+        };
 
-        // 3. Save to sessionStorage for auto-login
+        await set(ref(db, 'users/' + userId), userData);
+
         sessionStorage.setItem('apexvault_user', JSON.stringify({
           uid: userId,
           email: email,
           fullName: fullName
         }));
-        console.log('✅ sessionStorage saved');
 
-        status.className = 'status success';
-        status.style.display = 'block';
-        status.innerHTML = '✅ Account created successfully!<br>Redirecting to login...';
-        
-        console.log('🚀 Redirecting in 1.5s...');
-        
+        // BOLD & BEAUTIFUL SUCCESS - NO EMOJIS, NO REDIRECT TEXT
+        status.className = 'status success show';
+        status.innerHTML = '<div class="success-text">Account Created</div>';
+
+        // Silent redirect after delay
         setTimeout(() => {
           window.location.href = 'login.html';
         }, 1500);
 
       } catch (error) {
-        console.error('💥 SIGNUP ERROR:', error);
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        
-        let friendlyMessage = '❌ ' + error.message;
+        let friendlyMessage = error.message;
         if (error.code === 'auth/email-already-in-use') {
-          friendlyMessage = '❌ This email is already registered!';
+          friendlyMessage = 'This email is already registered';
         } else if (error.code === 'auth/invalid-email') {
-          friendlyMessage = '❌ Invalid email address!';
+          friendlyMessage = 'Invalid email address';
         } else if (error.code === 'auth/weak-password') {
-          friendlyMessage = '❌ Password is too weak! Use at least 6 characters.';
+          friendlyMessage = 'Password is too weak. Use at least 6 characters';
         } else if (error.code === 'auth/network-request-failed') {
-          friendlyMessage = '❌ Network error. Please check your internet connection.';
+          friendlyMessage = 'Network error. Please check your internet connection';
         }
-        
-        status.className = 'status error';
-        status.style.display = 'block';
+
+        status.className = 'status error show';
         status.textContent = friendlyMessage;
         btn.disabled = false;
         btn.textContent = 'Create Account';
       }
     });
-    
-    console.log('✅ Form listener attached successfully');
   </script>
-  
 </body>
-  </html>
-                                                    
+</html>
