@@ -5,32 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ApexVault - Smart Investments</title>
   <link rel="stylesheet" href="style.css">
-<style>
-  /* Background image enhancements */
-  .card.scroll-reveal {
-    position: relative;
-    overflow: hidden;
-  }
-  .card.scroll-reveal::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: inherit;
-    filter: brightness(0.4);
-    z-index: 0;
-  }
-  .card.scroll-reveal > * {
-    position: relative;
-    z-index: 1;
-  }
-  .card.scroll-reveal:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-  }
-  .hero, .cta-section {
-    position: relative;
-  }
-</style>
+<base target="_blank">
 </head>
 <body>
 
@@ -116,9 +91,10 @@
       <button class="nav-btn" onclick="window.location.href='login.html'">Login</button>
     </div>
   </nav>
-  
+
   <!-- ========== HERO ========== -->
-  <section class="hero" id="home" style="background-image: linear-gradient(rgba(5,10,25,0.82), rgba(5,10,25,0.90)), url('images-hero-bg.jpg'); background-size: cover; background-position: center; background-attachment: fixed;">
+  <section class="hero" id="home" style="background-image: url('images/hero-bg.jpg'); background-size: cover; background-position: center; background-attachment: fixed;">
+    <div class="hero-overlay"></div>
     <div class="hero-content">
       <div class="hero-tag fade-in">🚀 Next-Gen Investment Platform</div>
       <h1 class="fade-in fade-in-delay-1">Invest Smarter.<br>Build <span>Wealth Faster.</span></h1>
@@ -234,32 +210,32 @@
       <p>Tailored solutions designed to maximize your returns while minimizing risk.</p>
     </div>
     <div class="cards-grid">
-      <div class="card scroll-reveal" style="background-image: linear-gradient(rgba(15,23,42,0.93), rgba(15,23,42,0.88)), url('images-stocks.jpg'); background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,0.08);">
+      <div class="card scroll-reveal" style="background-image: url('images/stocks.jpg');">
         <div class="card-icon">📈</div>
         <h3>Stock Portfolio</h3>
         <p>Curated stock selections across diverse sectors. Our AI-powered analysis identifies high-growth opportunities.</p>
       </div>
-      <div class="card scroll-reveal" style="background-image: linear-gradient(rgba(15,23,42,0.93), rgba(15,23,42,0.88)), url('images-realestate.jpg'); background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,0.08);">
+      <div class="card scroll-reveal" style="background-image: url('images/realestate.jpg');">
         <div class="card-icon">🏠</div>
         <h3>Real Estate</h3>
         <p>Invest in premium real estate properties with fractional ownership. Start with as little as $500.</p>
       </div>
-      <div class="card scroll-reveal" style="background-image: linear-gradient(rgba(15,23,42,0.93), rgba(15,23,42,0.88)), url('images-crypto.jpg'); background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,0.08);">
+      <div class="card scroll-reveal" style="background-image: url('images/crypto.jpg');">
         <div class="card-icon">₿</div>
         <h3>Cryptocurrency</h3>
         <p>Secure crypto trading with cold storage protection. Access Bitcoin, Ethereum, and 50+ altcoins.</p>
       </div>
-      <div class="card scroll-reveal" style="background-image: linear-gradient(rgba(15,23,42,0.93), rgba(15,23,42,0.88)), url('images-funds.jpg'); background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,0.08);">
+      <div class="card scroll-reveal" style="background-image: url('images/funds.jpg');">
         <div class="card-icon">📊</div>
         <h3>Mutual Funds</h3>
         <p>Diversified fund options managed by top-tier fund managers. Low fees, high transparency.</p>
       </div>
-      <div class="card scroll-reveal" style="background-image: linear-gradient(rgba(15,23,42,0.93), rgba(15,23,42,0.88)), url('images-retirement.jpg'); background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,0.08);">
+      <div class="card scroll-reveal" style="background-image: url('images/retirement.jpg');">
         <div class="card-icon">🛡️</div>
         <h3>Retirement Plans</h3>
         <p>Tax-advantaged retirement accounts. 401(k) rollovers, IRAs, and pension planning made simple.</p>
       </div>
-      <div class="card scroll-reveal" style="background-image: linear-gradient(rgba(15,23,42,0.93), rgba(15,23,42,0.88)), url('images-robo.jpg'); background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,0.08);">
+      <div class="card scroll-reveal" style="background-image: url('images/robo.jpg');">
         <div class="card-icon">🤖</div>
         <h3>Robo-Advisor</h3>
         <p>Automated portfolio management that rebalances and optimizes based on market conditions 24/7.</p>
@@ -300,7 +276,7 @@
       </div>
     </div>
   </section>
-  
+
   <!-- ========== WHY CHOOSE US ========== -->
   <section class="section" id="why-us">
     <div class="section-header scroll-reveal">
@@ -507,9 +483,10 @@
     <div class="ticker-item"><span class="coin">ADA</span><span class="price">$0.45</span><span class="change up">+3.1%</span></div>
     <div class="ticker-item"><span class="coin">DOGE</span><span class="price">$0.13</span><span class="change up">+8.4%</span></div>
   </div>                                                                                        </div>
-                                                          
+
   <!-- ========== CTA ========== -->
-  <section class="cta-section" style="background-image: linear-gradient(rgba(8,12,30,0.88), rgba(8,12,30,0.94)), url('images-cta-bg.jpg'); background-size: cover; background-position: center; background-attachment: fixed;">
+  <section class="cta-section" style="background-image: url('images/cta-bg.jpg'); background-size: cover; background-position: center; background-attachment: fixed;">
+    <div class="cta-overlay"></div>
     <div class="cta-inner scroll-reveal">
       <h2>Ready to Grow Your Wealth?</h2>
       <p>Join thousands of investors who trust ApexVault to manage their financial future. Start with as little as $100.</p>
@@ -582,7 +559,7 @@
       </svg>
     </a>
   </div>
-  
+
 
 <script>
 // ========== APEXVAULT HOMEPAGE SCRIPT ==========
@@ -593,11 +570,11 @@ function toggleSidebar() {
   const sidebar = document.getElementById('rightSidebar');
   const overlay = document.getElementById('sidebarOverlay');
   const toggle = document.getElementById('sidebarToggle');
-  
+
   sidebar.classList.toggle('open');
   overlay.classList.toggle('open');
   toggle.classList.toggle('active');
-  
+
   toggle.textContent = sidebar.classList.contains('open') ? '✕' : '☰';
 }
   // Duplicate ticker items for seamless infinite loop
@@ -607,18 +584,18 @@ function toggleSidebar() {
       ticker.innerHTML += ticker.innerHTML;
     }
   });
-  
+
 // ========== FLOATING PARTICLES ==========
 function createParticles() {
   const container = document.getElementById('particles');
   if (!container) return;
-  
+
   const particleCount = 30;
-  
+
   for (let i = 0; i < particleCount; i++) {
     const particle = document.createElement('div');
     particle.className = 'particle';
-    
+
     const size = Math.random() * 4 + 2;
     particle.style.width = size + 'px';
     particle.style.height = size + 'px';
@@ -626,7 +603,7 @@ function createParticles() {
     particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
     particle.style.animationDelay = (Math.random() * 10) + 's';
     particle.style.opacity = Math.random() * 0.5 + 0.2;
-    
+
     container.appendChild(particle);
   }
 }
@@ -651,7 +628,7 @@ function initScrollAnimations() {
 function initNavbarScroll() {
   const navbar = document.getElementById('navbar');
   if (!navbar) return;
-  
+
   window.addEventListener('scroll', () => {
     if (window.scrollY > 50) {
       navbar.classList.add('scrolled');
@@ -679,27 +656,27 @@ function animateCounters() {
       }
     });
   }, { threshold: 0.5 });
-  
+
   counters.forEach(counter => observer.observe(counter));
 }
 
 function animateNumber(element, start, end, duration, suffix) {
   const startTime = performance.now();
   const isDecimal = end % 1 !== 0;
-  
+
   function update(currentTime) {
     const elapsed = currentTime - startTime;
     const progress = Math.min(elapsed / duration, 1);
     const eased = 1 - Math.pow(1 - progress, 3);
     const current = start + (end - start) * eased;
-    
+
     element.textContent = (isDecimal ? current.toFixed(1) : Math.floor(current)) + suffix;
-    
+
     if (progress < 1) {
       requestAnimationFrame(update);
     }
   }
-  
+
   requestAnimationFrame(update);
 }
 // ========== FAQ TOGGLE ==========
@@ -708,10 +685,10 @@ window.toggleFaq = function(el) {
   const answer = item.querySelector('.faq-answer');
   const icon = item.querySelector('.faq-icon');
   const isOpen = answer.style.maxHeight;
-  
+
   document.querySelectorAll('.faq-answer').forEach(a => a.style.maxHeight = null);
   document.querySelectorAll('.faq-icon').forEach(i => i.textContent = '+');
-  
+
   if (!isOpen) {
     answer.style.maxHeight = answer.scrollHeight + 'px';
     icon.textContent = '−';
@@ -743,11 +720,11 @@ function addFeedItem() {
   const name = names[Math.floor(Math.random() * names.length)];
   const action = actions[Math.floor(Math.random() * actions.length)];
   const amount = (Math.random() * (action.max - action.min) + action.min).toFixed(2);
-  
+
   const div = document.createElement('div');
   div.className = 'feed-item';
   div.innerHTML = `<span class="feed-user">${name} ${action.text}</span><span class="feed-amount ${action.type}">$${amount}</span>`;
-  
+
   feed.insertBefore(div, feed.firstChild);
   if (feed.children.length > 5) feed.removeChild(feed.lastChild);
 }
@@ -781,7 +758,7 @@ const observer = new IntersectionObserver((entries) => {
   });
 }, { threshold: 0.5 });
 counters.forEach(c => observer.observe(c));
-  
+
 // ========== START EVERYTHING ==========
 document.addEventListener('DOMContentLoaded', () => {
   createParticles();
