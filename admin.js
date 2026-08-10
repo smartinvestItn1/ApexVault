@@ -1,5 +1,4 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
 import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -14,7 +13,6 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getDatabase(app);
 
 const SESSION_TIMEOUT = 30 * 60 * 1000;
@@ -23,8 +21,8 @@ let allUsers = {};
 let allDeposits = {};
 let allWithdrawals = {};
 let allTransactions = [];
-let allKYC = {};
 let allInvestments = [];
+let allKYC = {};
 let platformSettings = {};
 let currentAdmin = null;
 let sessionTimer = null;
@@ -41,10 +39,9 @@ function resetSessionTimer() {
   document.addEventListener(event, resetSessionTimer);
 });
 
-// ========== CHECK ADMIN (NO PASSWORD PROMPT) ==========
+// ========== CHECK ADMIN ==========
 async function checkAdmin() {
   try {
-    // Use sessionStorage (same as dashboard login)
     const userJson = sessionStorage.getItem('apexvault_user');
     if (!userJson) {
       window.location.href = 'login.html';
@@ -90,31 +87,36 @@ async function checkAdmin() {
 }
 
 async function logAdminAction(action, details) {
-  await push(ref(db, 'adminAudit/actions'), {
-    adminId: currentAdmin?.uid,
-    adminEmail: currentAdmin?.email,
-    adminName: currentAdmin?.fullName,
-    action: action,
-    details: details,
-    timestamp: Date.now(),
-    date: new Date().toISOString()
-  });
+  try {
+    await push(ref(db, 'adminAudit/actions'), {
+      adminId: currentAdmin?.uid,
+      adminEmail: currentAdmin?.email,
+      adminName: currentAdmin?.fullName,
+      action: action,
+      details: details,
+      timestamp: Date.now(),
+      date: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Audit log failed:', e);
+  }
 }
 
 // ========== LOAD ALL DATA ==========
 async function loadAllData() {
-  let usersSnap, settingsSnap, depositsSnap, withdrawalsSnap, kycSnap;
+  console.log('Loading data...');
 
   try {
-    usersSnap = await get(ref(db, 'users'));
+    const usersSnap = await get(ref(db, 'users'));
     allUsers = usersSnap.val() || {};
+    console.log('Users loaded:', Object.keys(allUsers).length);
   } catch (err) {
     console.error('Error loading users:', err);
     allUsers = {};
   }
 
   try {
-    settingsSnap = await get(ref(db, 'platformSettings'));
+    const settingsSnap = await get(ref(db, 'platformSettings'));
     platformSettings = settingsSnap.val() || { transferEnabled: true, investEnabled: true, withdrawEnabled: true };
   } catch (err) {
     console.error('Error loading settings:', err);
@@ -122,7 +124,7 @@ async function loadAllData() {
   }
 
   try {
-    depositsSnap = await get(ref(db, 'pendingDeposits'));
+    const depositsSnap = await get(ref(db, 'pendingDeposits'));
     allDeposits = depositsSnap.val() || {};
   } catch (err) {
     console.error('Error loading deposits:', err);
@@ -130,7 +132,7 @@ async function loadAllData() {
   }
 
   try {
-    withdrawalsSnap = await get(ref(db, 'pendingWithdrawals'));
+    const withdrawalsSnap = await get(ref(db, 'pendingWithdrawals'));
     allWithdrawals = withdrawalsSnap.val() || {};
   } catch (err) {
     console.error('Error loading withdrawals:', err);
@@ -138,14 +140,12 @@ async function loadAllData() {
   }
 
   try {
-    kycSnap = await get(ref(db, 'pendingKYC'));
+    const kycSnap = await get(ref(db, 'pendingKYC'));
     allKYC = kycSnap.val() || {};
   } catch (err) {
     console.error('Error loading KYC:', err);
     allKYC = {};
   }
-
-
 
   updateStats();
   updateToggles();
@@ -157,6 +157,7 @@ async function loadAllData() {
   renderInvestments();
   renderKYC();
   loadWalletAddresses();
+  console.log('All data loaded');
 }
 
 // ========== UPDATE STATS ==========
@@ -171,7 +172,6 @@ function updateStats() {
   let activeInvestments = 0;
   let pendingKYC = 0;
 
-  // Calculate from all users' history for totals
   for (const user of Object.values(allUsers)) {
     if (user.history) {
       for (const tx of Object.values(user.history)) {
@@ -184,8 +184,6 @@ function updateStats() {
       }
     }
     if (user.referralEarnings) totalReferral += user.referralEarnings;
-
-    // Count active investments
     if (user.investments) {
       for (const inv of Object.values(user.investments)) {
         if (inv.status === 'active') activeInvestments++;
@@ -193,7 +191,6 @@ function updateStats() {
     }
   }
 
-  // Also check pending collections
   for (const d of Object.values(allDeposits)) {
     if (d.status === 'pending') pendingDeposits++;
     if (d.status === 'approved') totalDeposited += d.amount || 0;
@@ -204,7 +201,6 @@ function updateStats() {
     if (w.status === 'approved') totalWithdrawn += w.amount || 0;
   }
 
-  let pendingKYC = 0;
   for (const k of Object.values(allKYC)) {
     if (k.status === 'pending') pendingKYC++;
   }
@@ -214,23 +210,23 @@ function updateStats() {
   if (!platformSettings.investEnabled) blockedCount++;
   if (!platformSettings.withdrawEnabled) blockedCount++;
 
-  // Update main stat cards
-  document.getElementById('totalUsers').textContent = userCount.toLocaleString();
-  document.getElementById('totalDeposited').textContent = '$' + totalDeposited.toLocaleString();
-  document.getElementById('totalWithdrawn').textContent = '$' + totalWithdrawn.toLocaleString();
-  document.getElementById('totalInvested').textContent = '$' + totalInvested.toLocaleString();
+  const setText = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
 
-  // Update secondary stat cards
-  document.getElementById('statPendingDeposits').textContent = pendingDeposits;
-  document.getElementById('statPendingWithdrawals').textContent = pendingWithdrawals;
-  document.getElementById('statActiveInvestments').textContent = activeInvestments;
-  document.getElementById('statReferralEarnings').textContent = '$' + totalReferral.toLocaleString();
-
-  // Update quick action cards
-  document.getElementById('quickPendingDeposits').textContent = pendingDeposits + ' requests';
-  document.getElementById('quickPendingWithdrawals').textContent = pendingWithdrawals + ' requests';
-  document.getElementById('quickActiveInvestments').textContent = activeInvestments + ' running';
-  document.getElementById('blockedFeatures').textContent = blockedCount + ' disabled';
+  setText('totalUsers', userCount.toLocaleString());
+  setText('totalDeposited', '$' + totalDeposited.toLocaleString());
+  setText('totalWithdrawn', '$' + totalWithdrawn.toLocaleString());
+  setText('totalInvested', '$' + totalInvested.toLocaleString());
+  setText('statPendingDeposits', pendingDeposits);
+  setText('statPendingWithdrawals', pendingWithdrawals);
+  setText('statActiveInvestments', activeInvestments);
+  setText('statReferralEarnings', '$' + totalReferral.toLocaleString());
+  setText('quickPendingDeposits', pendingDeposits + ' requests');
+  setText('quickPendingWithdrawals', pendingWithdrawals + ' requests');
+  setText('quickActiveInvestments', activeInvestments + ' running');
+  setText('blockedFeatures', blockedCount + ' disabled');
 }
 
 // ========== SIDEBAR BADGES ==========
@@ -257,38 +253,34 @@ function updateSidebarBadges() {
     if (k.status === 'pending') pendingKYC++;
   }
 
-  const depBadge = document.getElementById('sidebarBadgeDeposits');
-  const withBadge = document.getElementById('sidebarBadgeWithdrawals');
-  const invBadge = document.getElementById('sidebarBadgeInvestments');
-  const kycBadge = document.getElementById('sidebarBadgeKYC');
+  const updateBadge = (id, count) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent = count;
+      el.style.display = count > 0 ? 'block' : 'none';
+    }
+  };
 
-  if (depBadge) {
-    depBadge.textContent = pendingDeposits;
-    depBadge.style.display = pendingDeposits > 0 ? 'block' : 'none';
-  }
-  if (withBadge) {
-    withBadge.textContent = pendingWithdrawals;
-    withBadge.style.display = pendingWithdrawals > 0 ? 'block' : 'none';
-  }
-  if (invBadge) {
-    invBadge.textContent = activeInvestments;
-    invBadge.style.display = activeInvestments > 0 ? 'block' : 'none';
-  }
-  if (kycBadge) {
-    kycBadge.textContent = pendingKYC;
-    kycBadge.style.display = pendingKYC > 0 ? 'block' : 'none';
-  }
+  updateBadge('sidebarBadgeDeposits', pendingDeposits);
+  updateBadge('sidebarBadgeWithdrawals', pendingWithdrawals);
+  updateBadge('sidebarBadgeInvestments', activeInvestments);
+  updateBadge('sidebarBadgeKYC', pendingKYC);
 }
 
 // ========== TOGGLES ==========
 function updateToggles() {
-  document.getElementById('transferToggle').checked = platformSettings.transferEnabled !== false;
-  document.getElementById('investToggle').checked = platformSettings.investEnabled !== false;
-  document.getElementById('withdrawToggle').checked = platformSettings.withdrawEnabled !== false;
+  const transferEl = document.getElementById('transferToggle');
+  const investEl = document.getElementById('investToggle');
+  const withdrawEl = document.getElementById('withdrawToggle');
+
+  if (transferEl) transferEl.checked = platformSettings.transferEnabled !== false;
+  if (investEl) investEl.checked = platformSettings.investEnabled !== false;
+  if (withdrawEl) withdrawEl.checked = platformSettings.withdrawEnabled !== false;
 }
 
 window.toggleFeature = async function(feature) {
   const checkbox = document.getElementById(feature + 'Toggle');
+  if (!checkbox) return;
   const enabled = checkbox.checked;
 
   try {
@@ -298,9 +290,9 @@ window.toggleFeature = async function(feature) {
     platformSettings[feature + 'Enabled'] = enabled;
     updateStats();
     await logAdminAction('toggle_feature', { feature, enabled });
-    alert((enabled ? '✅ Enabled ' : '🚫 Blocked ') + feature);
+    alert((enabled ? 'Enabled ' : 'Blocked ') + feature);
   } catch (error) {
-    alert('❌ Error: ' + error.message);
+    alert('Error: ' + error.message);
     checkbox.checked = !enabled;
   }
 };
@@ -313,7 +305,8 @@ window.showSection = function(sectionName) {
 
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (event && event.target) {
-    event.target.closest('.nav-item').classList.add('active');
+    const navItem = event.target.closest('.nav-item');
+    if (navItem) navItem.classList.add('active');
   }
 
   const titles = {
@@ -328,17 +321,23 @@ window.showSection = function(sectionName) {
     kycReview: 'KYC Review',
     settings: 'Feature Controls'
   };
-  document.getElementById('pageTitle').textContent = titles[sectionName] || 'Admin';
-  document.getElementById('sidebar').classList.remove('open');
+
+  const pageTitle = document.getElementById('pageTitle');
+  if (pageTitle) pageTitle.textContent = titles[sectionName] || 'Admin';
+
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar) sidebar.classList.remove('open');
 };
 
 window.toggleMobileSidebar = function() {
-  document.getElementById('sidebar').classList.toggle('open');
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar) sidebar.classList.toggle('open');
 };
 
 // ========== DEPOSITS ==========
 function renderDeposits() {
   const container = document.getElementById('depositsTable');
+  if (!container) return;
   const deposits = Object.entries(allDeposits);
 
   if (deposits.length === 0) {
@@ -351,7 +350,7 @@ function renderDeposits() {
   for (const [id, d] of deposits) {
     const statusClass = d.status === 'pending' ? 'badge-pending' : d.status === 'approved' ? 'badge-approved' : 'badge-rejected';
     const actions = d.status === 'pending'
-      ? '<div class="action-btns"><button class="btn-action btn-approve" onclick="approveDeposit('' + id + '')">Approve</button><button class="btn-action btn-reject" onclick="rejectDeposit('' + id + '')">Reject</button></div>'
+      ? '<div class="action-btns"><button class="btn-action btn-approve" onclick="approveDeposit(\'' + id + '\')">Approve</button><button class="btn-action btn-reject" onclick="rejectDeposit(\'' + id + '\')">Reject</button></div>'
       : 'Completed';
 
     html += '<tr><td><div class="user-cell"><div class="user-avatar">' + (d.userName || 'U').charAt(0) + '</div><div>' + (d.userName || 'Unknown') + '<br><small>' + (d.userEmail || '') + '</small></div></div></td>';
@@ -367,8 +366,8 @@ function renderDeposits() {
 }
 
 window.filterDeposits = function() {
-  const search = document.getElementById('depositSearch').value.toLowerCase();
-  const filter = document.getElementById('depositFilter').value;
+  const search = document.getElementById('depositSearch')?.value.toLowerCase() || '';
+  const filter = document.getElementById('depositFilter')?.value || 'all';
   document.querySelectorAll('#depositsTable tbody tr').forEach(row => {
     const text = row.textContent.toLowerCase();
     const status = row.querySelector('.badge')?.textContent.toLowerCase() || '';
@@ -405,9 +404,9 @@ window.approveDeposit = async function(depositId) {
     updateStats();
     updateSidebarBadges();
     renderDeposits();
-    alert('✅ Deposit approved!');
+    alert('Deposit approved!');
   } catch (error) {
-    alert('❌ Error: ' + error.message);
+    alert('Error: ' + error.message);
   }
 };
 
@@ -421,15 +420,16 @@ window.rejectDeposit = async function(depositId) {
     updateStats();
     updateSidebarBadges();
     renderDeposits();
-    alert('❌ Deposit rejected!');
+    alert('Deposit rejected!');
   } catch (error) {
-    alert('❌ Error: ' + error.message);
+    alert('Error: ' + error.message);
   }
 };
 
 // ========== WITHDRAWALS ==========
 function renderWithdrawals() {
   const container = document.getElementById('withdrawalsTable');
+  if (!container) return;
   const withdrawals = Object.entries(allWithdrawals);
 
   if (withdrawals.length === 0) {
@@ -442,13 +442,13 @@ function renderWithdrawals() {
   for (const [id, w] of withdrawals) {
     const statusClass = w.status === 'pending' ? 'badge-pending' : w.status === 'approved' ? 'badge-approved' : 'badge-rejected';
     const actions = w.status === 'pending'
-      ? '<div class="action-btns"><button class="btn-action btn-approve" onclick="approveWithdrawal('' + id + '')">Approve</button><button class="btn-action btn-reject" onclick="rejectWithdrawal('' + id + '')">Reject</button></div>'
+      ? '<div class="action-btns"><button class="btn-action btn-approve" onclick="approveWithdrawal(\'' + id + '\')">Approve</button><button class="btn-action btn-reject" onclick="rejectWithdrawal(\'' + id + '\')">Reject</button></div>'
       : 'Completed';
 
     html += '<tr><td><div class="user-cell"><div class="user-avatar">' + (w.userName || 'U').charAt(0) + '</div><div>' + (w.userName || 'Unknown') + '<br><small>' + (w.userEmail || '') + '</small></div></div></td>';
     html += '<td style="color:var(--danger);font-weight:600;">-$' + (w.amount || 0).toLocaleString() + '</td>';
     html += '<td>' + (w.network ? w.network.replace('_', ' ') : (w.method || 'N/A')) + '</td>';
-    html += '<td style="max-width:180px; word-break:break-all;"><small style="font-family:monospace; line-height:1.4; display:block; margin-bottom:4px;">' + (w.walletAddress || 'N/A') + '</small><button class="btn-copy" onclick="navigator.clipboard.writeText('' + (w.walletAddress || '') + ''); alert('Address copied!')">📋 Copy</button></td>';
+    html += '<td style="max-width:180px; word-break:break-all;"><small style="font-family:monospace; line-height:1.4; display:block; margin-bottom:4px;">' + (w.walletAddress || 'N/A') + '</small><button class="btn-copy" onclick="navigator.clipboard.writeText(\'' + (w.walletAddress || '') + '\'); alert(\'Address copied!\')">Copy</button></td>';
     html += '<td>' + new Date(w.date).toLocaleDateString() + '</td>';
     html += '<td><span class="badge ' + statusClass + '">' + w.status.toUpperCase() + '</span></td>';
     html += '<td>' + actions + '</td></tr>';
@@ -459,8 +459,8 @@ function renderWithdrawals() {
 }
 
 window.filterWithdrawals = function() {
-  const search = document.getElementById('withdrawSearch').value.toLowerCase();
-  const filter = document.getElementById('withdrawFilter').value;
+  const search = document.getElementById('withdrawSearch')?.value.toLowerCase() || '';
+  const filter = document.getElementById('withdrawFilter')?.value || 'all';
   document.querySelectorAll('#withdrawalsTable tbody tr').forEach(row => {
     const text = row.textContent.toLowerCase();
     const status = row.querySelector('.badge')?.textContent.toLowerCase() || '';
@@ -470,7 +470,6 @@ window.filterWithdrawals = function() {
 
 window.approveWithdrawal = async function(withdrawalId) {
   if (!confirm('Approve this withdrawal?')) return;
-
   try {
     const withdrawal = allWithdrawals[withdrawalId];
     if (!withdrawal) return;
@@ -478,7 +477,7 @@ window.approveWithdrawal = async function(withdrawalId) {
     const userSnap = await get(ref(db, 'users/' + withdrawal.userId));
     const user = userSnap.val() || {};
     if ((user.balance || 0) < (withdrawal.total || withdrawal.amount || 0)) {
-      alert('❌ User has insufficient balance! Cannot approve.');
+      alert('User has insufficient balance! Cannot approve.');
       return;
     }
 
@@ -502,9 +501,9 @@ window.approveWithdrawal = async function(withdrawalId) {
     updateStats();
     updateSidebarBadges();
     renderWithdrawals();
-    alert('✅ Withdrawal approved!');
+    alert('Withdrawal approved!');
   } catch (error) {
-    alert('❌ Error: ' + error.message);
+    alert('Error: ' + error.message);
   }
 };
 
@@ -534,15 +533,16 @@ window.rejectWithdrawal = async function(withdrawalId) {
     updateStats();
     updateSidebarBadges();
     renderWithdrawals();
-    alert('❌ Withdrawal rejected! Money refunded.');
+    alert('Withdrawal rejected! Money refunded.');
   } catch (error) {
-    alert('❌ Error: ' + error.message);
+    alert('Error: ' + error.message);
   }
 };
 
 // ========== ACTIVE INVESTMENTS ==========
 function renderInvestments() {
   const container = document.getElementById('investmentsTable');
+  if (!container) return;
   allInvestments = [];
 
   for (const [userId, user] of Object.entries(allUsers)) {
@@ -592,8 +592,8 @@ function renderInvestments() {
 }
 
 window.filterInvestments = function() {
-  const search = document.getElementById('investSearch').value.toLowerCase();
-  const filter = document.getElementById('investFilter').value;
+  const search = document.getElementById('investSearch')?.value.toLowerCase() || '';
+  const filter = document.getElementById('investFilter')?.value || 'all';
   document.querySelectorAll('#investmentsTable tbody tr').forEach(row => {
     const text = row.textContent.toLowerCase();
     const plan = row.getAttribute('data-plan') || '';
@@ -606,6 +606,7 @@ window.filterInvestments = function() {
 // ========== USERS ==========
 function renderUsers() {
   const container = document.getElementById('usersTable');
+  if (!container) return;
   const users = Object.entries(allUsers);
 
   if (users.length === 0) {
@@ -623,7 +624,7 @@ function renderUsers() {
     html += '<td>$' + (u.totalInvested || 0).toLocaleString() + '</td>';
     html += '<td style="color:var(--success);">$' + (u.totalProfit || 0).toLocaleString() + '</td>';
     html += '<td>' + (u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A') + '</td>';
-    html += '<td><button class="btn-action btn-view" onclick="viewUser('' + id + '')">View</button><button class="btn-action btn-approve" style="margin-left:5px;" onclick="manageUserFeatures('' + id + '')">Manage</button></td>';
+    html += '<td><button class="btn-action btn-view" onclick="viewUser(\'' + id + '\')">View</button><button class="btn-action btn-approve" style="margin-left:5px;" onclick="manageUserFeatures(\'' + id + '\')">Manage</button></td>';
   }
 
   html += '</tbody></table>';
@@ -631,8 +632,8 @@ function renderUsers() {
 }
 
 window.filterUsers = function() {
-  const search = document.getElementById('userSearch').value.toLowerCase();
-  const filter = document.getElementById('userFilter').value;
+  const search = document.getElementById('userSearch')?.value.toLowerCase() || '';
+  const filter = document.getElementById('userFilter')?.value || 'all';
   document.querySelectorAll('#usersTable tbody tr').forEach(row => {
     const text = row.textContent.toLowerCase();
     const hasInvestment = row.getAttribute('data-has-investment') === 'true';
@@ -654,42 +655,47 @@ window.manageUserFeatures = async function(userId) {
   const u = allUsers[userId];
   if (!u) return;
 
-  const featuresSnap = await get(ref(db, 'users/' + userId + '/features'));
-  const features = featuresSnap.val() || {};
+  try {
+    const featuresSnap = await get(ref(db, 'users/' + userId + '/features'));
+    const features = featuresSnap.val() || {};
 
-  const investEnabled = features.investEnabled !== false;
-  const depositEnabled = features.depositEnabled !== false;
-  const withdrawEnabled = features.withdrawEnabled !== false;
+    const investEnabled = features.investEnabled !== false;
+    const depositEnabled = features.depositEnabled !== false;
+    const withdrawEnabled = features.withdrawEnabled !== false;
 
-  const choice = prompt(
-    'User: ' + (u.fullName || 'N/A') + '\n\n' +
-    '1. Invest: ' + (investEnabled ? 'ENABLED' : 'BLOCKED') + '\n' +
-    '2. Deposit: ' + (depositEnabled ? 'ENABLED' : 'BLOCKED') + '\n' +
-    '3. Withdraw: ' + (withdrawEnabled ? 'ENABLED' : 'BLOCKED') + '\n\n' +
-    'Enter number to toggle, or Cancel to exit:'
-  );
+    const choice = prompt(
+      'User: ' + (u.fullName || 'N/A') + '\n\n' +
+      '1. Invest: ' + (investEnabled ? 'ENABLED' : 'BLOCKED') + '\n' +
+      '2. Deposit: ' + (depositEnabled ? 'ENABLED' : 'BLOCKED') + '\n' +
+      '3. Withdraw: ' + (withdrawEnabled ? 'ENABLED' : 'BLOCKED') + '\n\n' +
+      'Enter number to toggle, or Cancel to exit:'
+    );
 
-  if (!choice) return;
+    if (!choice) return;
 
-  const num = parseInt(choice);
-  let featureKey, featureName;
+    const num = parseInt(choice);
+    let featureKey, featureName;
 
-  if (num === 1) { featureKey = 'investEnabled'; featureName = 'Invest'; }
-  else if (num === 2) { featureKey = 'depositEnabled'; featureName = 'Deposit'; }
-  else if (num === 3) { featureKey = 'withdrawEnabled'; featureName = 'Withdraw'; }
-  else { alert('Invalid choice'); return; }
+    if (num === 1) { featureKey = 'investEnabled'; featureName = 'Invest'; }
+    else if (num === 2) { featureKey = 'depositEnabled'; featureName = 'Deposit'; }
+    else if (num === 3) { featureKey = 'withdrawEnabled'; featureName = 'Withdraw'; }
+    else { alert('Invalid choice'); return; }
 
-  const currentValue = (num === 1 ? investEnabled : num === 2 ? depositEnabled : withdrawEnabled);
-  const newValue = !currentValue;
+    const currentValue = (num === 1 ? investEnabled : num === 2 ? depositEnabled : withdrawEnabled);
+    const newValue = !currentValue;
 
-  await update(ref(db, 'users/' + userId + '/features'), { [featureKey]: newValue });
-  await logAdminAction('toggle_user_feature', { userId, feature: featureName, enabled: newValue });
-  alert(featureName + ' is now ' + (newValue ? 'ENABLED' : 'BLOCKED') + ' for this user.');
+    await update(ref(db, 'users/' + userId + '/features'), { [featureKey]: newValue });
+    await logAdminAction('toggle_user_feature', { userId, feature: featureName, enabled: newValue });
+    alert(featureName + ' is now ' + (newValue ? 'ENABLED' : 'BLOCKED') + ' for this user.');
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
 };
 
 // ========== TRANSACTIONS ==========
 function renderTransactions() {
   const container = document.getElementById('transactionsTable');
+  if (!container) return;
   allTransactions = [];
 
   for (const [userId, user] of Object.entries(allUsers)) {
@@ -715,6 +721,7 @@ function renderTransactions() {
   for (const tx of allTransactions) {
     const color = typeColors[tx.type] || 'var(--text-light)';
     const sign = tx.type === 'withdraw' || tx.type === 'transfer_out' || tx.type === 'invest' ? '-' : '+';
+    const isPositive = tx.type === 'deposit' || tx.type === 'transfer_in' || tx.type === 'invest_return';
     let details = '';
     if (tx.network) details = tx.network.replace('_', ' ');
     if (tx.walletAddress) details = tx.walletAddress.substring(0, 16) + '...';
@@ -736,8 +743,8 @@ function renderTransactions() {
 }
 
 window.filterTransactions = function() {
-  const search = document.getElementById('txSearch').value.toLowerCase();
-  const filter = document.getElementById('txFilter').value;
+  const search = document.getElementById('txSearch')?.value.toLowerCase() || '';
+  const filter = document.getElementById('txFilter')?.value || 'all';
   document.querySelectorAll('#transactionsTable tbody tr').forEach(row => {
     const text = row.textContent.toLowerCase();
     const type = row.getAttribute('data-type') || '';
@@ -747,144 +754,10 @@ window.filterTransactions = function() {
   });
 };
 
-// ========== WALLET SETTINGS ==========
-async function loadWalletAddresses() {
-  try {
-    const snapshot = await get(ref(db, 'platformSettings/depositAddresses'));
-    if (snapshot.exists()) {
-      const data = snapshot.val();
-      if (data.USDT_BEP20) {
-        document.getElementById('bep20Address').value = data.USDT_BEP20;
-        document.getElementById('currentBep20').textContent = 'Current: ' + data.USDT_BEP20;
-        document.getElementById('currentBep20').classList.add('show');
-      }
-      if (data.USDT_TRC20) {
-        document.getElementById('trc20Address').value = data.USDT_TRC20;
-        document.getElementById('currentTrc20').textContent = 'Current: ' + data.USDT_TRC20;
-        document.getElementById('currentTrc20').classList.add('show');
-      }
-    }
-  } catch (err) {
-    console.error('Error loading wallet addresses:', err);
-  }
-}
-
-window.saveWalletAddresses = async function() {
-  const bep20 = document.getElementById('bep20Address').value.trim();
-  const trc20 = document.getElementById('trc20Address').value.trim();
-  const saveBtn = document.getElementById('saveWalletBtn');
-  const successMsg = document.getElementById('walletSuccessMsg');
-  const errorMsg = document.getElementById('walletErrorMsg');
-
-  if (!bep20 && !trc20) {
-    alert('Please enter at least one wallet address');
-    return;
-  }
-
-  saveBtn.disabled = true;
-  saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-
-  try {
-    const updates = {};
-    if (bep20) updates.USDT_BEP20 = bep20;
-    if (trc20) updates.USDT_TRC20 = trc20;
-
-    await set(ref(db, 'platformSettings/depositAddresses'), updates);
-
-    if (bep20) {
-      document.getElementById('currentBep20').textContent = 'Current: ' + bep20;
-      document.getElementById('currentBep20').classList.add('show');
-    }
-    if (trc20) {
-      document.getElementById('currentTrc20').textContent = 'Current: ' + trc20;
-      document.getElementById('currentTrc20').classList.add('show');
-    }
-
-    await logAdminAction('update_wallet_addresses', updates);
-    successMsg.classList.add('show');
-    setTimeout(() => successMsg.classList.remove('show'), 4000);
-  } catch (err) {
-    console.error('Save error:', err);
-    errorMsg.classList.add('show');
-    setTimeout(() => errorMsg.classList.remove('show'), 4000);
-  } finally {
-    saveBtn.disabled = false;
-    saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
-  }
-};
-
-// ========== ADD BONUS ==========
-window.sendBonus = async function() {
-  const email = document.getElementById('bonusEmail').value.trim();
-  const amount = parseFloat(document.getElementById('bonusAmount').value);
-  const note = document.getElementById('bonusNote').value.trim();
-  const sendBtn = document.getElementById('sendBonusBtn');
-  const successMsg = document.getElementById('bonusSuccessMsg');
-  const errorMsg = document.getElementById('bonusErrorMsg');
-
-  if (!email) { alert('Please enter user email'); return; }
-  if (!amount || amount <= 0) { alert('Please enter a valid bonus amount'); return; }
-
-  sendBtn.disabled = true;
-  sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-
-  try {
-    // Find user by email
-    let userId = null;
-    let userData = null;
-    for (const [id, u] of Object.entries(allUsers)) {
-      if (u.email === email) {
-        userId = id;
-        userData = u;
-        break;
-      }
-    }
-
-    if (!userId) {
-      alert('User not found with email: ' + email);
-      sendBtn.disabled = false;
-      sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Bonus';
-      return;
-    }
-
-    // Add bonus to user balance
-    await update(ref(db, 'users/' + userId), {
-      balance: (userData.balance || 0) + amount
-    });
-
-    // Add to user history
-    await push(ref(db, 'users/' + userId + '/history'), {
-      type: 'bonus',
-      amount: amount,
-      note: note || 'Admin bonus',
-      status: 'completed',
-      date: new Date().toISOString(),
-      timestamp: Date.now()
-    });
-
-    await logAdminAction('send_bonus', { userId, email, amount, note });
-
-    // Clear form
-    document.getElementById('bonusEmail').value = '';
-    document.getElementById('bonusAmount').value = '';
-    document.getElementById('bonusNote').value = '';
-
-    successMsg.classList.add('show');
-    setTimeout(() => successMsg.classList.remove('show'), 4000);
-    updateStats();
-  } catch (err) {
-    console.error('Bonus error:', err);
-    errorMsg.classList.add('show');
-    setTimeout(() => errorMsg.classList.remove('show'), 4000);
-  } finally {
-    sendBtn.disabled = false;
-    sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Bonus';
-  }
-};
-
 // ========== KYC REVIEW ==========
 function renderKYC() {
   const container = document.getElementById('kycTable');
+  if (!container) return;
   const kycEntries = Object.entries(allKYC);
 
   if (kycEntries.length === 0) {
@@ -897,10 +770,10 @@ function renderKYC() {
   for (const [userId, k] of kycEntries) {
     const statusClass = k.status === 'pending' ? 'badge-pending' : k.status === 'approved' ? 'badge-approved' : 'badge-rejected';
     const actions = k.status === 'pending'
-      ? '<div class="action-btns"><button class="btn-action btn-approve" onclick="approveKYC('' + userId + '')">Approve</button><button class="btn-action btn-reject" onclick="rejectKYC('' + userId + '')">Reject</button></div>'
+      ? '<div class="action-btns"><button class="btn-action btn-approve" onclick="approveKYC(\'' + userId + '\')">Approve</button><button class="btn-action btn-reject" onclick="rejectKYC(\'' + userId + '\')">Reject</button></div>'
       : 'Completed';
 
-    const docs = '<div style="display:flex; gap:8px; flex-wrap:wrap;"><a href="' + (k.idFront || '#') + '" target="_blank" style="position:relative; display:inline-block;"><img src="' + (k.idFront || '') + '" style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid var(--border);" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span style="display:none; font-size:0.7rem; color:var(--accent);">ID Front</span></a><a href="' + (k.selfie || '#') + '" target="_blank" style="position:relative; display:inline-block;"><img src="' + (k.selfie || '') + '" style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid var(--border);" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span style="display:none; font-size:0.7rem; color:var(--accent);">Selfie</span></a></div>';
+    const docs = '<div style="display:flex; gap:8px; flex-wrap:wrap;"><a href="' + (k.idFront || '#') + '" target="_blank" style="position:relative; display:inline-block;"><img src="' + (k.idFront || '') + '" style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid var(--border);" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\';"><span style="display:none; font-size:0.7rem; color:var(--accent);">ID Front</span></a><a href="' + (k.selfie || '#') + '" target="_blank" style="position:relative; display:inline-block;"><img src="' + (k.selfie || '') + '" style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid var(--border);" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\';"><span style="display:none; font-size:0.7rem; color:var(--accent);">Selfie</span></a></div>';
 
     html += '<tr data-status="' + k.status + '">';
     html += '<td><div class="user-cell"><div class="user-avatar">' + (k.userName || 'U').charAt(0) + '</div><div>' + (k.userName || 'Unknown') + '<br><small>' + (k.userEmail || '') + '</small></div></div></td>';
@@ -919,8 +792,8 @@ function renderKYC() {
 }
 
 window.filterKYC = function() {
-  const search = document.getElementById('kycSearch').value.toLowerCase();
-  const filter = document.getElementById('kycFilter').value;
+  const search = document.getElementById('kycSearch')?.value.toLowerCase() || '';
+  const filter = document.getElementById('kycFilter')?.value || 'all';
   document.querySelectorAll('#kycTable tbody tr').forEach(row => {
     const text = row.textContent.toLowerCase();
     const status = row.getAttribute('data-status') || '';
@@ -936,31 +809,196 @@ window.approveKYC = async function(userId) {
     await update(ref(db, 'users/' + userId + '/kyc'), { status: 'approved', reviewedAt: new Date().toISOString() });
     await update(ref(db, 'pendingKYC/' + userId), { status: 'approved', reviewedAt: new Date().toISOString() });
     await logAdminAction('approve_kyc', { userId });
-    allKYC[userId].status = 'approved';
+    if (allKYC[userId]) allKYC[userId].status = 'approved';
     updateStats();
     updateSidebarBadges();
     renderKYC();
-    alert('✅ KYC approved!');
+    alert('KYC approved!');
   } catch (error) {
-    alert('❌ Error: ' + error.message);
+    alert('Error: ' + error.message);
   }
 };
 
 window.rejectKYC = async function(userId) {
   const reason = prompt('Enter rejection reason (optional):');
-  if (reason === null) return; // Cancelled
+  if (reason === null) return;
   try {
     await update(ref(db, 'users/' + userId + '/kyc'), { status: 'rejected', rejectionReason: reason || 'No reason provided', reviewedAt: new Date().toISOString() });
     await update(ref(db, 'pendingKYC/' + userId), { status: 'rejected', rejectionReason: reason || 'No reason provided', reviewedAt: new Date().toISOString() });
     await logAdminAction('reject_kyc', { userId, reason });
-    allKYC[userId].status = 'rejected';
-    allKYC[userId].rejectionReason = reason || 'No reason provided';
+    if (allKYC[userId]) {
+      allKYC[userId].status = 'rejected';
+      allKYC[userId].rejectionReason = reason || 'No reason provided';
+    }
     updateStats();
     updateSidebarBadges();
     renderKYC();
-    alert('❌ KYC rejected!');
+    alert('KYC rejected!');
   } catch (error) {
-    alert('❌ Error: ' + error.message);
+    alert('Error: ' + error.message);
+  }
+};
+
+// ========== WALLET SETTINGS ==========
+async function loadWalletAddresses() {
+  try {
+    const snapshot = await get(ref(db, 'platformSettings/depositAddresses'));
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const bep20El = document.getElementById('bep20Address');
+      const trc20El = document.getElementById('trc20Address');
+      const currentBep20 = document.getElementById('currentBep20');
+      const currentTrc20 = document.getElementById('currentTrc20');
+
+      if (data.USDT_BEP20 && bep20El) {
+        bep20El.value = data.USDT_BEP20;
+        if (currentBep20) {
+          currentBep20.textContent = 'Current: ' + data.USDT_BEP20;
+          currentBep20.classList.add('show');
+        }
+      }
+      if (data.USDT_TRC20 && trc20El) {
+        trc20El.value = data.USDT_TRC20;
+        if (currentTrc20) {
+          currentTrc20.textContent = 'Current: ' + data.USDT_TRC20;
+          currentTrc20.classList.add('show');
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error loading wallet addresses:', err);
+  }
+}
+
+window.saveWalletAddresses = async function() {
+  const bep20 = document.getElementById('bep20Address')?.value.trim() || '';
+  const trc20 = document.getElementById('trc20Address')?.value.trim() || '';
+  const saveBtn = document.getElementById('saveWalletBtn');
+  const successMsg = document.getElementById('walletSuccessMsg');
+  const errorMsg = document.getElementById('walletErrorMsg');
+
+  if (!bep20 && !trc20) {
+    alert('Please enter at least one wallet address');
+    return;
+  }
+
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+  }
+
+  try {
+    const updates = {};
+    if (bep20) updates.USDT_BEP20 = bep20;
+    if (trc20) updates.USDT_TRC20 = trc20;
+
+    await set(ref(db, 'platformSettings/depositAddresses'), updates);
+
+    const currentBep20 = document.getElementById('currentBep20');
+    const currentTrc20 = document.getElementById('currentTrc20');
+    if (bep20 && currentBep20) {
+      currentBep20.textContent = 'Current: ' + bep20;
+      currentBep20.classList.add('show');
+    }
+    if (trc20 && currentTrc20) {
+      currentTrc20.textContent = 'Current: ' + trc20;
+      currentTrc20.classList.add('show');
+    }
+
+    await logAdminAction('update_wallet_addresses', updates);
+    if (successMsg) {
+      successMsg.classList.add('show');
+      setTimeout(() => successMsg.classList.remove('show'), 4000);
+    }
+  } catch (err) {
+    console.error('Save error:', err);
+    if (errorMsg) {
+      errorMsg.classList.add('show');
+      setTimeout(() => errorMsg.classList.remove('show'), 4000);
+    }
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+    }
+  }
+};
+
+// ========== ADD BONUS ==========
+window.sendBonus = async function() {
+  const email = document.getElementById('bonusEmail')?.value.trim() || '';
+  const amount = parseFloat(document.getElementById('bonusAmount')?.value || '0');
+  const note = document.getElementById('bonusNote')?.value.trim() || '';
+  const sendBtn = document.getElementById('sendBonusBtn');
+  const successMsg = document.getElementById('bonusSuccessMsg');
+  const errorMsg = document.getElementById('bonusErrorMsg');
+
+  if (!email) { alert('Please enter user email'); return; }
+  if (!amount || amount <= 0) { alert('Please enter a valid bonus amount'); return; }
+
+  if (sendBtn) {
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+  }
+
+  try {
+    let userId = null;
+    let userData = null;
+    for (const [id, u] of Object.entries(allUsers)) {
+      if (u.email === email) {
+        userId = id;
+        userData = u;
+        break;
+      }
+    }
+
+    if (!userId) {
+      alert('User not found with email: ' + email);
+      if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Bonus';
+      }
+      return;
+    }
+
+    await update(ref(db, 'users/' + userId), {
+      balance: (userData.balance || 0) + amount
+    });
+
+    await push(ref(db, 'users/' + userId + '/history'), {
+      type: 'bonus',
+      amount: amount,
+      note: note || 'Admin bonus',
+      status: 'completed',
+      date: new Date().toISOString(),
+      timestamp: Date.now()
+    });
+
+    await logAdminAction('send_bonus', { userId, email, amount, note });
+
+    const emailEl = document.getElementById('bonusEmail');
+    const amountEl = document.getElementById('bonusAmount');
+    const noteEl = document.getElementById('bonusNote');
+    if (emailEl) emailEl.value = '';
+    if (amountEl) amountEl.value = '';
+    if (noteEl) noteEl.value = '';
+
+    if (successMsg) {
+      successMsg.classList.add('show');
+      setTimeout(() => successMsg.classList.remove('show'), 4000);
+    }
+    updateStats();
+  } catch (err) {
+    console.error('Bonus error:', err);
+    if (errorMsg) {
+      errorMsg.classList.add('show');
+      setTimeout(() => errorMsg.classList.remove('show'), 4000);
+    }
+  } finally {
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Bonus';
+    }
   }
 };
 
@@ -975,7 +1013,7 @@ window.logout = function() {
       action: 'logout',
       timestamp: Date.now(),
       date: new Date().toISOString()
-    });
+    }).catch(() => {});
   }
   sessionStorage.removeItem('apexvault_user');
   window.location.href = 'index.html';
@@ -983,21 +1021,19 @@ window.logout = function() {
 
 // ========== INIT ==========
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log('Admin panel initializing...');
   const overlay = document.getElementById('loginOverlay');
 
   // FORCE REMOVE overlay after 5 seconds no matter what
   const forceRemoveTimeout = setTimeout(() => {
     console.log('Force removing loading overlay...');
-    if (overlay) {
-      overlay.classList.add('hidden');
-      // If data hasn't loaded yet, show a toast
-      if (!window._adminDataLoaded) {
-        const main = document.getElementById('mainContent');
-        if (main) {
-          const toast = document.createElement('div');
-          toast.innerHTML = '<div style="position:fixed; top:20px; right:20px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; z-index:9998; box-shadow:0 10px 30px rgba(0,0,0,0.3);"><p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:8px;">Some data could not load.</p><button onclick="location.reload()" style="background:var(--accent); border:none; border-radius:8px; padding:8px 16px; color:var(--bg-deep); font-weight:700; font-size:0.8rem; cursor:pointer;">Reload</button></div>';
-          document.body.appendChild(toast);
-        }
+    if (overlay) overlay.classList.add('hidden');
+    if (!window._adminDataLoaded) {
+      const main = document.getElementById('mainContent');
+      if (main) {
+        const toast = document.createElement('div');
+        toast.innerHTML = '<div style="position:fixed; top:20px; right:20px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; z-index:9998; box-shadow:0 10px 30px rgba(0,0,0,0.3);"><p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:8px;">Some data could not load.</p><button onclick="location.reload()" style="background:var(--accent); border:none; border-radius:8px; padding:8px 16px; color:var(--bg-deep); font-weight:700; font-size:0.8rem; cursor:pointer;">Reload</button></div>';
+        document.body.appendChild(toast);
       }
     }
   }, 5000);
@@ -1022,7 +1058,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       window._adminDataLoaded = true;
     } catch (dataErr) {
       console.error('Data load error (non-fatal):', dataErr);
-      // Still show the panel, just with empty/default data
       window._adminDataLoaded = false;
     }
 
