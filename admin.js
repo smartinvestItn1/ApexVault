@@ -983,38 +983,57 @@ window.logout = function() {
 
 // ========== INIT ==========
 document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const isAdmin = await checkAdmin();
-    if (!isAdmin) return;
+  const overlay = document.getElementById('loginOverlay');
 
-    // Safety timeout - if loading takes too long, show error
-    const safetyTimeout = setTimeout(() => {
-      const overlay = document.getElementById('loginOverlay');
-      if (overlay && !overlay.classList.contains('hidden')) {
-        overlay.innerHTML = '<div style="text-align:center; padding:20px;"><div style="font-size:2rem; font-weight:800; background:linear-gradient(90deg, var(--gradient-start), var(--gradient-end)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:16px;">ApexVault</div><p style="color:var(--text-muted); margin-bottom:12px;">Loading is taking longer than expected.</p><p style="color:var(--danger); font-size:0.85rem; margin-bottom:16px;">This may be due to a network issue or Firebase rules.</p><button onclick="location.reload()" style="background:var(--accent); border:none; border-radius:10px; padding:12px 24px; color:var(--bg-deep); font-weight:700; cursor:pointer;">Retry</button><br><a href="login.html" style="color:var(--text-muted); font-size:0.8rem; margin-top:12px; display:inline-block;">Back to Login</a></div>';
-      }
-    }, 15000);
-
-    setTimeout(async () => {
-      try {
-        const overlay = document.getElementById('loginOverlay');
-        await loadAllData();
-        clearTimeout(safetyTimeout);
-        if (overlay) overlay.classList.add('hidden');
-      } catch (err) {
-        clearTimeout(safetyTimeout);
-        console.error('Load data error:', err);
-        const overlay = document.getElementById('loginOverlay');
-        if (overlay) {
-          overlay.innerHTML = '<div style="text-align:center; padding:20px;"><div style="font-size:2rem; font-weight:800; background:linear-gradient(90deg, var(--gradient-start), var(--gradient-end)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:16px;">ApexVault</div><p style="color:var(--danger); margin-bottom:8px;">Error loading data</p><p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:16px;">' + (err.message || 'Unknown error') + '</p><button onclick="location.reload()" style="background:var(--accent); border:none; border-radius:10px; padding:12px 24px; color:var(--bg-deep); font-weight:700; cursor:pointer;">Retry</button></div>';
+  // FORCE REMOVE overlay after 5 seconds no matter what
+  const forceRemoveTimeout = setTimeout(() => {
+    console.log('Force removing loading overlay...');
+    if (overlay) {
+      overlay.classList.add('hidden');
+      // If data hasn't loaded yet, show a toast
+      if (!window._adminDataLoaded) {
+        const main = document.getElementById('mainContent');
+        if (main) {
+          const toast = document.createElement('div');
+          toast.innerHTML = '<div style="position:fixed; top:20px; right:20px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; z-index:9998; box-shadow:0 10px 30px rgba(0,0,0,0.3);"><p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:8px;">Some data could not load.</p><button onclick="location.reload()" style="background:var(--accent); border:none; border-radius:8px; padding:8px 16px; color:var(--bg-deep); font-weight:700; font-size:0.8rem; cursor:pointer;">Reload</button></div>';
+          document.body.appendChild(toast);
         }
       }
-    }, 1200);
+    }
+  }, 5000);
+
+  try {
+    const isAdmin = await Promise.race([
+      checkAdmin(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Admin check timed out')), 8000))
+    ]);
+
+    if (!isAdmin) {
+      clearTimeout(forceRemoveTimeout);
+      return;
+    }
+
+    // Try to load data
+    try {
+      await Promise.race([
+        loadAllData(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Data load timed out')), 10000))
+      ]);
+      window._adminDataLoaded = true;
+    } catch (dataErr) {
+      console.error('Data load error (non-fatal):', dataErr);
+      // Still show the panel, just with empty/default data
+      window._adminDataLoaded = false;
+    }
+
+    clearTimeout(forceRemoveTimeout);
+    if (overlay) overlay.classList.add('hidden');
+
   } catch (err) {
+    clearTimeout(forceRemoveTimeout);
     console.error('Init error:', err);
-    const overlay = document.getElementById('loginOverlay');
     if (overlay) {
-      overlay.innerHTML = '<div style="text-align:center; padding:20px;"><div style="font-size:2rem; font-weight:800; background:linear-gradient(90deg, var(--gradient-start), var(--gradient-end)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:16px;">ApexVault</div><p style="color:var(--danger); margin-bottom:8px;">Error loading admin panel</p><p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:16px;">' + (err.message || 'Please login again') + '</p><a href="login.html" style="background:var(--accent); border:none; border-radius:10px; padding:12px 24px; color:var(--bg-deep); font-weight:700; cursor:pointer; text-decoration:none; display:inline-block;">Go to Login</a></div>';
+      overlay.innerHTML = '<div style="text-align:center; padding:20px;"><div style="font-size:1.8rem; font-weight:800; background:linear-gradient(90deg, var(--gradient-start), var(--gradient-end)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:16px;">ApexVault</div><p style="color:var(--danger); margin-bottom:8px; font-weight:600;">Unable to load admin panel</p><p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:20px;">' + (err.message || 'Please check your connection and try again') + '</p><div style="display:flex; gap:12px; justify-content:center;"><button onclick="location.reload()" style="background:var(--accent); border:none; border-radius:10px; padding:12px 24px; color:var(--bg-deep); font-weight:700; cursor:pointer;">Retry</button><a href="login.html" style="background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:12px 24px; color:var(--text-light); font-weight:600; text-decoration:none; display:inline-block;">Back to Login</a></div></div>';
     }
   }
 });
