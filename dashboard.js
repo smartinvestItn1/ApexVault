@@ -1,6 +1,7 @@
 // ========== APEXVAULT DASHBOARD JAVASCRIPT ==========
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBt77e2QQCtOyCVCupw-6jIJ8MVyHf3UKY",
@@ -15,6 +16,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const storage = getStorage(app);
 
 // ========== CONFIG ==========
 const DAILY_WITHDRAW_LIMIT = 10000;
@@ -1074,7 +1076,6 @@ async function checkKYCStatus() {
     const rejectedContainer = document.getElementById('kycRejectedContainer');
 
     if (!kycData) {
-      // No KYC submitted yet
       if (formContainer) formContainer.style.display = 'block';
       if (statusContainer) statusContainer.style.display = 'none';
       if (approvedContainer) approvedContainer.style.display = 'none';
@@ -1105,6 +1106,54 @@ async function checkKYCStatus() {
   }
 }
 
+// ========== FILE UPLOAD ==========
+window.handleFileUpload = function(input, previewId, urlId) {
+  const file = input.files[0];
+  if (!file) return;
+
+  // Show preview
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const previewDiv = document.getElementById(previewId);
+    const img = previewDiv.querySelector('img');
+    img.src = e.target.result;
+    previewDiv.style.display = 'block';
+
+    // Hide placeholder
+    const box = input.closest('.file-upload-box');
+    const placeholder = box.querySelector('[id$="Placeholder"]');
+    if (placeholder) placeholder.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+};
+
+async function uploadFileToStorage(file, path, progressId, fillId) {
+  return new Promise((resolve, reject) => {
+    const fileRef = storageRef(storage, path);
+    const uploadTask = uploadBytesResumable(fileRef, file);
+
+    const progressDiv = document.getElementById(progressId);
+    const fillDiv = document.getElementById(fillId);
+    if (progressDiv) progressDiv.style.display = 'block';
+
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        if (fillDiv) fillDiv.style.width = progress + '%';
+      },
+      (error) => {
+        if (progressDiv) progressDiv.style.display = 'none';
+        reject(error);
+      },
+      async () => {
+        if (progressDiv) progressDiv.style.display = 'none';
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        resolve(downloadURL);
+      }
+    );
+  });
+}
+
 window.submitKYC = async function(event) {
   event.preventDefault();
 
@@ -1113,24 +1162,47 @@ window.submitKYC = async function(event) {
   const dob = document.getElementById('kycDob').value;
   const address = document.getElementById('kycAddress').value.trim();
   const phone = document.getElementById('kycPhone').value.trim();
-  const idFront = document.getElementById('kycIdFront').value.trim();
-  const selfie = document.getElementById('kycSelfie').value.trim();
+  const idFrontFile = document.getElementById('kycIdFrontFile').files[0];
+  const selfieFile = document.getElementById('kycSelfieFile').files[0];
+  const submitBtn = document.getElementById('kycSubmitBtn');
+
+  if (!idFrontFile) { alert('Please upload your ID front photo'); return; }
+  if (!selfieFile) { alert('Please upload your selfie with ID'); return; }
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
 
   try {
+    // Upload ID front
+    const idFrontUrl = await uploadFileToStorage(
+      idFrontFile, 
+      'kyc/' + currentUser.uid + '/idFront_' + Date.now(),
+      'idFrontProgress',
+      'idFrontFill'
+    );
+
+    // Upload selfie
+    const selfieUrl = await uploadFileToStorage(
+      selfieFile,
+      'kyc/' + currentUser.uid + '/selfie_' + Date.now(),
+      'selfieProgress',
+      'selfieFill'
+    );
+
+    // Save to database
     await set(ref(db, 'users/' + currentUser.uid + '/kyc'), {
       fullName: fullName,
       idNumber: idNumber,
       dob: dob,
       address: address,
       phone: phone,
-      idFront: idFront,
-      selfie: selfie,
+      idFront: idFrontUrl,
+      selfie: selfieUrl,
       status: 'pending',
       submittedAt: new Date().toISOString(),
       timestamp: Date.now()
     });
 
-    // Also add to global pendingKYC for admin review
     await set(ref(db, 'pendingKYC/' + currentUser.uid), {
       userId: currentUser.uid,
       userName: userData.fullName,
@@ -1140,8 +1212,8 @@ window.submitKYC = async function(event) {
       dob: dob,
       address: address,
       phone: phone,
-      idFront: idFront,
-      selfie: selfie,
+      idFront: idFrontUrl,
+      selfie: selfieUrl,
       status: 'pending',
       submittedAt: new Date().toISOString(),
       timestamp: Date.now()
@@ -1151,6 +1223,9 @@ window.submitKYC = async function(event) {
     checkKYCStatus();
   } catch (error) {
     alert('❌ Error: ' + error.message);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = 'Submit KYC for Review';
   }
 };
 
@@ -1171,8 +1246,16 @@ window.resetKYC = function() {
   document.getElementById('kycDob').value = '';
   document.getElementById('kycAddress').value = '';
   document.getElementById('kycPhone').value = '';
-  document.getElementById('kycIdFront').value = '';
-  document.getElementById('kycSelfie').value = '';
+  document.getElementById('kycIdFrontFile').value = '';
+  document.getElementById('kycSelfieFile').value = '';
+  document.getElementById('idFrontUrl').value = '';
+  document.getElementById('selfieUrl').value = '';
+
+  // Reset previews
+  document.getElementById('idFrontPreview').style.display = 'none';
+  document.getElementById('idFrontPlaceholder').style.display = 'block';
+  document.getElementById('selfiePreview').style.display = 'none';
+  document.getElementById('selfiePlaceholder').style.display = 'block';
 };
 
 // ========== INIT ==========
