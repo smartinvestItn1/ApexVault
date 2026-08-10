@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ApexVault - KYC Verification</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-deep: #0a0e1a;
+      --bg-card: #112240;
+      --bg-card-hover: #1a2f4f;
+      --border: #233554;
+      --accent: #64ffda;
+      --gradient-start: #00d4aa;
+      --gradient-end: #00a8e8;
+      --text-muted: #8892b0;
+      --text-light: #ccd6f6;
+      --text-white: #ffffff;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --orange: #f97316;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-light);
+      line-height: 1.5;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-deep); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    /* Header */
+    .kyc-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      background: rgba(10, 14, 26, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 100;
+    }
+    .kyc-header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-white);
+    }
+    .back-btn {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-light);
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+    }
+    .back-btn:active { transform: scale(0.95); background: var(--bg-card-hover); }
+    .status-badge {
+      padding: 6px 14px;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .status-badge.pending {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: var(--warning);
+    }
+    .status-badge.verified {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--success);
+    }
+    .status-badge.rejected {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+    }
+
+    /* Main */
+    .kyc-main {
+      padding: 80px 16px 40px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Progress */
+    .progress-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding: 0 8px;
+    }
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      position: relative;
+    }
+    .progress-step::after {
+      content: '';
+      position: absolute;
+      top: 14px;
+      right: -50%;
+      width: 100%;
+      height: 2px;
+      background: var(--border);
+      z-index: 0;
+    }
+    .progress-step:last-child::after { display: none; }
+    .progress-step.completed::after { background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end)); }
+    .step-circle {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      z-index: 1;
+      transition: all 0.3s;
+    }
+    .progress-step.active .step-circle {
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      border-color: transparent;
+      color: var(--bg-deep);
+      box-shadow: 0 0 15px rgba(0, 212, 170, 0.4);
+    }
+    .progress-step.completed .step-circle {
+      background: var(--success);
+      border-color: var(--success);
+      color: #fff;
+    }
+    .step-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .progress-step.active .step-label { color: var(--accent); }
+    .progress-step.completed .step-label { color: var(--success); }
+
+    /* Cards */
+    .kyc-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 20px;
+      animation: fadeInUp 0.4s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .kyc-card h2 {
+      color: var(--text-white);
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .kyc-card h2 i { color: var(--accent); font-size: 1rem; }
+    .kyc-card > p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-light);
+      margin-bottom: 8px;
+    }
+    .form-group label span { color: var(--danger); }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-white);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--accent);
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+    .form-group select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238892b0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      padding-right: 40px;
+    }
+    .form-group select option {
+      background: var(--bg-card);
+      color: var(--text-white);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 480px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    /* File Upload */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .upload-zone:hover {
+      border-color: var(--accent);
+      background: rgba(100, 255, 218, 0.03);
+    }
+    .upload-zone.has-file {
+      border-color: var(--success);
+      background: rgba(16, 185, 129, 0.05);
+    }
+    .upload-zone i {
+      font-size: 2.5rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: block;
+    }
+    .upload-zone.has-file i { color: var(--success); }
+    .upload-zone p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+    .upload-zone .file-name {
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 600;
+      word-break: break-all;
+    }
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .upload-preview {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-top: 12px;
+      display: none;
+    }
+    .upload-preview.show { display: block; }
+
+    /* Buttons */
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .btn {
+      flex: 1;
+      padding: 16px;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn:active { transform: scale(0.97); opacity: 0.9; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      color: var(--bg-deep);
+    }
+    .btn-secondary {
+      background: var(--bg-deep);
+      color: var(--text-light);
+      border: 1px solid var(--border);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Step sections */
+    .step-section { display: none; }
+    .step-section.active { display: block; }
+
+    /* Review Card */
+    .review-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .review-item:last-child { border-bottom: none; }
+    .review-label { color: var(--text-muted); font-size: 0.85rem; }
+    .review-value { color: var(--text-white); font-size: 0.9rem; font-weight: 600; text-align: right; }
+    .review-docs {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .review-doc {
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+    .review-doc img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .review-doc p { color: var(--text-muted); font-size: 0.75rem; }
+
+    /* Success */
+    .success-screen {
+      text-align: center;
+      padding: 60px 20px;
+      display: none;
+    }
+    .success-screen.show { display: block; }
+    .success-icon {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 2.5rem;
+      color: var(--bg-deep);
+      animation: successPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      transform: scale(0);
+      box-shadow: 0 0 40px rgba(0, 212, 170, 0.4);
+    }
+    @keyframes successPop { to { transform: scale(1); } }
+    .success-screen h2 {
+      color: var(--text-white);
+      font-size: 1.4rem;
+      margin-bottom: 8px;
+    }
+    .success-screen p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 32px;
+    }
+
+    /* Info Box */
+    .info-box {
+      background: rgba(100, 255, 218, 0.05);
+      border: 1px solid rgba(100, 255, 218, 0.15);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .info-box i {
+      color: var(--accent);
+      font-size: 1.1rem;
+      margin-top: 2px;
+    }
+    .info-box p {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    /* ID Type selector */
+    .id-type-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .id-type-btn {
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: var(--text-muted);
+    }
+    .id-type-btn i {
+      font-size: 1.4rem;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .id-type-btn span {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .id-type-btn.active {
+      border-color: var(--accent);
+      background: rgba(100, 255, 218, 0.1);
+      color: var(--accent);
+    }
+    .id-type-btn:active { transform: scale(0.97); }
+
+    /* Gender */
+    .gender-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .gender-btn {
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .gender-btn.active {
+      border-color: var(--accent);
+      background: rgba(100, 255, 218, 0.1);
+      color: var(--accent);
+    }
+  </style>
+<base target="_blank">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="kyc-header">
+    <a href="dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+    <h1>KYC Verification</h1>
+    <span class="status-badge pending" id="kycStatus">Pending</span>
+  </header>
+
+  <main class="kyc-main">
+
+    <!-- Progress -->
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-step active" data-step="1">
+        <div class="step-circle">1</div>
+        <span class="step-label">Personal</span>
+      </div>
+      <div class="progress-step" data-step="2">
+        <div class="step-circle">2</div>
+        <span class="step-label">Identity</span>
+      </div>
+      <div class="progress-step" data-step="3">
+        <div class="step-circle">3</div>
+        <span class="step-label">Selfie</span>
+      </div>
+      <div class="progress-step" data-step="4">
+        <div class="step-circle">4</div>
+        <span class="step-label">Review</span>
+      </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="info-box">
+      <i class="fas fa-shield-alt"></i>
+      <p>Your information is encrypted and stored securely. We only use it for identity verification purposes in compliance with financial regulations.</p>
+    </div>
+
+    <!-- STEP 1: Personal Info -->
+    <div class="step-section active" id="step1">
+      <div class="kyc-card">
+        <h2><i class="fas fa-user"></i> Personal Information</h2>
+        <p>Please provide your basic personal details exactly as they appear on your ID.</p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>First Name <span>*</span></label>
+            <input type="text" id="firstName" placeholder="John" required>
+          </div>
+          <div class="form-group">
+            <label>Last Name <span>*</span></label>
+            <input type="text" id="lastName" placeholder="Doe" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Date of Birth <span>*</span></label>
+          <input type="date" id="dob" required>
+        </div>
+
+        <div class="form-group">
+          <label>Gender <span>*</span></label>
+          <div class="gender-grid">
+            <button type="button" class="gender-btn" data-value="male" onclick="selectGender(this)">Male</button>
+            <button type="button" class="gender-btn" data-value="female" onclick="selectGender(this)">Female</button>
+            <button type="button" class="gender-btn" data-value="other" onclick="selectGender(this)">Other</button>
+          </div>
+          <input type="hidden" id="gender" required>
+        </div>
+
+        <div class="form-group">
+          <label>Nationality / Country <span>*</span></label>
+          <select id="country" required>
+            <option value="">Select your country</option>
+            <option value="AF">Afghanistan</option>
+            <option value="AL">Albania</option>
+            <option value="DZ">Algeria</option>
+            <option value="AD">Andorra</option>
+            <option value="AO">Angola</option>
+            <option value="AG">Antigua and Barbuda</option>
+            <option value="AR">Argentina</option>
+            <option value="AM">Armenia</option>
+            <option value="AU">Australia</option>
+            <option value="AT">Austria</option>
+            <option value="AZ">Azerbaijan</option>
+            <option value="BS">Bahamas</option>
+            <option value="BH">Bahrain</option>
+            <option value="BD">Bangladesh</option>
+            <option value="BB">Barbados</option>
+            <option value="BY">Belarus</option>
+            <option value="BE">Belgium</option>
+            <option value="BZ">Belize</option>
+            <option value="BJ">Benin</option>
+            <option value="BT">Bhutan</option>
+            <option value="BO">Bolivia</option>
+            <option value="BA">Bosnia and Herzegovina</option>
+            <option value="BW">Botswana</option>
+            <option value="BR">Brazil</option>
+            <option value="BN">Brunei</option>
+            <option value="BG">Bulgaria</option>
+            <option value="BF">Burkina Faso</option>
+            <option value="BI">Burundi</option>
+            <option value="KH">Cambodia</option>
+            <option value="CM">Cameroon</option>
+            <option value="CA">Canada</option>
+            <option value="CV">Cape Verde</option>
+            <option value="CF">Central African Republic</option>
+            <option value="TD">Chad</option>
+            <option value="CL">Chile</option>
+            <option value="CN">China</option>
+            <option value="CO">Colombia</option>
+            <option value="KM">Comoros</option>
+            <option value="CG">Congo</option>
+            <option value="CD">Congo (DRC)</option>
+            <option value="CR">Costa Rica</option>
+            <option value="HR">Croatia</option>
+            <option value="CU">Cuba</option>
+            <option value="CY">Cyprus</option>
+            <option value="CZ">Czech Republic</option>
+            <option value="DK">Denmark</option>
+            <option value="DJ">Djibouti</option>
+            <option value="DM">Dominica</option>
+            <option value="DO">Dominican Republic</option>
+            <option value="EC">Ecuador</option>
+            <option value="EG">Egypt</option>
+            <option value="SV">El Salvador</option>
+            <option value="GQ">Equatorial Guinea</option>
+            <option value="ER">Eritrea</option>
+            <option value="EE">Estonia</option>
+            <option value="ET">Ethiopia</option>
+            <option value="FJ">Fiji</option>
+            <option value="FI">Finland</option>
+            <option value="FR">France</option>
+            <option value="GA">Gabon</option>
+            <option value="GM">Gambia</option>
+            <option value="GE">Georgia</option>
+            <option value="DE">Germany</option>
+            <option value="GH">Ghana</option>
+            <option value="GR">Greece</option>
+            <option value="GT">Guatemala</option>
+            <option value="GN">Guinea</option>
+            <option value="GW">Guinea-Bissau</option>
+            <option value="GY">Guyana</option>
+            <option value="HT">Haiti</option>
+            <option value="HN">Honduras</option>
+            <option value="HU">Hungary</option>
+            <option value="IS">Iceland</option>
+            <option value="IN">India</option>
+            <option value="ID">Indonesia</option>
+            <option value="IR">Iran</option>
+            <option value="IQ">Iraq</option>
+            <option value="IE">Ireland</option>
+            <option value="IL">Israel</option>
+            <option value="IT">Italy</option>
+            <option value="JM">Jamaica</option>
+            <option value="JP">Japan</option>
+            <option value="JO">Jordan</option>
+            <option value="KZ">Kazakhstan</option>
+            <option value="KE">Kenya</option>
+            <option value="KI">Kiribati</option>
+            <option value="KP">Korea (North)</option>
+            <option value="KR">Korea (South)</option>
+            <option value="KW">Kuwait</option>
+            <option value="KG">Kyrgyzstan</option>
+            <option value="LA">Laos</option>
+            <option value="LV">Latvia</option>
+            <option value="LB">Lebanon</option>
+            <option value="LS">Lesotho</option>
+            <option value="LR">Liberia</option>
+            <option value="LY">Libya</option>
+            <option value="LI">Liechtenstein</option>
+            <option value="LT">Lithuania</option>
+            <option value="LU">Luxembourg</option>
+            <option value="MG">Madagascar</option>
+            <option value="MW">Malawi</option>
+            <option value="MY">Malaysia</option>
+            <option value="MV">Maldives</option>
+            <option value="ML">Mali</option>
+            <option value="MT">Malta</option>
+            <option value="MH">Marshall Islands</option>
+            <option value="MR">Mauritania</option>
+            <option value="MU">Mauritius</option>
+            <option value="MX">Mexico</option>
+            <option value="FM">Micronesia</option>
+            <option value="MD">Moldova</option>
+            <option value="MC">Monaco</option>
+            <option value="MN">Mongolia</option>
+            <option value="ME">Montenegro</option>
+            <option value="MA">Morocco</option>
+            <option value="MZ">Mozambique</option>
+            <option value="MM">Myanmar</option>
+            <option value="NA">Namibia</option>
+            <option value="NR">Nauru</option>
+            <option value="NP">Nepal</option>
+            <option value="NL">Netherlands</option>
+            <option value="NZ">New Zealand</option>
+            <option value="NI">Nicaragua</option>
+            <option value="NE">Niger</option>
+            <option value="NG">Nigeria</option>
+            <option value="MK">North Macedonia</option>
+            <option value="NO">Norway</option>
+            <option value="OM">Oman</option>
+            <option value="PK">Pakistan</option>
+            <option value="PW">Palau</option>
+            <option value="PA">Panama</option>
+            <option value="PG">Papua New Guinea</option>
+            <option value="PY">Paraguay</option>
+            <option value="PE">Peru</option>
+            <option value="PH">Philippines</option>
+            <option value="PL">Poland</option>
+            <option value="PT">Portugal</option>
+            <option value="QA">Qatar</option>
+            <option value="RO">Romania</option>
+            <option value="RU">Russia</option>
+            <option value="RW">Rwanda</option>
+            <option value="KN">Saint Kitts and Nevis</option>
+            <option value="LC">Saint Lucia</option>
+            <option value="VC">Saint Vincent</option>
+            <option value="WS">Samoa</option>
+            <option value="SM">San Marino</option>
+            <option value="ST">Sao Tome and Principe</option>
+            <option value="SA">Saudi Arabia</option>
+            <option value="SN">Senegal</option>
+            <option value="RS">Serbia</option>
+            <option value="SC">Seychelles</option>
+            <option value="SL">Sierra Leone</option>
+            <option value="SG">Singapore</option>
+            <option value="SK">Slovakia</option>
+            <option value="SI">Slovenia</option>
+            <option value="SB">Solomon Islands</option>
+            <option value="SO">Somalia</option>
+            <option value="ZA">South Africa</option>
+            <option value="SS">South Sudan</option>
+            <option value="ES">Spain</option>
+            <option value="LK">Sri Lanka</option>
+            <option value="SD">Sudan</option>
+            <option value="SR">Suriname</option>
+            <option value="SE">Sweden</option>
+            <option value="CH">Switzerland</option>
+            <option value="SY">Syria</option>
+            <option value="TJ">Tajikistan</option>
+            <option value="TZ">Tanzania</option>
+            <option value="TH">Thailand</option>
+            <option value="TL">Timor-Leste</option>
+            <option value="TG">Togo</option>
+            <option value="TO">Tonga</option>
+            <option value="TT">Trinidad and Tobago</option>
+            <option value="TN">Tunisia</option>
+            <option value="TR">Turkey</option>
+            <option value="TM">Turkmenistan</option>
+            <option value="TV">Tuvalu</option>
+            <option value="UG">Uganda</option>
+            <option value="UA">Ukraine</option>
+            <option value="AE">United Arab Emirates</option>
+            <option value="GB">United Kingdom</option>
+            <option value="US">United States</option>
+            <option value="UY">Uruguay</option>
+            <option value="UZ">Uzbekistan</option>
+            <option value="VU">Vanuatu</option>
+            <option value="VA">Vatican City</option>
+            <option value="VE">Venezuela</option>
+            <option value="VN">Vietnam</option>
+            <option value="YE">Yemen</option>
+            <option value="ZM">Zambia</option>
+            <option value="ZW">Zimbabwe</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Phone Number <span>*</span></label>
+          <input type="tel" id="phone" placeholder="+1 234 567 8900" required>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="goToStep(2)">
+            Continue <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Identity Document -->
+    <div class="step-section" id="step2">
+      <div class="kyc-card">
+        <h2><i class="fas fa-id-card"></i> Identity Document</h2>
+        <p>Select your document type and upload clear photos of both sides.</p>
+
+        <label style="display:block; font-size:0.8rem; font-weight:600; color:var(--text-light); margin-bottom:10px;">Document Type <span style="color:var(--danger);">*</span></label>
+        <div class="id-type-grid">
+          <button type="button" class="id-type-btn active" data-value="passport" onclick="selectIdType(this)">
+            <i class="fas fa-passport"></i>
+            <span>Passport</span>
+          </button>
+          <button type="button" class="id-type-btn" data-value="national_id" onclick="selectIdType(this)">
+            <i class="fas fa-id-card"></i>
+            <span>National ID</span>
+          </button>
+          <button type="button" class="id-type-btn" data-value="drivers_license" onclick="selectIdType(this)">
+            <i class="fas fa-car"></i>
+            <span>Driver's License</span>
+          </button>
+        </div>
+        <input type="hidden" id="idType" value="passport">
+
+        <div class="form-group">
+          <label>Document Number <span>*</span></label>
+          <input type="text" id="idNumber" placeholder="Enter document number" required>
+        </div>
+
+        <div class="form-group">
+          <label>Issue Date <span>*</span></label>
+          <input type="date" id="idIssueDate" required>
+        </div>
+
+        <div class="form-group">
+          <label>Expiry Date <span>*</span></label>
+          <input type="date" id="idExpiryDate" required>
+        </div>
+
+        <div class="form-group">
+          <label>Upload Front Side <span>*</span></label>
+          <div class="upload-zone" id="frontUploadZone">
+            <input type="file" id="idFront" accept="image/*" onchange="handleFileUpload(this, 'frontPreview', 'frontUploadZone')">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Tap to upload front side</p>
+            <span class="file-name" id="frontFileName"></span>
+            <img class="upload-preview" id="frontPreview">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Upload Back Side <span>*</span></label>
+          <div class="upload-zone" id="backUploadZone">
+            <input type="file" id="idBack" accept="image/*" onchange="handleFileUpload(this, 'backPreview', 'backUploadZone')">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Tap to upload back side</p>
+            <span class="file-name" id="backFileName"></span>
+            <img class="upload-preview" id="backPreview">
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="goToStep(1)">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+          <button class="btn btn-primary" onclick="goToStep(3)">
+            Continue <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Selfie -->
+    <div class="step-section" id="step3">
+      <div class="kyc-card">
+        <h2><i class="fas fa-camera"></i> Selfie Verification</h2>
+        <p>Take a clear selfie holding your ID document next to your face. Make sure both your face and the ID are clearly visible.</p>
+
+        <div class="upload-zone" id="selfieUploadZone" style="padding:40px 20px;">
+          <input type="file" id="selfie" accept="image/*" capture="user" onchange="handleFileUpload(this, 'selfiePreview', 'selfieUploadZone')">
+          <i class="fas fa-user-circle" style="font-size:3rem;"></i>
+          <p>Tap to take a selfie with your ID</p>
+          <span class="file-name" id="selfieFileName"></span>
+          <img class="upload-preview" id="selfiePreview">
+        </div>
+
+        <div class="info-box" style="margin-top:16px;">
+          <i class="fas fa-lightbulb"></i>
+          <p>Tips: Use good lighting, look directly at the camera, remove glasses/sunglasses, and ensure the ID text is readable.</p>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="goToStep(2)">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+          <button class="btn btn-primary" onclick="goToStep(4)">
+            Continue <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Review -->
+    <div class="step-section" id="step4">
+      <div class="kyc-card">
+        <h2><i class="fas fa-clipboard-check"></i> Review & Submit</h2>
+        <p>Please review your information before submitting.</p>
+
+        <h3 style="color:var(--text-white); font-size:0.95rem; margin-bottom:12px; margin-top:8px;">Personal Details</h3>
+        <div class="review-item">
+          <span class="review-label">Full Name</span>
+          <span class="review-value" id="reviewName">-</span>
+        </div>
+        <div class="review-item">
+          <span class="review-label">Date of Birth</span>
+          <span class="review-value" id="reviewDob">-</span>
+        </div>
+        <div class="review-item">
+          <span class="review-label">Gender</span>
+          <span class="review-value" id="reviewGender">-</span>
+        </div>
+        <div class="review-item">
+          <span class="review-label">Country</span>
+          <span class="review-value" id="reviewCountry">-</span>
+        </div>
+        <div class="review-item">
+          <span class="review-label">Phone</span>
+          <span class="review-value" id="reviewPhone">-</span>
+        </div>
+
+        <h3 style="color:var(--text-white); font-size:0.95rem; margin:20px 0 12px;">Document Details</h3>
+        <div class="review-item">
+          <span class="review-label">Document Type</span>
+          <span class="review-value" id="reviewIdType">-</span>
+        </div>
+        <div class="review-item">
+          <span class="review-label">Document Number</span>
+          <span class="review-value" id="reviewIdNumber">-</span>
+        </div>
+        <div class="review-item">
+          <span class="review-label">Issue Date</span>
+          <span class="review-value" id="reviewIssueDate">-</span>
+        </div>
+        <div class="review-item">
+          <span class="review-label">Expiry Date</span>
+          <span class="review-value" id="reviewExpiryDate">-</span>
+        </div>
+
+        <h3 style="color:var(--text-white); font-size:0.95rem; margin:20px 0 12px;">Uploaded Documents</h3>
+        <div class="review-docs">
+          <div class="review-doc">
+            <img id="reviewFrontImg" src="" alt="ID Front">
+            <p>ID Front</p>
+          </div>
+          <div class="review-doc">
+            <img id="reviewBackImg" src="" alt="ID Back">
+            <p>ID Back</p>
+          </div>
+          <div class="review-doc" style="grid-column:span 2;">
+            <img id="reviewSelfieImg" src="" alt="Selfie" style="height:150px;">
+            <p>Selfie with ID</p>
+          </div>
+        </div>
+
+        <div class="info-box" style="margin-top:20px;">
+          <i class="fas fa-info-circle"></i>
+          <p>By submitting, you confirm that all information provided is accurate and the documents belong to you. False information may result in account suspension.</p>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="goToStep(3)">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+          <button class="btn btn-primary" id="submitBtn" onclick="submitKYC()">
+            <i class="fas fa-paper-plane"></i> Submit KYC
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUCCESS SCREEN -->
+    <div class="success-screen" id="successScreen">
+      <div class="success-icon"><i class="fas fa-check"></i></div>
+      <h2>KYC Submitted Successfully!</h2>
+      <p>Your documents have been received and are under review. You will be notified once verification is complete. This usually takes 24-48 hours.</p>
+      <button class="btn btn-primary" onclick="window.location.href='dashboard.html'" style="max-width:300px; margin:0 auto;">
+        <i class="fas fa-home"></i> Back to Dashboard
+      </button>
+    </div>
+
+  </main>
+
+  <script>
+    let currentStep = 1;
+    const totalSteps = 4;
+    let uploadedFiles = {};
+
+    // Gender selection
+    function selectGender(btn) {
+      document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('gender').value = btn.dataset.value;
+    }
+
+    // ID Type selection
+    function selectIdType(btn) {
+      document.querySelectorAll('.id-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('idType').value = btn.dataset.value;
+    }
+
+    // File upload handler
+    function handleFileUpload(input, previewId, zoneId) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const zone = document.getElementById(zoneId);
+      const preview = document.getElementById(previewId);
+      const fileNameEl = zone.querySelector('.file-name');
+
+      zone.classList.add('has-file');
+      fileNameEl.textContent = file.name;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        preview.src = e.target.result;
+        preview.classList.add('show');
+        uploadedFiles[previewId] = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Navigation
+    function goToStep(step) {
+      // Validation before moving forward
+      if (step > currentStep) {
+        if (!validateStep(currentStep)) return;
+      }
+
+      // Hide all sections
+      document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
+      document.getElementById('step' + step).classList.add('active');
+
+      // Update progress
+      document.querySelectorAll('.progress-step').forEach(ps => {
+        const psStep = parseInt(ps.dataset.step);
+        ps.classList.remove('active', 'completed');
+        if (psStep === step) ps.classList.add('active');
+        else if (psStep < step) ps.classList.add('completed');
+      });
+
+      currentStep = step;
+
+      // If review step, populate data
+      if (step === 4) populateReview();
+
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function validateStep(step) {
+      let valid = true;
+      let firstError = null;
+
+      if (step === 1) {
+        const fields = ['firstName', 'lastName', 'dob', 'country', 'phone'];
+        fields.forEach(id => {
+          const el = document.getElementById(id);
+          if (!el.value.trim()) {
+            el.style.borderColor = 'var(--danger)';
+            valid = false;
+            if (!firstError) firstError = el;
+          } else {
+            el.style.borderColor = 'var(--border)';
+          }
+        });
+        if (!document.getElementById('gender').value) {
+          valid = false;
+          alert('Please select your gender');
+        }
+      }
+
+      if (step === 2) {
+        const fields = ['idNumber', 'idIssueDate', 'idExpiryDate'];
+        fields.forEach(id => {
+          const el = document.getElementById(id);
+          if (!el.value.trim()) {
+            el.style.borderColor = 'var(--danger)';
+            valid = false;
+            if (!firstError) firstError = el;
+          } else {
+            el.style.borderColor = 'var(--border)';
+          }
+        });
+        if (!uploadedFiles['frontPreview']) {
+          valid = false;
+          alert('Please upload the front side of your ID');
+        }
+        if (!uploadedFiles['backPreview']) {
+          valid = false;
+          alert('Please upload the back side of your ID');
+        }
+      }
+
+      if (step === 3) {
+        if (!uploadedFiles['selfiePreview']) {
+          valid = false;
+          alert('Please upload a selfie with your ID');
+        }
+      }
+
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstError.focus();
+      }
+
+      return valid;
+    }
+
+    function populateReview() {
+      const firstName = document.getElementById('firstName').value;
+      const lastName = document.getElementById('lastName').value;
+      const gender = document.getElementById('gender').value;
+      const countrySelect = document.getElementById('country');
+      const countryName = countrySelect.options[countrySelect.selectedIndex].text;
+      const idType = document.getElementById('idType').value;
+
+      document.getElementById('reviewName').textContent = firstName + ' ' + lastName;
+      document.getElementById('reviewDob').textContent = document.getElementById('dob').value;
+      document.getElementById('reviewGender').textContent = gender.charAt(0).toUpperCase() + gender.slice(1);
+      document.getElementById('reviewCountry').textContent = countryName;
+      document.getElementById('reviewPhone').textContent = document.getElementById('phone').value;
+
+      const idTypeLabels = { passport: 'Passport', national_id: 'National ID', drivers_license: "Driver's License" };
+      document.getElementById('reviewIdType').textContent = idTypeLabels[idType] || idType;
+      document.getElementById('reviewIdNumber').textContent = document.getElementById('idNumber').value;
+      document.getElementById('reviewIssueDate').textContent = document.getElementById('idIssueDate').value;
+      document.getElementById('reviewExpiryDate').textContent = document.getElementById('idExpiryDate').value;
+
+      if (uploadedFiles['frontPreview']) document.getElementById('reviewFrontImg').src = uploadedFiles['frontPreview'];
+      if (uploadedFiles['backPreview']) document.getElementById('reviewBackImg').src = uploadedFiles['backPreview'];
+      if (uploadedFiles['selfiePreview']) document.getElementById('reviewSelfieImg').src = uploadedFiles['selfiePreview'];
+    }
+
+    async function submitKYC() {
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+      // Simulate submission (replace with actual Firebase logic later)
+      setTimeout(() => {
+        document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
+        document.getElementById('successScreen').classList.add('show');
+        document.getElementById('progressBar').style.display = 'none';
+        document.querySelector('.info-box').style.display = 'none';
+
+        // Update header status
+        const statusBadge = document.getElementById('kycStatus');
+        statusBadge.textContent = 'Under Review';
+        statusBadge.className = 'status-badge pending';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 2000);
+    }
+
+    // Reset border color on input
+    document.querySelectorAll('input, select').forEach(el => {
+      el.addEventListener('input', function() {
+        this.style.borderColor = 'var(--border)';
+      });
+    });
+  </script>
+</body>
+</html>
