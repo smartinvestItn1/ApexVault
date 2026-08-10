@@ -11,6 +11,36 @@
     .modal-overlay.show { opacity:1; pointer-events:auto; }
     .filter-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); color:var(--text-muted); padding:0.4rem 0.9rem; border-radius:20px; font-size:0.8rem; cursor:pointer; white-space:nowrap; }
     .filter-btn.active { background:linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); color:#fff; border-color:transparent; }
+
+    /* KYC File Upload */
+    .file-upload-box {
+      background: rgba(255,255,255,0.03);
+      border: 2px dashed rgba(100,255,218,0.3);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .file-upload-box:hover {
+      border-color: var(--accent);
+      background: rgba(100,255,218,0.05);
+    }
+    .upload-progress {
+      margin-top: 8px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
   </style>
 <base target="_blank">
 </head>
@@ -339,17 +369,52 @@
               <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;">Phone Number</label>
               <input type="tel" id="kycPhone" required style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.7rem; color:var(--text); margin-bottom:0.75rem;">
             </div>
+
+            <!-- ID FRONT UPLOAD -->
             <div style="margin-bottom:1.5rem;">
-              <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;">ID Document Front Photo URL</label>
-              <input type="url" id="kycIdFront" required placeholder="https://..." style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.7rem; color:var(--text); margin-bottom:0.75rem;">
-              <p style="font-size:0.75rem; color:var(--text-muted);">Upload your ID to imgur/any image host and paste the direct link here</p>
+              <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;">ID Document Front Photo</label>
+              <div class="file-upload-box" id="idFrontBox" onclick="document.getElementById('kycIdFrontFile').click()">
+                <input type="file" id="kycIdFrontFile" accept="image/*" style="display:none;" onchange="handleFileUpload(this, 'idFrontPreview', 'idFrontUrl')">
+                <div id="idFrontPreview" style="display:none; width:100%; text-align:center;">
+                  <img id="idFrontImg" style="max-width:100%; max-height:200px; border-radius:10px; margin-bottom:8px;">
+                  <p style="color:var(--success); font-size:0.8rem;"><i class="fas fa-check"></i> Ready to upload</p>
+                </div>
+                <div id="idFrontPlaceholder" style="text-align:center; padding:2rem;">
+                  <i class="fas fa-cloud-upload-alt" style="font-size:2rem; color:var(--accent); margin-bottom:8px;"></i>
+                  <p style="color:var(--text-muted); font-size:0.85rem;">Tap to upload ID front photo</p>
+                  <p style="color:var(--text-muted); font-size:0.7rem; margin-top:4px;">JPG, PNG, WEBP accepted</p>
+                </div>
+              </div>
+              <input type="hidden" id="idFrontUrl">
+              <div class="upload-progress" id="idFrontProgress" style="display:none;">
+                <div class="progress-bar"><div class="progress-fill" id="idFrontFill"></div></div>
+                <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:4px;">Uploading...</p>
+              </div>
             </div>
+
+            <!-- SELFIE UPLOAD -->
             <div style="margin-bottom:1.5rem;">
-              <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;">Selfie with ID Photo URL</label>
-              <input type="url" id="kycSelfie" required placeholder="https://..." style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.7rem; color:var(--text); margin-bottom:0.75rem;">
-              <p style="font-size:0.75rem; color:var(--text-muted);">Upload selfie holding your ID to imgur/any image host and paste link</p>
+              <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;">Selfie with ID Photo</label>
+              <div class="file-upload-box" id="selfieBox" onclick="document.getElementById('kycSelfieFile').click()">
+                <input type="file" id="kycSelfieFile" accept="image/*" style="display:none;" onchange="handleFileUpload(this, 'selfiePreview', 'selfieUrl')">
+                <div id="selfiePreview" style="display:none; width:100%; text-align:center;">
+                  <img id="selfieImg" style="max-width:100%; max-height:200px; border-radius:10px; margin-bottom:8px;">
+                  <p style="color:var(--success); font-size:0.8rem;"><i class="fas fa-check"></i> Ready to upload</p>
+                </div>
+                <div id="selfiePlaceholder" style="text-align:center; padding:2rem;">
+                  <i class="fas fa-camera" style="font-size:2rem; color:var(--accent); margin-bottom:8px;"></i>
+                  <p style="color:var(--text-muted); font-size:0.85rem;">Tap to upload selfie with ID</p>
+                  <p style="color:var(--text-muted); font-size:0.7rem; margin-top:4px;">JPG, PNG, WEBP accepted</p>
+                </div>
+              </div>
+              <input type="hidden" id="selfieUrl">
+              <div class="upload-progress" id="selfieProgress" style="display:none;">
+                <div class="progress-bar"><div class="progress-fill" id="selfieFill"></div></div>
+                <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:4px;">Uploading...</p>
+              </div>
             </div>
-            <button type="submit" style="width:100%; background:linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); border:none; border-radius:12px; padding:0.9rem; color:#fff; font-weight:600; cursor:pointer;">Submit KYC for Review</button>
+
+            <button type="submit" id="kycSubmitBtn" style="width:100%; background:linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); border:none; border-radius:12px; padding:0.9rem; color:#fff; font-weight:600; cursor:pointer;">Submit KYC for Review</button>
           </form>
         </div>
         <div id="kycStatusContainer" style="display:none; text-align:center; padding:2rem 1rem;">
