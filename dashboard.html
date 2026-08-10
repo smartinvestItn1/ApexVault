@@ -89,7 +89,7 @@
         <i class="fas fa-clock"></i> Pending
       </a>
       <a class="drawer-link" onclick="showKYC(); toggleMobileSidebar()">
-        <i class="fas fa-id-card"></i> KYC <span class="kyc-badge">more info</span>
+        <i class="fas fa-id-card"></i> <span class="kyc-badge">more info</span>
       </a>
     </nav>
     <div class="drawer-footer">
@@ -313,16 +313,67 @@
       </div>
     </div>
 
-    <!-- KYC SECTION (Placeholder) -->
+    <!-- KYC SECTION -->
     <div id="kycSection" class="section-content" style="display:none;">
       <div class="section-block">
-        <div class="block-header"><h3>KYC Verification</h3></div>
-        <div style="text-align:center; padding:3rem 1rem;">
-          <div style="width:80px; height:80px; border-radius:50%; background:rgba(100,255,218,0.1); display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem;">
-            <i class="fas fa-id-card" style="font-size:2rem; color:var(--accent);"></i>
+        <div class="block-header"><h3>Identity Verification</h3></div>
+        <div id="kycFormContainer">
+          <form onsubmit="submitKYC(event)" style="padding:1rem 0;">
+            <div style="margin-bottom:1rem;">
+              <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;">Full Name (as on ID)</label>
+              <input type="text" id="kycFullName" required style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.7rem; color:var(--text); margin-bottom:0.75rem;">
+            </div>
+            <div style="margin-bottom:1rem;">
+              <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;">ID Number / Passport</label>
+              <input type="text" id="kycIdNumber" required style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.7rem; color:var(--text); margin-bottom:0.75rem;">
+            </div>
+            <div style="margin-bottom:1rem;">
+              <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;">Date of Birth</label>
+              <input type="date" id="kycDob" required style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.7rem; color:var(--text); margin-bottom:0.75rem;">
+            </div>
+            <div style="margin-bottom:1rem;">
+              <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;">Address</label>
+              <input type="text" id="kycAddress" required placeholder="Street, City, Country" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.7rem; color:var(--text); margin-bottom:0.75rem;">
+            </div>
+            <div style="margin-bottom:1rem;">
+              <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;">Phone Number</label>
+              <input type="tel" id="kycPhone" required style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.7rem; color:var(--text); margin-bottom:0.75rem;">
+            </div>
+            <div style="margin-bottom:1.5rem;">
+              <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;">ID Document Front Photo URL</label>
+              <input type="url" id="kycIdFront" required placeholder="https://..." style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.7rem; color:var(--text); margin-bottom:0.75rem;">
+              <p style="font-size:0.75rem; color:var(--text-muted);">Upload your ID to imgur/any image host and paste the direct link here</p>
+            </div>
+            <div style="margin-bottom:1.5rem;">
+              <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;">Selfie with ID Photo URL</label>
+              <input type="url" id="kycSelfie" required placeholder="https://..." style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.7rem; color:var(--text); margin-bottom:0.75rem;">
+              <p style="font-size:0.75rem; color:var(--text-muted);">Upload selfie holding your ID to imgur/any image host and paste link</p>
+            </div>
+            <button type="submit" style="width:100%; background:linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); border:none; border-radius:12px; padding:0.9rem; color:#fff; font-weight:600; cursor:pointer;">Submit KYC for Review</button>
+          </form>
+        </div>
+        <div id="kycStatusContainer" style="display:none; text-align:center; padding:2rem 1rem;">
+          <div style="width:70px; height:70px; border-radius:50%; background:rgba(100,255,218,0.1); display:flex; align-items:center; justify-content:center; margin:0 auto 1rem;">
+            <i class="fas fa-clock" style="font-size:1.8rem; color:var(--accent);"></i>
           </div>
-          <h3 style="color:var(--text-white); margin-bottom:0.5rem;">KYC Coming Soon</h3>
-          <p style="color:var(--text-muted); font-size:0.9rem; max-width:300px; margin:0 auto;">Identity verification will be available here soon. Check back later!</p>
+          <h3 style="color:var(--text-white); margin-bottom:0.5rem;">KYC Under Review</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem;">Your identity verification is being reviewed by our team. You will be notified once approved.</p>
+        </div>
+        <div id="kycApprovedContainer" style="display:none; text-align:center; padding:2rem 1rem;">
+          <div style="width:70px; height:70px; border-radius:50%; background:rgba(16,185,129,0.1); display:flex; align-items:center; justify-content:center; margin:0 auto 1rem;">
+            <i class="fas fa-check" style="font-size:1.8rem; color:var(--success);"></i>
+          </div>
+          <h3 style="color:var(--text-white); margin-bottom:0.5rem;">KYC Verified</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem;">Your identity has been verified. You have full access to all features.</p>
+        </div>
+        <div id="kycRejectedContainer" style="display:none; text-align:center; padding:2rem 1rem;">
+          <div style="width:70px; height:70px; border-radius:50%; background:rgba(239,68,68,0.1); display:flex; align-items:center; justify-content:center; margin:0 auto 1rem;">
+            <i class="fas fa-times" style="font-size:1.8rem; color:var(--danger);"></i>
+          </div>
+          <h3 style="color:var(--text-white); margin-bottom:0.5rem;">KYC Rejected</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">Your submission was rejected. Please review and resubmit.</p>
+          <p id="kycRejectionReason" style="color:var(--danger); font-size:0.85rem; margin-bottom:1rem;"></p>
+          <button onclick="resetKYC()" style="background:var(--accent); border:none; border-radius:10px; padding:0.7rem 1.5rem; color:var(--bg-deep); font-weight:600; cursor:pointer;">Resubmit KYC</button>
         </div>
       </div>
     </div>
