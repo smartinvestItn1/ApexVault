@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel - ApexVault</title>
   <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<base target="_blank">
 </head>
 <body>
 
@@ -27,28 +29,52 @@
 
     <nav class="sidebar-nav">
       <div class="nav-section">
-        <div class="nav-section-title">Management</div>
+        <div class="nav-section-title">Overview</div>
         <button class="nav-item active" onclick="showSection('overview')">
           <span class="icon">📊</span> Dashboard
         </button>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Requests</div>
         <button class="nav-item" onclick="showSection('pendingDeposits')">
           <span class="icon">💰</span> Pending Deposits
+          <span class="nav-badge" id="sidebarBadgeDeposits">0</span>
         </button>
         <button class="nav-item" onclick="showSection('pendingWithdrawals')">
           <span class="icon">💸</span> Pending Withdrawals
+          <span class="nav-badge" id="sidebarBadgeWithdrawals">0</span>
         </button>
+        <button class="nav-item" onclick="showSection('activeInvestments')">
+          <span class="icon">📈</span> Active Investments
+          <span class="nav-badge" id="sidebarBadgeInvestments">0</span>
+        </button>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Management</div>
         <button class="nav-item" onclick="showSection('users')">
           <span class="icon">👥</span> All Users
         </button>
         <button class="nav-item" onclick="showSection('transactions')">
           <span class="icon">📋</span> Transactions
         </button>
+        <button class="nav-item" onclick="showSection('kycReview')">
+          <span class="icon">🛡️</span> KYC Review
+          <span class="nav-badge" id="sidebarBadgeKYC">0</span>
+        </button>
+        <button class="nav-item" onclick="showSection('walletSettings')">
+          <span class="icon">🔐</span> Wallet Settings
+        </button>
+        <button class="nav-item" onclick="showSection('addBonus')">
+          <span class="icon">🎁</span> Add Bonus
+        </button>
       </div>
 
       <div class="nav-section">
         <div class="nav-section-title">Controls</div>
         <button class="nav-item" onclick="showSection('settings')">
-          <span class="icon">⚙️</span> Settings
+          <span class="icon">⚙️</span> Feature Controls
         </button>
       </div>
     </nav>
@@ -71,39 +97,75 @@
       </div>
     </div>
 
-    <!-- STATS CARDS -->
-    <div class="stats-grid">
-      <div class="stat-card">
+    <!-- STATS CARDS ROW 1 -->
+    <div class="stats-grid" id="mainStats">
+      <div class="stat-card gradient-blue">
         <div class="stat-card-header">
           <span>Total Users</span>
-          <div class="stat-icon blue">👥</div>
+          <div class="stat-icon"><i class="fas fa-users"></i></div>
         </div>
         <h3 id="totalUsers">0</h3>
         <p>Registered accounts</p>
       </div>
-      <div class="stat-card">
+      <div class="stat-card gradient-green">
         <div class="stat-card-header">
-          <span>Total Deposits</span>
-          <div class="stat-icon green">💰</div>
+          <span>Total Deposited</span>
+          <div class="stat-icon"><i class="fas fa-arrow-down"></i></div>
         </div>
-        <h3 id="totalDeposits">$0</h3>
+        <h3 id="totalDeposited">$0</h3>
         <p>All time deposits</p>
       </div>
-      <div class="stat-card">
+      <div class="stat-card gradient-orange">
         <div class="stat-card-header">
-          <span>Total Withdrawals</span>
-          <div class="stat-icon orange">💸</div>
+          <span>Total Withdrawn</span>
+          <div class="stat-icon"><i class="fas fa-arrow-up"></i></div>
         </div>
-        <h3 id="totalWithdrawals">$0</h3>
+        <h3 id="totalWithdrawn">$0</h3>
         <p>All time withdrawals</p>
       </div>
-      <div class="stat-card">
+      <div class="stat-card gradient-purple">
         <div class="stat-card-header">
-          <span>Pending</span>
-          <div class="stat-icon red">⏳</div>
+          <span>Total Invested</span>
+          <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
         </div>
-        <h3 id="totalPending">0</h3>
-        <p>Awaiting action</p>
+        <h3 id="totalInvested">$0</h3>
+        <p>All time investments</p>
+      </div>
+    </div>
+
+    <!-- STATS CARDS ROW 2 -->
+    <div class="stats-grid" id="secondaryStats">
+      <div class="stat-card gradient-red">
+        <div class="stat-card-header">
+          <span>Pending Deposits</span>
+          <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        </div>
+        <h3 id="statPendingDeposits">0</h3>
+        <p>Awaiting approval</p>
+      </div>
+      <div class="stat-card gradient-red">
+        <div class="stat-card-header">
+          <span>Pending Withdrawals</span>
+          <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        </div>
+        <h3 id="statPendingWithdrawals">0</h3>
+        <p>Awaiting approval</p>
+      </div>
+      <div class="stat-card gradient-cyan">
+        <div class="stat-card-header">
+          <span>Active Investments</span>
+          <div class="stat-icon"><i class="fas fa-rocket"></i></div>
+        </div>
+        <h3 id="statActiveInvestments">0</h3>
+        <p>Currently running</p>
+      </div>
+      <div class="stat-card gradient-pink">
+        <div class="stat-card-header">
+          <span>Referral Earnings</span>
+          <div class="stat-icon"><i class="fas fa-gift"></i></div>
+        </div>
+        <h3 id="statReferralEarnings">$0</h3>
+        <p>Total paid out</p>
       </div>
     </div>
 
@@ -114,30 +176,48 @@
       <div class="section-content" id="overviewSection">
         <div class="section-card">
           <h2>⚡ Quick Actions</h2>
-          <div class="stats-grid" style="margin-bottom: 0;">
-            <div class="stat-card" style="cursor: pointer;" onclick="showSection('pendingDeposits')">
-              <div class="stat-card-header">
-                <span>Pending Deposits</span>
-                <div class="stat-icon green">💰</div>
+          <div class="quick-actions-grid">
+            <div class="quick-card" onclick="showSection('pendingDeposits')">
+              <div class="quick-icon green"><i class="fas fa-plus-circle"></i></div>
+              <div class="quick-info">
+                <h4>Pending Deposits</h4>
+                <p id="quickPendingDeposits">0 requests</p>
               </div>
-              <h3 id="quickPendingDeposits">0</h3>
-              <p>Click to review</p>
             </div>
-            <div class="stat-card" style="cursor: pointer;" onclick="showSection('pendingWithdrawals')">
-              <div class="stat-card-header">
-                <span>Pending Withdrawals</span>
-                <div class="stat-icon orange">💸</div>
+            <div class="quick-card" onclick="showSection('pendingWithdrawals')">
+              <div class="quick-icon orange"><i class="fas fa-minus-circle"></i></div>
+              <div class="quick-info">
+                <h4>Pending Withdrawals</h4>
+                <p id="quickPendingWithdrawals">0 requests</p>
               </div>
-              <h3 id="quickPendingWithdrawals">0</h3>
-              <p>Click to review</p>
             </div>
-            <div class="stat-card" style="cursor: pointer;" onclick="showSection('settings')">
-              <div class="stat-card-header">
-                <span>Feature Controls</span>
-                <div class="stat-icon purple">⚙️</div>
+            <div class="quick-card" onclick="showSection('activeInvestments')">
+              <div class="quick-icon purple"><i class="fas fa-chart-line"></i></div>
+              <div class="quick-info">
+                <h4>Active Investments</h4>
+                <p id="quickActiveInvestments">0 running</p>
               </div>
-              <h3 id="blockedFeatures">0</h3>
-              <p>Currently blocked</p>
+            </div>
+            <div class="quick-card" onclick="showSection('walletSettings')">
+              <div class="quick-icon blue"><i class="fas fa-wallet"></i></div>
+              <div class="quick-info">
+                <h4>Update Wallets</h4>
+                <p>Manage deposit addresses</p>
+              </div>
+            </div>
+            <div class="quick-card" onclick="showSection('addBonus')">
+              <div class="quick-icon pink"><i class="fas fa-gift"></i></div>
+              <div class="quick-info">
+                <h4>Add Bonus</h4>
+                <p>Send bonus to users</p>
+              </div>
+            </div>
+            <div class="quick-card" onclick="showSection('settings')">
+              <div class="quick-icon red"><i class="fas fa-ban"></i></div>
+              <div class="quick-info">
+                <h4>Blocked Features</h4>
+                <p id="blockedFeatures">0 disabled</p>
+              </div>
             </div>
           </div>
         </div>
@@ -187,6 +267,28 @@
         </div>
       </div>
 
+      <!-- ACTIVE INVESTMENTS -->
+      <div class="section-content" id="activeInvestmentsSection" style="display: none;">
+        <div class="section-card">
+          <h2>📈 Active Investments</h2>
+          <div class="search-bar">
+            <input type="text" class="search-input" id="investSearch" placeholder="Search by user name or plan..." oninput="filterInvestments()">
+            <select class="filter-select" id="investFilter" onchange="filterInvestments()">
+              <option value="all">All Plans</option>
+              <option value="startup">Startup</option>
+              <option value="pro">Pro</option>
+              <option value="ultimate">Ultimate</option>
+            </select>
+          </div>
+          <div id="investmentsTable">
+            <div class="empty-state">
+              <div class="icon">📈</div>
+              <p>No active investments found</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- USERS -->
       <div class="section-content" id="usersSection" style="display: none;">
         <div class="section-card">
@@ -231,11 +333,106 @@
         </div>
       </div>
 
+      <!-- WALLET SETTINGS -->
+      <div class="section-content" id="walletSettingsSection" style="display: none;">
+        <div class="section-card">
+          <h2>🔐 Wallet Settings</h2>
+          <p style="color: var(--text-muted); margin-bottom: 24px;">Update deposit addresses. Changes reflect instantly on all user dashboards.</p>
+
+          <div class="wallet-form">
+            <div class="form-group">
+              <label><i class="fas fa-coins" style="color: var(--accent);"></i> USDT BEP20 Address</label>
+              <input type="text" id="bep20Address" placeholder="0x..." style="font-family: 'Courier New', monospace;">
+              <div class="current-address" id="currentBep20"></div>
+              <p class="hint">Users will see this address when selecting USDT BEP20 network</p>
+            </div>
+
+            <div class="form-group">
+              <label><i class="fas fa-coins" style="color: var(--accent);"></i> USDT TRC20 Address</label>
+              <input type="text" id="trc20Address" placeholder="T..." style="font-family: 'Courier New', monospace;">
+              <div class="current-address" id="currentTrc20"></div>
+              <p class="hint">Users will see this address when selecting USDT TRC20 network</p>
+            </div>
+
+            <button class="btn-save" id="saveWalletBtn" onclick="saveWalletAddresses()">
+              <i class="fas fa-save"></i> Save Changes
+            </button>
+
+            <div class="status-msg success" id="walletSuccessMsg">
+              <i class="fas fa-check-circle"></i> Wallet addresses updated successfully!
+            </div>
+            <div class="status-msg error" id="walletErrorMsg">
+              <i class="fas fa-exclamation-circle"></i> Failed to save. Please try again.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADD BONUS -->
+      <div class="section-content" id="addBonusSection" style="display: none;">
+        <div class="section-card">
+          <h2>🎁 Add Bonus</h2>
+          <p style="color: var(--text-muted); margin-bottom: 24px;">Send a bonus amount to any user. This will be added directly to their balance.</p>
+
+          <div class="bonus-form">
+            <div class="form-group">
+              <label><i class="fas fa-user" style="color: var(--accent);"></i> User Email</label>
+              <input type="email" id="bonusEmail" placeholder="user@example.com">
+              <p class="hint">Enter the exact email of the registered user</p>
+            </div>
+
+            <div class="form-group">
+              <label><i class="fas fa-dollar-sign" style="color: var(--accent);"></i> Bonus Amount (USD)</label>
+              <input type="number" id="bonusAmount" placeholder="100.00" step="0.01">
+              <p class="hint">Amount to add to user's balance</p>
+            </div>
+
+            <div class="form-group">
+              <label><i class="fas fa-comment" style="color: var(--accent);"></i> Bonus Note (Optional)</label>
+              <input type="text" id="bonusNote" placeholder="Welcome bonus, referral reward, etc.">
+            </div>
+
+            <button class="btn-save" id="sendBonusBtn" onclick="sendBonus()">
+              <i class="fas fa-paper-plane"></i> Send Bonus
+            </button>
+
+            <div class="status-msg success" id="bonusSuccessMsg">
+              <i class="fas fa-check-circle"></i> Bonus sent successfully!
+            </div>
+            <div class="status-msg error" id="bonusErrorMsg">
+              <i class="fas fa-exclamation-circle"></i> Failed to send bonus. Please try again.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KYC REVIEW -->
+      <div class="section-content" id="kycReviewSection" style="display: none;">
+        <div class="section-card">
+          <h2>🛡️ KYC Review</h2>
+          <div class="search-bar">
+            <input type="text" class="search-input" id="kycSearch" placeholder="Search by user name or email..." oninput="filterKYC()">
+            <select class="filter-select" id="kycFilter" onchange="filterKYC()">
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div id="kycTable">
+            <div class="empty-state">
+              <div class="icon">🛡️</div>
+              <p>No KYC submissions found</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- SETTINGS -->
       <div class="section-content" id="settingsSection" style="display: none;">
         <div class="section-card">
           <h2>⚙️ Feature Controls</h2>
-          <p style="color: var(--text-muted); margin-bottom: 20px;">Toggle features ON or OFF for all users.</p>
+          <p style="color: var(--text-muted); margin-bottom: 20px;">Toggle features ON or OFF for all users. When OFF, users will see a blocked message.</p>
 
           <div class="toggle-switch">
             <div>
@@ -279,4 +476,4 @@
   <script type="module" src="admin.js"></script>
 
 </body>
-  </html>
+</html>
