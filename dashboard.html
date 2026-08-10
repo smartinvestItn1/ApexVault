@@ -12,8 +12,18 @@
     .filter-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); color:var(--text-muted); padding:0.4rem 0.9rem; border-radius:20px; font-size:0.8rem; cursor:pointer; white-space:nowrap; }
     .filter-btn.active { background:linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); color:#fff; border-color:transparent; }
   </style>
+<base target="_blank">
 </head>
 <body>
+
+  <!-- SUCCESS ANIMATION OVERLAY -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-checkmark">
+      <i class="fas fa-check"></i>
+    </div>
+    <div class="success-text" id="successText">Registered</div>
+    <div class="success-subtext" id="successSubtext">Redirecting...</div>
+  </div>
 
   <div class="login-overlay" id="loginOverlay">
     <div class="login-logo-text">🔥</div>
@@ -77,6 +87,9 @@
       </a>
       <a class="drawer-link" onclick="showSection('pending'); toggleMobileSidebar()">
         <i class="fas fa-clock"></i> Pending
+      </a>
+      <a class="drawer-link" onclick="showKYC(); toggleMobileSidebar()">
+        <i class="fas fa-id-card"></i> KYC <span class="kyc-badge">more info</span>
       </a>
     </nav>
     <div class="drawer-footer">
@@ -300,6 +313,20 @@
       </div>
     </div>
 
+    <!-- KYC SECTION (Placeholder) -->
+    <div id="kycSection" class="section-content" style="display:none;">
+      <div class="section-block">
+        <div class="block-header"><h3>KYC Verification</h3></div>
+        <div style="text-align:center; padding:3rem 1rem;">
+          <div style="width:80px; height:80px; border-radius:50%; background:rgba(100,255,218,0.1); display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem;">
+            <i class="fas fa-id-card" style="font-size:2rem; color:var(--accent);"></i>
+          </div>
+          <h3 style="color:var(--text-white); margin-bottom:0.5rem;">KYC Coming Soon</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; max-width:300px; margin:0 auto;">Identity verification will be available here soon. Check back later!</p>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- ========== BOTTOM NAVIGATION ========== -->
@@ -455,5 +482,4 @@
   <!-- Firebase SDK -->
   <script type="module" src="dashboard.js"></script>
 </body>
-      </html>
-                                                                                                                                                                                     
+</html>
