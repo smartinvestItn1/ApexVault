@@ -10,8 +10,8 @@
   --text-muted: #8892b0;
   --text-light: #ccd6f6;
   --text-white: #ffffff;
-  --success: #22c55e;   /* ← ADD THIS */
-  --danger: #ef4444;    /* ← ADD THIS */
+  --success: #22c55e;
+  --danger: #ef4444;
   --sidebar-width: 280px;
 }
 
@@ -351,6 +351,7 @@ nav.scrolled {
   padding: 100px 40px 60px;
   position: relative;
   overflow: hidden;
+  background-repeat: no-repeat;
 }
 
 .hero::before {
@@ -363,6 +364,7 @@ nav.scrolled {
   background: radial-gradient(circle, rgba(0, 212, 170, 0.08) 0%, transparent 70%);
   pointer-events: none;
   animation: pulse 4s ease-in-out infinite;
+  z-index: 1;
 }
 
 @keyframes pulse {
@@ -374,7 +376,7 @@ nav.scrolled {
   max-width: 900px;
   text-align: center;
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
 .hero-tag {
@@ -395,6 +397,7 @@ nav.scrolled {
   line-height: 1.1;
   margin-bottom: 24px;
   color: var(--text-white);
+  text-shadow: 0 2px 20px rgba(0,0,0,0.5);
 }
 
 .hero h1 span {
@@ -406,9 +409,10 @@ nav.scrolled {
 
 .hero p {
   font-size: 1.25rem;
-  color: var(--text-muted);
+  color: var(--text-light);
   max-width: 600px;
   margin: 0 auto 40px;
+  text-shadow: 0 1px 10px rgba(0,0,0,0.5);
 }
 
 .hero-buttons {
@@ -462,6 +466,7 @@ nav.scrolled {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
+  backdrop-filter: blur(4px);
 }
 
 .btn-secondary:hover {
@@ -550,12 +555,47 @@ nav.scrolled {
   border-radius: 16px;
   padding: 40px 32px;
   transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Cards with background images */
+.card[style*="background-image"] {
+  background-color: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.card[style*="background-image"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.35);
+  z-index: 0;
+  transition: filter 0.4s ease, transform 0.6s ease;
+}
+
+.card[style*="background-image"]:hover::before {
+  filter: brightness(0.45);
+  transform: scale(1.05);
+}
+
+.card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .card:hover {
   transform: translateY(-8px);
   border-color: var(--accent);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.card[style*="background-image"]:hover {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  border-color: rgba(100, 255, 218, 0.3);
 }
 
 .card-icon {
@@ -569,6 +609,7 @@ nav.scrolled {
   font-size: 1.5rem;
   margin-bottom: 20px;
   transition: transform 0.3s;
+  backdrop-filter: blur(4px);
 }
 
 .card:hover .card-icon {
@@ -579,12 +620,14 @@ nav.scrolled {
   color: var(--text-white);
   font-size: 1.3rem;
   margin-bottom: 12px;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.6);
 }
 
 .card p {
-  color: var(--text-muted);
+  color: var(--text-light);
   font-size: 0.95rem;
   line-height: 1.7;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.5);
 }
 
 /* ========== CTA SECTION ========== */
@@ -596,23 +639,38 @@ nav.scrolled {
   text-align: center;
   position: relative;
   z-index: 1;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(0, 212, 170, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .cta-inner {
   max-width: 700px;
   margin: 0 auto;
+  position: relative;
+  z-index: 2;
 }
 
 .cta-section h2 {
   font-size: 2.5rem;
   color: var(--text-white);
   margin-bottom: 20px;
+  text-shadow: 0 2px 15px rgba(0,0,0,0.5);
 }
 
 .cta-section p {
-  color: var(--text-muted);
+  color: var(--text-light);
   font-size: 1.1rem;
   margin-bottom: 32px;
+  text-shadow: 0 1px 10px rgba(0,0,0,0.4);
 }
 
 /* ========== FOOTER ========== */
@@ -674,6 +732,7 @@ footer {
   color: var(--text-muted);
   font-size: 0.85rem;
 }
+
 /* ========== INVESTMENT PLANS ========== */
 .plan-card {
   position: relative;
@@ -694,6 +753,7 @@ footer {
   text-transform: uppercase;
   letter-spacing: 1px;
   transform: rotate(45deg);
+  z-index: 2;
 }
 
 .plan-card h3 {
@@ -764,7 +824,8 @@ footer {
   width: 100%;
   padding: 12px;
   font-size: 0.95rem;
-  }
+}
+
 /* ========== HOW IT WORKS ========== */
 .steps-grid {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -791,12 +852,14 @@ footer {
   font-weight: 800;
   font-size: 0.9rem;
   box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
+  z-index: 2;
 }
 
 .step-card .card-icon {
   margin: 16px auto 16px;
-  }
-  /* ========== TESTIMONIALS ========== */
+}
+
+/* ========== TESTIMONIALS ========== */
 .testimonial-card {
   position: relative;
 }
@@ -844,7 +907,8 @@ footer {
 .author-title {
   color: var(--text-muted);
   font-size: 0.8rem;
-  }
+}
+
 /* ========== FAQ ========== */
 .faq-container {
   max-width: 800px;
@@ -899,8 +963,9 @@ footer {
 
 .faq-answer.open {
   padding: 0 24px 20px;
-  }
- /* ========== TRUST BADGES ========== */
+}
+
+/* ========== TRUST BADGES ========== */
 .trust-section {
   padding: 60px 40px;
   background: var(--bg-card);
@@ -944,7 +1009,7 @@ footer {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 1px;
-    }
+}
 
 /* ========== SCROLL REVEAL ========== */
 .scroll-reveal {
@@ -960,7 +1025,7 @@ footer {
 
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
-   .trust-inner { gap: 30px; }
+  .trust-inner { gap: 30px; }
   .plan-badge { font-size: 0.6rem; width: 100px; right: -26px; }
   .steps-grid { grid-template-columns: 1fr; }
   .nav-links { display: none; }
@@ -994,7 +1059,7 @@ footer {
   letter-spacing: 1px;
 }
 
-/* ========== UK SECTION (if you want a full section) ========== */
+/* ========== UK SECTION ========== */
 .uk-section {
   padding: 80px 40px;
   text-align: center;
@@ -1038,8 +1103,9 @@ footer {
   color: var(--text-muted);
   font-size: 0.85rem;
   font-weight: 400;
-  }
-  /* ========== FLOATING CONTACT BUTTONS ========== */
+}
+
+/* ========== FLOATING CONTACT BUTTONS ========== */
 .floating-contacts {
   position: fixed;
   bottom: 24px;
@@ -1108,6 +1174,7 @@ footer {
     height: 22px;
   }
 }
+
 /* ========== LIVE MARKET TICKER ========== */
 .market-ticker-wrap {
   width: 100%;
@@ -1132,12 +1199,12 @@ footer {
 
 .market-ticker-wrap::before {
   left: 0;
-  background: linear-gradient(90deg, var(--bg), transparent);
+  background: linear-gradient(90deg, var(--bg-deep), transparent);
 }
 
 .market-ticker-wrap::after {
   right: 0;
-  background: linear-gradient(-90deg, var(--bg), transparent);
+  background: linear-gradient(-90deg, var(--bg-deep), transparent);
 }
 
 .market-ticker {
@@ -1166,7 +1233,7 @@ footer {
 
 .ticker-item .coin {
   font-weight: 700;
-  color: var(--text);
+  color: var(--text-light);
 }
 
 .ticker-item .price {
@@ -1202,6 +1269,7 @@ footer {
 .market-section h2 {
   font-size: 1.6rem;
   margin-bottom: 0.5rem;
+  color: var(--text-white);
 }
 
 .market-section p {
@@ -1211,12 +1279,13 @@ footer {
 }
 
 .market-iframe-wrap {
-  background: var(--card-bg);
+  background: var(--bg-card);
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 16px;
   overflow: hidden;
   backdrop-filter: blur(10px);
-  }
+}
+
 .stats-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -1224,13 +1293,15 @@ footer {
   max-width: 800px;
   margin: 0 auto;
 }
+
 .stat-box {
   text-align: center;
   padding: 1.5rem;
-  background: var(--card-bg);
+  background: var(--bg-card);
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 16px;
 }
+
 .stat-box h2 {
   font-size: 2.2rem;
   background: linear-gradient(135deg, var(--accent), var(--gradient-end));
@@ -1238,13 +1309,16 @@ footer {
   -webkit-text-fill-color: transparent;
   margin-bottom: 0.3rem;
 }
+
 .stat-box p { color: var(--text-muted); font-size: 0.85rem; }
+
 .app-badges {
   display: flex;
   gap: 1rem;
   justify-content: center;
   flex-wrap: wrap;
 }
+
 .app-badge {
   display: flex;
   align-items: center;
@@ -1253,30 +1327,35 @@ footer {
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 10px;
   padding: 0.7rem 1.2rem;
-  color: var(--text);
+  color: var(--text-light);
   text-decoration: none;
   transition: all 0.3s;
 }
+
 .app-badge:hover {
   border-color: var(--accent);
   background: rgba(0,212,170,0.05);
 }
+
 .app-badge i { font-size: 1.6rem; }
 .app-badge small { display: block; font-size: 0.65rem; color: var(--text-muted); }
 .app-badge strong { font-size: 1rem; }
+
 .live-feed-section {
   padding: 3rem 1.5rem;
   text-align: center;
   max-width: 600px;
   margin: 0 auto;
 }
+
 .live-feed-section h3 {
   font-size: 1.2rem;
   margin-bottom: 1.5rem;
   color: var(--accent);
 }
+
 .live-feed {
-  background: var(--card-bg);
+  background: var(--bg-card);
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 16px;
   padding: 1rem 1.5rem;
@@ -1285,19 +1364,30 @@ footer {
   position: relative;
   text-align: left;
 }
+
 .feed-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
 }
+
+.feed-item:last-child {
+  border-bottom: none;
+}
+
 .feed-amount.deposit { color: #22c55e; }
 .feed-amount.withdraw { color: #ef4444; }
+
 .trust-bar {
   text-align: center;
   padding: 1.8rem 1rem;
   border-top: 1px solid rgba(255,255,255,0.04);
   border-bottom: 1px solid rgba(255,255,255,0.04);
   background: rgba(0, 212, 170, 0.03);
+  position: relative;
+  z-index: 1;
 }
 
 .trust-bar > p {
@@ -1317,7 +1407,7 @@ footer {
   flex-wrap: wrap;
 }
 
-.trust-item {
+.trust-bar .trust-item {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -1328,16 +1418,16 @@ footer {
   white-space: nowrap;
 }
 
-.trust-item i {
+.trust-bar .trust-item i {
   color: var(--accent);
   font-size: 1rem;
 }
+
 @media (max-width: 480px) {
   .trust-logos {
     gap: 1rem 1.5rem;
   }
-  .trust-item {
+  .trust-bar .trust-item {
     font-size: 0.8rem;
   }
-  }
-  
+}
