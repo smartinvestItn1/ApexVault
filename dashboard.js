@@ -1057,6 +1057,124 @@ window.logout = function() {
   }, 1500);
 };
 
+// ========== KYC ==========
+window.showKYC = function() {
+  showSection('kyc');
+  checkKYCStatus();
+};
+
+async function checkKYCStatus() {
+  try {
+    const snapshot = await get(ref(db, 'users/' + currentUser.uid + '/kyc'));
+    const kycData = snapshot.val();
+
+    const formContainer = document.getElementById('kycFormContainer');
+    const statusContainer = document.getElementById('kycStatusContainer');
+    const approvedContainer = document.getElementById('kycApprovedContainer');
+    const rejectedContainer = document.getElementById('kycRejectedContainer');
+
+    if (!kycData) {
+      // No KYC submitted yet
+      if (formContainer) formContainer.style.display = 'block';
+      if (statusContainer) statusContainer.style.display = 'none';
+      if (approvedContainer) approvedContainer.style.display = 'none';
+      if (rejectedContainer) rejectedContainer.style.display = 'none';
+      return;
+    }
+
+    if (kycData.status === 'pending') {
+      if (formContainer) formContainer.style.display = 'none';
+      if (statusContainer) statusContainer.style.display = 'block';
+      if (approvedContainer) approvedContainer.style.display = 'none';
+      if (rejectedContainer) rejectedContainer.style.display = 'none';
+    } else if (kycData.status === 'approved') {
+      if (formContainer) formContainer.style.display = 'none';
+      if (statusContainer) statusContainer.style.display = 'none';
+      if (approvedContainer) approvedContainer.style.display = 'block';
+      if (rejectedContainer) rejectedContainer.style.display = 'none';
+    } else if (kycData.status === 'rejected') {
+      if (formContainer) formContainer.style.display = 'none';
+      if (statusContainer) statusContainer.style.display = 'none';
+      if (approvedContainer) approvedContainer.style.display = 'none';
+      if (rejectedContainer) rejectedContainer.style.display = 'block';
+      const reasonEl = document.getElementById('kycRejectionReason');
+      if (reasonEl) reasonEl.textContent = 'Reason: ' + (kycData.rejectionReason || 'No reason provided');
+    }
+  } catch (err) {
+    console.error('KYC status error:', err);
+  }
+}
+
+window.submitKYC = async function(event) {
+  event.preventDefault();
+
+  const fullName = document.getElementById('kycFullName').value.trim();
+  const idNumber = document.getElementById('kycIdNumber').value.trim();
+  const dob = document.getElementById('kycDob').value;
+  const address = document.getElementById('kycAddress').value.trim();
+  const phone = document.getElementById('kycPhone').value.trim();
+  const idFront = document.getElementById('kycIdFront').value.trim();
+  const selfie = document.getElementById('kycSelfie').value.trim();
+
+  try {
+    await set(ref(db, 'users/' + currentUser.uid + '/kyc'), {
+      fullName: fullName,
+      idNumber: idNumber,
+      dob: dob,
+      address: address,
+      phone: phone,
+      idFront: idFront,
+      selfie: selfie,
+      status: 'pending',
+      submittedAt: new Date().toISOString(),
+      timestamp: Date.now()
+    });
+
+    // Also add to global pendingKYC for admin review
+    await set(ref(db, 'pendingKYC/' + currentUser.uid), {
+      userId: currentUser.uid,
+      userName: userData.fullName,
+      userEmail: userData.email,
+      fullName: fullName,
+      idNumber: idNumber,
+      dob: dob,
+      address: address,
+      phone: phone,
+      idFront: idFront,
+      selfie: selfie,
+      status: 'pending',
+      submittedAt: new Date().toISOString(),
+      timestamp: Date.now()
+    });
+
+    showSuccessAnimation('KYC Submitted', 'Your verification is under review.', 'overview');
+    checkKYCStatus();
+  } catch (error) {
+    alert('❌ Error: ' + error.message);
+  }
+};
+
+window.resetKYC = function() {
+  const formContainer = document.getElementById('kycFormContainer');
+  const statusContainer = document.getElementById('kycStatusContainer');
+  const approvedContainer = document.getElementById('kycApprovedContainer');
+  const rejectedContainer = document.getElementById('kycRejectedContainer');
+
+  if (formContainer) formContainer.style.display = 'block';
+  if (statusContainer) statusContainer.style.display = 'none';
+  if (approvedContainer) approvedContainer.style.display = 'none';
+  if (rejectedContainer) rejectedContainer.style.display = 'none';
+
+  // Clear form
+  document.getElementById('kycFullName').value = '';
+  document.getElementById('kycIdNumber').value = '';
+  document.getElementById('kycDob').value = '';
+  document.getElementById('kycAddress').value = '';
+  document.getElementById('kycPhone').value = '';
+  document.getElementById('kycIdFront').value = '';
+  document.getElementById('kycSelfie').value = '';
+};
+
 // ========== INIT ==========
 document.addEventListener('DOMContentLoaded', async () => {
   if (!checkLogin()) return;
@@ -1066,6 +1184,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadDepositAddresses();
     await loadUserData();
     showSection('overview');
+    checkKYCStatus();
 
   } catch (error) {
     console.error('Dashboard init error:', error);
