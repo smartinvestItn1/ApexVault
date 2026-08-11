@@ -112,7 +112,24 @@
       position: relative; z-index: 1;
       padding: 8rem 1.5rem 3rem;
       text-align: center;
-      max-width: 700px; margin: 0 auto;
+      max-width: 100%; margin: 0 auto;
+      background-image: url('images-hero-bg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(10,14,26,0.60) 0%, rgba(10,14,26,0.80) 100%);
+      z-index: -1;
+    }
+    .hero-inner {
+      max-width: 700px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
     }
     .hero-badge {
       display: inline-block; padding: 0.4rem 1rem;
@@ -283,6 +300,7 @@
       .form-container { padding: 1.5rem; }
     }
   </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -304,11 +322,13 @@
 
   <!-- Hero -->
   <section class="hero">
-    <div class="hero-badge fade-in">GET IN TOUCH</div>
-    <h1 class="fade-in fade-in-delay-1">We Would Love to Hear From You</h1>
-    <p class="fade-in fade-in-delay-2">
-      Whether you have a question about our plans, need technical support, or just want to say hello, our team is ready to help.
-    </p>
+    <div class="hero-inner">
+      <div class="hero-badge fade-in">GET IN TOUCH</div>
+      <h1 class="fade-in fade-in-delay-1">We Would Love to Hear From You</h1>
+      <p class="fade-in fade-in-delay-2">
+        Whether you have a question about our plans, need technical support, or just want to say hello, our team is ready to help.
+      </p>
+    </div>
   </section>
 
   <!-- Contact Info -->
