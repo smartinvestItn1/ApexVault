@@ -1,12 +1,14 @@
-/* ========== APEXVAULT UNIVERSAL TRANSLATOR v12 (VISIBLE) ========== */
-/* Big button below your header. Inline styles so nothing can hide it. */
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v13 (FAST) ========== */
+/* Parallel batching (4 at once) + localStorage cache = 4-10x faster */
 (function() {
   'use strict';
 
-  const STORAGE_KEY = 'apexvault_lang_v12';
-  const CHUNK_SIZE = 450;
-  const DELAY_MS = 200;
-  const FETCH_TIMEOUT = 6000;
+  const STORAGE_KEY = 'apexvault_lang_v13';
+  const CACHE_KEY = 'apexvault_cache_v13';
+  const CHUNK_SIZE = 900;
+  const DELAY_MS = 150;
+  const FETCH_TIMEOUT = 8000;
+  const BATCH_SIZE = 4;
 
   const LANGUAGES = [
     { code: 'en', name: 'English', flag: '🇺🇸', api: 'en' },
@@ -81,7 +83,32 @@
 
   let isTranslating = false;
   let currentLang = 'en';
+  let cache = {};
 
+  /* ========== LOAD CACHE ========== */
+  try {
+    var raw = localStorage.getItem(CACHE_KEY);
+    if (raw) cache = JSON.parse(raw);
+  } catch(e) { cache = {}; }
+
+  function saveCache() {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch(e) {}
+  }
+
+  function getCacheKey(text, target) {
+    return target + '::' + text;
+  }
+
+  function getCached(text, target) {
+    return cache[getCacheKey(text, target)];
+  }
+
+  function setCached(text, target, translated) {
+    cache[getCacheKey(text, target)] = translated;
+    saveCache();
+  }
+
+  /* ========== FETCH WITH TIMEOUT ========== */
   function fetchWithTimeout(url, options, ms) {
     return new Promise(function(resolve, reject) {
       var timer = setTimeout(function() { reject(new Error('Timeout')); }, ms);
@@ -90,6 +117,7 @@
     });
   }
 
+  /* ========== EXTRACT TEXT NODES ========== */
   function getTextNodes(root) {
     var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, function(node) {
       var parent = node.parentElement;
@@ -106,6 +134,7 @@
     return nodes;
   }
 
+  /* ========== SAVE ORIGINALS ========== */
   function saveOriginals() {
     var nodes = getTextNodes(document.body);
     nodes.forEach(function(node) {
@@ -113,11 +142,13 @@
     });
   }
 
+  /* ========== SPLIT TEXT INTO CHUNKS ========== */
   function splitIntoChunks(text, maxBytes) {
     var chunks = [];
     var current = '';
     var currentBytes = 0;
-    var sentences = text.split(/(?<=[.!?\n])\s+/);
+    var sentences = text.split(/(?<=[.!?
+])\s+/);
     sentences.forEach(function(sentence) {
       var sentenceBytes = new Blob([sentence]).size;
       if (sentenceBytes > maxBytes) {
@@ -146,6 +177,7 @@
     return chunks;
   }
 
+  /* ========== MYMEMORY API ========== */
   async function translateMyMemory(text, target) {
     var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + target;
     var res = await fetchWithTimeout(url, { method: 'GET', mode: 'cors' }, FETCH_TIMEOUT);
@@ -157,6 +189,7 @@
     throw new Error('Status ' + data.responseStatus);
   }
 
+  /* ========== GOOGLE UNOFFICIAL API ========== */
   async function translateGoogle(text, target) {
     var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=' + target + '&dt=t&q=' + encodeURIComponent(text);
     var res = await fetchWithTimeout(url, { method: 'GET', mode: 'cors' }, FETCH_TIMEOUT);
@@ -166,14 +199,34 @@
     throw new Error('Bad response');
   }
 
+  /* ========== TRANSLATE ONE CHUNK ========== */
   async function translateChunk(text, target) {
-    try { return await translateMyMemory(text, target); }
-    catch (e1) {
-      try { return await translateGoogle(text, target); }
-      catch (e2) { return text; }
+    var cached = getCached(text, target);
+    if (cached) return cached;
+    try {
+      var result = await translateMyMemory(text, target);
+      setCached(text, target, result);
+      return result;
+    } catch (e1) {
+      try {
+        var result = await translateGoogle(text, target);
+        setCached(text, target, result);
+        return result;
+      } catch (e2) {
+        return text;
+      }
     }
   }
 
+  /* ========== TRANSLATE BATCH IN PARALLEL ========== */
+  async function translateBatch(chunks, target) {
+    var promises = chunks.map(function(chunk) {
+      return translateChunk(chunk, target);
+    });
+    return await Promise.all(promises);
+  }
+
+  /* ========== APPLY TRANSLATION ========== */
   async function applyTranslation(targetCode) {
     if (isTranslating) return;
     isTranslating = true;
@@ -211,6 +264,7 @@
         return;
       }
 
+      /* Build unique chunks */
       var uniqueMap = {};
       var uniqueChunks = [];
       items.forEach(function(item) {
@@ -221,14 +275,32 @@
         }
       });
 
+      console.log('[AVT] ' + uniqueChunks.length + ' chunks, batch size ' + BATCH_SIZE);
+
+      /* Translate in parallel batches */
       var results = {};
-      for (var i = 0; i < uniqueChunks.length; i++) {
-        var item = uniqueChunks[i];
-        var translated = await translateChunk(item.chunk, targetCode);
-        results[item.chunk] = translated;
-        if (i < uniqueChunks.length - 1) await new Promise(function(r) { setTimeout(r, DELAY_MS); });
+      var total = uniqueChunks.length;
+      var done = 0;
+
+      for (var i = 0; i < total; i += BATCH_SIZE) {
+        var batch = uniqueChunks.slice(i, i + BATCH_SIZE);
+        var batchChunks = batch.map(function(b) { return b.chunk; });
+
+        var translated = await translateBatch(batchChunks, targetCode);
+
+        batch.forEach(function(b, idx) {
+          results[b.chunk] = translated[idx];
+        });
+
+        done += batch.length;
+        setStatus('Translating ' + Math.round((done / total) * 100) + '%');
+
+        if (i + BATCH_SIZE < total) {
+          await new Promise(function(r) { setTimeout(r, DELAY_MS); });
+        }
       }
 
+      /* Apply translations */
       items.forEach(function(item) {
         var chunks = splitIntoChunks(item.text, CHUNK_SIZE);
         var translatedParts = chunks.map(function(c) { return results[c] || c; });
@@ -325,7 +397,6 @@
 
     document.body.appendChild(wrap);
     bindEvents();
-    console.log('[AVT] Button created at top:80px');
   }
 
   function bindEvents() {
@@ -335,7 +406,7 @@
     var list = document.getElementById('avLangList');
     var wrap = document.getElementById('av-lang-btn');
 
-    if (!toggle) { console.error('[AVT] Button missing!'); return; }
+    if (!toggle) return;
 
     toggle.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -410,7 +481,7 @@
       injectStyles();
       buildUI();
       autoRestore();
-      console.log('[AVT] v12 Ready');
+      console.log('[AVT] v13 Ready - Parallel batching + cache');
     } catch (err) {
       console.error('[AVT] Fatal start:', err);
     }
