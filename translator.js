@@ -1,9 +1,9 @@
-/* ========== APEXVAULT UNIVERSAL TRANSLATOR v6 (FIXED) ========== */
-/* Fixed: Text nodes cannot use setAttribute — now uses direct properties */
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v7 (PRODUCTION) ========== */
+/* Clean version - no debug panel, just the working translator */
 (function() {
   'use strict';
 
-  const STORAGE_KEY = 'apexvault_lang_v6';
+  const STORAGE_KEY = 'apexvault_lang_v7';
   const CHUNK_SIZE = 450;
 
   const LANGUAGES = [
@@ -79,24 +79,6 @@
 
   let isTranslating = false;
   let currentLang = 'en';
-  let debugLogs = [];
-
-  /* ========== DEBUG LOGGER ========== */
-  function log(msg) {
-    var line = '[AVT] ' + msg;
-    debugLogs.push(line);
-    if (debugLogs.length > 30) debugLogs.shift();
-    console.log(line);
-    updateDebugPanel();
-  }
-
-  function updateDebugPanel() {
-    var panel = document.getElementById('av-debug-panel');
-    if (panel) {
-      panel.innerHTML = '<strong>Translator Debug Log</strong> (tap to hide)<br>' + debugLogs.join('<br>');
-      panel.scrollTop = panel.scrollHeight;
-    }
-  }
 
   /* ========== EXTRACT TEXT NODES ========== */
   function getTextNodes(root) {
@@ -109,7 +91,6 @@
         var tag = parent.tagName.toLowerCase();
         if (tag === 'script' || tag === 'style' || tag === 'noscript' || tag === 'code' || tag === 'pre') return NodeFilter.FILTER_REJECT;
         if (parent.closest('#av-lang-btn')) return NodeFilter.FILTER_REJECT;
-        if (parent.closest('#av-debug-panel')) return NodeFilter.FILTER_REJECT;
         if (parent.closest('.notranslate')) return NodeFilter.FILTER_REJECT;
         if (!node.textContent.trim()) return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
@@ -121,7 +102,7 @@
     return nodes;
   }
 
-  /* ========== SAVE ORIGINALS (FIXED) ========== */
+  /* ========== SAVE ORIGINALS ========== */
   function saveOriginals() {
     var nodes = getTextNodes(document.body);
     var count = 0;
@@ -131,7 +112,7 @@
         count++;
       }
     });
-    log('Saved ' + count + ' new text nodes (total: ' + nodes.length + ')');
+    console.log('[AVT] Saved ' + count + ' new text nodes');
   }
 
   /* ========== SPLIT TEXT INTO CHUNKS ========== */
@@ -171,7 +152,6 @@
   /* ========== MYMEMORY API ========== */
   async function translateMyMemory(text, target) {
     var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + target;
-    log('MyMemory: "' + text.substring(0, 50) + '..."');
     var res = await fetch(url, { method: 'GET', mode: 'cors' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     var data = await res.json();
@@ -184,7 +164,6 @@
   /* ========== GOOGLE UNOFFICIAL API ========== */
   async function translateGoogle(text, target) {
     var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=' + target + '&dt=t&q=' + encodeURIComponent(text);
-    log('Google: "' + text.substring(0, 50) + '..."');
     var res = await fetch(url, { method: 'GET', mode: 'cors' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     var data = await res.json();
@@ -199,11 +178,9 @@
     try {
       return await translateMyMemory(text, target);
     } catch (e1) {
-      log('MyMemory fail: ' + e1.message);
       try {
         return await translateGoogle(text, target);
       } catch (e2) {
-        log('Google fail: ' + e2.message);
         return text;
       }
     }
@@ -219,7 +196,6 @@
 
     function setStatus(txt) {
       if (nameSpan) nameSpan.textContent = txt;
-      log(txt);
     }
 
     try {
@@ -229,12 +205,11 @@
         localStorage.setItem(STORAGE_KEY, 'en');
         updateBtn('en');
         setStatus('English');
-        log('Restored English');
         return;
       }
 
       saveOriginals();
-      setStatus('Scanning page...');
+      setStatus('Translating...');
 
       var nodes = getTextNodes(document.body);
       var items = [];
@@ -246,10 +221,8 @@
         }
       });
 
-      log('Found ' + items.length + ' items to translate');
-
       if (items.length === 0) {
-        setStatus('No text found');
+        setStatus('No text');
         currentLang = targetCode;
         localStorage.setItem(STORAGE_KEY, targetCode);
         updateBtn(targetCode);
@@ -268,8 +241,6 @@
           });
         }
       });
-
-      log('Split into ' + uniqueChunks.length + ' chunks');
 
       /* Translate chunks */
       var results = {};
@@ -295,10 +266,9 @@
       localStorage.setItem(STORAGE_KEY, targetCode);
       updateBtn(targetCode);
       setStatus('Done!');
-      log('Complete → ' + targetCode);
     } catch (err) {
-      log('FATAL: ' + err.message);
-      setStatus('Error - see debug');
+      console.error('[AVT] Error:', err);
+      setStatus('Error');
     } finally {
       isTranslating = false;
     }
@@ -346,16 +316,6 @@
 
     document.body.appendChild(wrap);
     bindEvents();
-    log('Dropdown created');
-  }
-
-  function buildDebugPanel() {
-    if (document.getElementById('av-debug-panel')) return;
-    var panel = document.createElement('div');
-    panel.id = 'av-debug-panel';
-    panel.innerHTML = '<strong>Translator Debug Log</strong> (tap to hide)<br><em>Initializing...</em>';
-    panel.onclick = function() { panel.style.display = 'none'; };
-    document.body.appendChild(panel);
   }
 
   function bindEvents() {
@@ -430,9 +390,7 @@
       '.avLangOpt.active{background:rgba(100,255,218,0.15)!important;color:#64ffda!important;}' +
       '.avLangOptFlag{font-size:1.15rem!important;flex-shrink:0!important;}' +
       '.avLangOptName{flex:1!important;}' +
-      '#av-debug-panel{position:fixed!important;bottom:10px!important;left:10px!important;right:10px!important;max-height:200px!important;overflow-y:auto!important;background:rgba(0,0,0,0.92)!important;color:#64ffda!important;padding:12px!important;border-radius:8px!important;font-family:monospace!important;font-size:11px!important;z-index:99998!important;line-height:1.5!important;border:1px solid #233554!important;}' +
-      '#av-debug-panel strong{color:#fff!important;}' +
-      '@media(max-width:480px){#av-lang-btn{top:8px!important;right:8px!important;}#avLangToggle{padding:8px 12px!important;font-size:0.82rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}#av-debug-panel{left:5px!important;right:5px!important;bottom:5px!important;}}';
+      '@media(max-width:480px){#av-lang-btn{top:8px!important;right:8px!important;}#avLangToggle{padding:8px 12px!important;font-size:0.82rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}}';
     document.head.appendChild(s);
   }
 
@@ -440,7 +398,6 @@
   function autoRestore() {
     var saved = localStorage.getItem(STORAGE_KEY);
     if (saved && saved !== 'en') {
-      log('Auto-restoring: ' + saved);
       setTimeout(function() { setLang(saved); }, 2000);
     }
   }
@@ -450,9 +407,8 @@
     try {
       injectStyles();
       buildUI();
-      buildDebugPanel();
       autoRestore();
-      log('v6 Ready - MyMemory + Google fallback');
+      console.log('[AVT] v7 Ready');
     } catch (err) {
       console.error('[AVT] Fatal start:', err);
     }
