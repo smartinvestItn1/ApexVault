@@ -1,14 +1,12 @@
-/* ========== APEXVAULT UNIVERSAL TRANSLATOR v15 (UNMISSABLE) ========== */
-/* Big, bright, pulsing button. Left side. Guaranteed visible. */
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v12 (VISIBLE) ========== */
+/* Big button below your header. Inline styles so nothing can hide it. */
 (function() {
   'use strict';
 
-  const STORAGE_KEY = 'apexvault_lang_v15';
-  const CACHE_KEY = 'apexvault_cache_v15';
-  const CHUNK_SIZE = 900;
-  const DELAY_MS = 150;
-  const FETCH_TIMEOUT = 8000;
-  const BATCH_SIZE = 4;
+  const STORAGE_KEY = 'apexvault_lang_v12';
+  const CHUNK_SIZE = 450;
+  const DELAY_MS = 200;
+  const FETCH_TIMEOUT = 6000;
 
   const LANGUAGES = [
     { code: 'en', name: 'English', flag: '🇺🇸', api: 'en' },
@@ -83,23 +81,6 @@
 
   let isTranslating = false;
   let currentLang = 'en';
-  let cache = {};
-
-  try {
-    var raw = localStorage.getItem(CACHE_KEY);
-    if (raw) cache = JSON.parse(raw);
-  } catch(e) { cache = {}; }
-
-  function saveCache() {
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch(e) {}
-  }
-
-  function getCacheKey(text, target) { return target + '::' + text; }
-  function getCached(text, target) { return cache[getCacheKey(text, target)]; }
-  function setCached(text, target, translated) {
-    cache[getCacheKey(text, target)] = translated;
-    saveCache();
-  }
 
   function fetchWithTimeout(url, options, ms) {
     return new Promise(function(resolve, reject) {
@@ -136,8 +117,7 @@
     var chunks = [];
     var current = '';
     var currentBytes = 0;
-    var sentences = text.split(/(?<=[.!?
-])\s+/);
+    var sentences = text.split(/(?<=[.!?\n])\s+/);
     sentences.forEach(function(sentence) {
       var sentenceBytes = new Blob([sentence]).size;
       if (sentenceBytes > maxBytes) {
@@ -187,24 +167,11 @@
   }
 
   async function translateChunk(text, target) {
-    var cached = getCached(text, target);
-    if (cached) return cached;
-    try {
-      var result = await translateMyMemory(text, target);
-      setCached(text, target, result);
-      return result;
-    } catch (e1) {
-      try {
-        var result = await translateGoogle(text, target);
-        setCached(text, target, result);
-        return result;
-      } catch (e2) { return text; }
+    try { return await translateMyMemory(text, target); }
+    catch (e1) {
+      try { return await translateGoogle(text, target); }
+      catch (e2) { return text; }
     }
-  }
-
-  async function translateBatch(chunks, target) {
-    var promises = chunks.map(function(chunk) { return translateChunk(chunk, target); });
-    return await Promise.all(promises);
   }
 
   async function applyTranslation(targetCode) {
@@ -255,17 +222,11 @@
       });
 
       var results = {};
-      var total = uniqueChunks.length;
-      var done = 0;
-
-      for (var i = 0; i < total; i += BATCH_SIZE) {
-        var batch = uniqueChunks.slice(i, i + BATCH_SIZE);
-        var batchChunks = batch.map(function(b) { return b.chunk; });
-        var translated = await translateBatch(batchChunks, targetCode);
-        batch.forEach(function(b, idx) { results[b.chunk] = translated[idx]; });
-        done += batch.length;
-        setStatus('Translating ' + Math.round((done / total) * 100) + '%');
-        if (i + BATCH_SIZE < total) await new Promise(function(r) { setTimeout(r, DELAY_MS); });
+      for (var i = 0; i < uniqueChunks.length; i++) {
+        var item = uniqueChunks[i];
+        var translated = await translateChunk(item.chunk, targetCode);
+        results[item.chunk] = translated;
+        if (i < uniqueChunks.length - 1) await new Promise(function(r) { setTimeout(r, DELAY_MS); });
       }
 
       items.forEach(function(item) {
@@ -316,36 +277,34 @@
 
     var wrap = document.createElement('div');
     wrap.id = 'av-lang-btn';
-    /* LEFT side, lower to clear header, high z-index */
-    wrap.style.cssText = 'position:fixed!important;top:120px!important;left:16px!important;right:auto!important;z-index:2147483647!important;font-family:"Inter","Segoe UI",system-ui,sans-serif!important;';
+    wrap.style.cssText = 'position:fixed!important;top:80px!important;right:12px!important;z-index:99999!important;font-family:"Inter","Segoe UI",system-ui,sans-serif!important;';
 
     var btn = document.createElement('button');
     btn.id = 'avLangToggle';
     btn.title = 'Change Language';
-    /* BRIGHT teal background, bigger, impossible to miss */
     btn.style.cssText =
-      'display:flex!important;align-items:center!important;gap:10px!important;' +
-      'padding:14px 22px!important;margin:0!important;border:none!important;' +
-      'background:#00d4aa!important;' +
-      'border:3px solid #fff!important;border-radius:14px!important;' +
-      'color:#0a192f!important;font-size:1rem!important;font-weight:800!important;' +
+      'display:flex!important;align-items:center!important;gap:8px!important;' +
+      'padding:10px 18px!important;margin:0!important;border:none!important;' +
+      'background:rgba(17,34,64,0.95)!important;' +
+      'border:2px solid #64ffda!important;border-radius:12px!important;' +
+      'color:#fff!important;font-size:0.9rem!important;font-weight:700!important;' +
       'cursor:pointer!important;backdrop-filter:blur(12px)!important;' +
-      'box-shadow:0 0 20px rgba(0,212,170,0.6), 0 4px 15px rgba(0,0,0,0.4)!important;' +
+      'box-shadow:0 4px 20px rgba(0,212,170,0.35)!important;' +
       'transition:all 0.2s!important;outline:none!important;' +
       '-webkit-tap-highlight-color:transparent!important;';
 
     var flag = document.createElement('span');
     flag.id = 'avLangFlag';
     flag.textContent = cur.flag;
-    flag.style.cssText = 'font-size:1.3rem!important;line-height:1!important;pointer-events:none!important;';
+    flag.style.cssText = 'font-size:1.1rem!important;line-height:1!important;pointer-events:none!important;';
 
     var name = document.createElement('span');
     name.id = 'avLangName';
     name.textContent = cur.name;
-    name.style.cssText = 'pointer-events:none!important;';
+    name.style.cssText = 'max-width:110px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;pointer-events:none!important;';
 
     var arrow = document.createElement('span');
-    arrow.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="opacity:0.8;pointer-events:none;"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    arrow.innerHTML = '<svg width="10" height="10" viewBox="0 0 12 12" fill="none" style="opacity:0.7;pointer-events:none;"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     arrow.style.cssText = 'display:flex!important;align-items:center!important;pointer-events:none!important;';
 
     btn.appendChild(flag);
@@ -366,7 +325,7 @@
 
     document.body.appendChild(wrap);
     bindEvents();
-    console.log('[AVT] Button created on LEFT at top:120px');
+    console.log('[AVT] Button created at top:80px');
   }
 
   function bindEvents() {
@@ -423,7 +382,7 @@
     var s = document.createElement('style');
     s.id = 'av-translate-style';
     s.textContent =
-      '#avLangMenu{position:absolute!important;top:calc(100% + 10px)!important;left:0!important;right:auto!important;width:280px!important;max-height:400px!important;background:rgba(17,34,64,0.98)!important;border:1px solid #233554!important;border-radius:16px!important;overflow:hidden!important;opacity:0!important;visibility:hidden!important;transform:translateY(-10px)!important;transition:all 0.25s ease!important;box-shadow:0 25px 60px rgba(0,0,0,0.6)!important;display:flex!important;flex-direction:column!important;}' +
+      '#avLangMenu{position:absolute!important;top:calc(100% + 10px)!important;right:0!important;width:280px!important;max-height:400px!important;background:rgba(17,34,64,0.98)!important;border:1px solid #233554!important;border-radius:16px!important;overflow:hidden!important;opacity:0!important;visibility:hidden!important;transform:translateY(-10px)!important;transition:all 0.25s ease!important;box-shadow:0 25px 60px rgba(0,0,0,0.6)!important;display:flex!important;flex-direction:column!important;}' +
       '#avLangMenu.open{opacity:1!important;visibility:visible!important;transform:translateY(0)!important;}' +
       '#avLangSearchWrap{padding:14px!important;border-bottom:1px solid #233554!important;flex-shrink:0!important;}' +
       '#avLangSearch{width:100%!important;padding:12px 16px!important;background:#0a0e1a!important;border:1px solid #233554!important;border-radius:10px!important;color:#ccd6f6!important;font-size:0.9rem!important;outline:none!important;font-family:"Inter",sans-serif!important;font-weight:600!important;}' +
@@ -437,7 +396,7 @@
       '.avLangOpt.active{background:rgba(100,255,218,0.15)!important;color:#64ffda!important;}' +
       '.avLangOptFlag{font-size:1.15rem!important;flex-shrink:0!important;}' +
       '.avLangOptName{flex:1!important;}' +
-      '@media(max-width:480px){#av-lang-btn{top:100px!important;left:10px!important;right:auto!important;}#avLangToggle{padding:10px 16px!important;font-size:0.9rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}}';
+      '@media(max-width:480px){#av-lang-btn{top:70px!important;right:8px!important;}#avLangToggle{padding:8px 14px!important;font-size:0.82rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}}';
     document.head.appendChild(s);
   }
 
@@ -451,7 +410,7 @@
       injectStyles();
       buildUI();
       autoRestore();
-      console.log('[AVT] v15 Ready - Unmissable left button');
+      console.log('[AVT] v12 Ready');
     } catch (err) {
       console.error('[AVT] Fatal start:', err);
     }
