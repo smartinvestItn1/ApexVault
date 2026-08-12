@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Contact Us - ApexVault</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- ===== GOOGLE FONTS ===== -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --bg: #0a0e1a;
@@ -21,8 +27,38 @@
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ===== FONT FAMILY + BOLD EVERYTHING ===== */
+    body, p, span, a, li, div, button, input, textarea, label, small, strong, em, b, i, u, td, th, figcaption, blockquote, cite, dfn, abbr, q, sub, sup, mark, ins, del, time, data {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+      font-weight: 700 !important;
+    }
+    h1, h2, h3, h4, h5, h6,
+    .logo, .hero h1, .hero-badge,
+    .contact-card h3, .footer-col h4,
+    .btn-primary, .nav-links a,
+    .form-group label, .form-message,
+    .social-links a {
+      font-family: 'Montserrat', 'Inter', sans-serif !important;
+      font-weight: 800 !important;
+    }
+    /* Muted text slightly lighter but still bold */
+    .hero p, .contact-card p,
+    .footer-col a, .footer-bottom,
+    .form-group input::placeholder,
+    .form-group textarea::placeholder,
+    .text-muted {
+      font-family: 'Inter', 'Segoe UI', sans-serif !important;
+      font-weight: 600 !important;
+    }
+    /* Headings extra bold */
+    .hero h1, .contact-card h3, .form-container h3,
+    .footer-col h4, .hero-badge {
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
@@ -84,8 +120,10 @@
     }
     .logo {
       display: flex; align-items: center; gap: 0.6rem;
-      font-size: 1.4rem; font-weight: 700; color: var(--accent);
+      font-size: 1.4rem; color: var(--accent);
       text-decoration: none;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
     .logo-icon {
       width: 36px; height: 36px; border-radius: 10px;
@@ -98,8 +136,10 @@
     }
     .nav-links a {
       color: var(--text-muted); text-decoration: none;
-      font-size: 0.9rem; font-weight: 500;
+      font-size: 0.9rem;
       transition: color 0.2s;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 700 !important;
     }
     .nav-links a:hover, .nav-links a.active { color: var(--accent); }
     .mobile-menu-btn {
@@ -135,17 +175,23 @@
       display: inline-block; padding: 0.4rem 1rem;
       background: rgba(0, 212, 170, 0.1); border: 1px solid rgba(0, 212, 170, 0.2);
       border-radius: 50px; color: var(--accent); font-size: 0.8rem;
-      font-weight: 600; margin-bottom: 1.5rem; letter-spacing: 0.5px;
+      margin-bottom: 1.5rem; letter-spacing: 0.5px;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
     .hero h1 {
       font-size: 2.4rem; line-height: 1.2;
       margin-bottom: 1rem;
       background: linear-gradient(135deg, #fff, var(--accent));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
     .hero p {
       color: var(--text-muted); font-size: 1.05rem;
       max-width: 600px; margin: 0 auto;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
 
     /* ========== SECTIONS ========== */
@@ -179,10 +225,20 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 1.4rem; margin: 0 auto 1.2rem;
     }
-    .contact-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
-    .contact-card p { color: var(--text-muted); font-size: 0.9rem; }
+    .contact-card h3 { 
+      font-size: 1.1rem; margin-bottom: 0.5rem; 
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
+    }
+    .contact-card p { 
+      color: var(--text-muted); font-size: 0.9rem; 
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
+    }
     .contact-card a {
-      color: var(--accent); text-decoration: none; font-weight: 500;
+      color: var(--accent); text-decoration: none;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 700 !important;
     }
     .contact-card a:hover { text-decoration: underline; }
 
@@ -198,6 +254,8 @@
     .form-group label {
       display: block; font-size: 0.85rem;
       color: var(--text-muted); margin-bottom: 0.4rem;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 700 !important;
     }
     .form-group input,
     .form-group textarea {
@@ -205,8 +263,10 @@
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 12px; padding: 0.85rem 1rem;
       color: var(--text); font-size: 0.95rem;
-      font-family: inherit; outline: none;
+      outline: none;
       transition: border-color 0.2s;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
     .form-group input:focus,
     .form-group textarea:focus {
@@ -218,9 +278,11 @@
       padding: 0.85rem 2rem;
       background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
       border: none; border-radius: 12px; color: #fff;
-      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      font-size: 0.95rem; cursor: pointer;
       text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;
       width: 100%; justify-content: center;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
     .btn-primary:hover {
       transform: translateY(-2px);
@@ -230,6 +292,8 @@
       text-align: center; padding: 1rem;
       border-radius: 10px; margin-top: 1rem;
       font-size: 0.9rem; display: none;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 700 !important;
     }
     .form-message.success {
       background: rgba(34, 197, 94, 0.1);
@@ -254,6 +318,8 @@
       display: flex; align-items: center; justify-content: center;
       color: var(--text-muted); font-size: 1.2rem;
       text-decoration: none; transition: all 0.3s;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 700 !important;
     }
     .social-links a:hover {
       color: var(--accent);
@@ -277,11 +343,15 @@
       font-size: 0.85rem; text-transform: uppercase;
       letter-spacing: 1px; color: var(--text);
       margin-bottom: 1.2rem;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
     .footer-col a {
       display: block; color: var(--text-muted);
       text-decoration: none; font-size: 0.9rem;
       margin-bottom: 0.7rem; transition: color 0.2s;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
     .footer-col a:hover { color: var(--accent); }
     .footer-bottom {
@@ -289,6 +359,8 @@
       font-size: 0.8rem; padding-top: 2rem;
       border-top: 1px solid rgba(255,255,255,0.05);
       max-width: 1100px; margin: 0 auto;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
 
     /* ========== MOBILE ========== */
@@ -300,6 +372,7 @@
       .form-container { padding: 1.5rem; }
     }
   </style>
+  <base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -335,21 +408,15 @@
   <section class="section">
     <div class="contact-grid">
       <div class="contact-card fade-in fade-in-delay-1">
-        <div class="contact-icon">📧</div>
+        <div class="contact-icon">&#9993;</div>
         <h3>Email Us</h3>
         <p><a href="mailto:support@apexvault.com">support@apexvault.com</a></p>
         <p style="margin-top:0.3rem; font-size:0.8rem;">We reply within 24 hours</p>
       </div>
       <div class="contact-card fade-in fade-in-delay-2">
-        <div class="contact-icon">📱</div>
-        <h3>Call Us</h3>
-        <p><a href="tel:+1234567890">+1 (234) 567-890</a></p>
-        <p style="margin-top:0.3rem; font-size:0.8rem;">Mon – Fri, 9am – 6pm EST</p>
-      </div>
-      <div class="contact-card fade-in fade-in-delay-3">
-        <div class="contact-icon">💬</div>
+        <div class="contact-icon">&#128172;</div>
         <h3>WhatsApp</h3>
-        <p><a href="https://wa.me/44 7493 759120" target="_blank">+44 7493 759120</a></p>
+        <p><a href="https://wa.me/447493759120" target="_blank">+44 7493 759120</a></p>
         <p style="margin-top:0.3rem; font-size:0.8rem;">Instant messaging support</p>
       </div>
     </div>
@@ -422,7 +489,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      © 2026 ApexVault. All rights reserved.
+      &#169; 2026 ApexVault. All rights reserved.
     </div>
   </footer>
 
@@ -459,10 +526,10 @@
       e.preventDefault();
       const msg = document.getElementById('formMessage');
       msg.className = 'form-message success';
-      msg.textContent = '✅ Message sent! We will get back to you within 24 hours.';
+      msg.textContent = 'Message sent! We will get back to you within 24 hours.';
       document.getElementById('contactForm').reset();
       setTimeout(() => { msg.style.display = 'none'; }, 5000);
     }
   </script>
 </body>
-      </html>
+</html>
