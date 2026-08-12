@@ -1,10 +1,12 @@
-/* ========== APEXVAULT UNIVERSAL TRANSLATOR v7 (PRODUCTION) ========== */
-/* Clean version - no debug panel, just the working translator */
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v8 (ROBUST) ========== */
+/* Google primary, MyMemory fallback, timeouts, no counting UI */
 (function() {
   'use strict';
 
-  const STORAGE_KEY = 'apexvault_lang_v7';
+  const STORAGE_KEY = 'apexvault_lang_v8';
   const CHUNK_SIZE = 450;
+  const FETCH_TIMEOUT = 8000;
+  const DELAY_MS = 250;
 
   const LANGUAGES = [
     { code: 'en', name: 'English', flag: '🇺🇸', api: 'en' },
@@ -80,6 +82,22 @@
   let isTranslating = false;
   let currentLang = 'en';
 
+  /* ========== FETCH WITH TIMEOUT ========== */
+  function fetchWithTimeout(url, options, ms) {
+    return new Promise(function(resolve, reject) {
+      var timer = setTimeout(function() {
+        reject(new Error('Timeout after ' + ms + 'ms'));
+      }, ms);
+      fetch(url, options).then(function(res) {
+        clearTimeout(timer);
+        resolve(res);
+      }).catch(function(err) {
+        clearTimeout(timer);
+        reject(err);
+      });
+    });
+  }
+
   /* ========== EXTRACT TEXT NODES ========== */
   function getTextNodes(root) {
     var walker = document.createTreeWalker(
@@ -112,7 +130,7 @@
         count++;
       }
     });
-    console.log('[AVT] Saved ' + count + ' new text nodes');
+    console.log('[AVT] Saved ' + count + ' text nodes');
   }
 
   /* ========== SPLIT TEXT INTO CHUNKS ========== */
@@ -120,7 +138,8 @@
     var chunks = [];
     var current = '';
     var currentBytes = 0;
-    var sentences = text.split(/(?<=[.!?\n])\s+/);
+    var sentences = text.split(/(?<=[.!?
+])\s+/);
     sentences.forEach(function(sentence) {
       var sentenceBytes = new Blob([sentence]).size;
       if (sentenceBytes > maxBytes) {
@@ -149,22 +168,10 @@
     return chunks;
   }
 
-  /* ========== MYMEMORY API ========== */
-  async function translateMyMemory(text, target) {
-    var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + target;
-    var res = await fetch(url, { method: 'GET', mode: 'cors' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    var data = await res.json();
-    if (data.responseStatus === 200 && data.responseData && data.responseData.translatedText) {
-      return data.responseData.translatedText;
-    }
-    throw new Error('Status ' + data.responseStatus);
-  }
-
-  /* ========== GOOGLE UNOFFICIAL API ========== */
+  /* ========== GOOGLE TRANSLATE API (PRIMARY) ========== */
   async function translateGoogle(text, target) {
-    var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=' + target + '&dt=t&q=' + encodeURIComponent(text);
-    var res = await fetch(url, { method: 'GET', mode: 'cors' });
+    var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=' + encodeURIComponent(target) + '&dt=t&q=' + encodeURIComponent(text);
+    var res = await fetchWithTimeout(url, { method: 'GET', mode: 'cors' }, FETCH_TIMEOUT);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     var data = await res.json();
     if (data && data[0] && data[0][0] && data[0][0][0]) {
@@ -173,14 +180,30 @@
     throw new Error('Bad response');
   }
 
+  /* ========== MYMEMORY API (FALLBACK) ========== */
+  async function translateMyMemory(text, target) {
+    var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + encodeURIComponent(target);
+    var res = await fetchWithTimeout(url, { method: 'GET', mode: 'cors' }, FETCH_TIMEOUT);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+    if (data.responseStatus === 200 && data.responseData && data.responseData.translatedText) {
+      return data.responseData.translatedText;
+    }
+    throw new Error('Status ' + data.responseStatus);
+  }
+
   /* ========== TRANSLATE ONE CHUNK ========== */
   async function translateChunk(text, target) {
+    /* Try Google first */
     try {
-      return await translateMyMemory(text, target);
+      return await translateGoogle(text, target);
     } catch (e1) {
+      console.log('[AVT] Google failed, trying MyMemory:', e1.message);
+      /* Try MyMemory */
       try {
-        return await translateGoogle(text, target);
+        return await translateMyMemory(text, target);
       } catch (e2) {
+        console.log('[AVT] MyMemory failed, keeping original:', e2.message);
         return text;
       }
     }
@@ -193,6 +216,7 @@
 
     var btn = document.getElementById('avLangToggle');
     var nameSpan = btn ? btn.querySelector('#avLangName') : null;
+    var flagSpan = btn ? btn.querySelector('#avLangFlag') : null;
 
     function setStatus(txt) {
       if (nameSpan) nameSpan.textContent = txt;
@@ -221,6 +245,8 @@
         }
       });
 
+      console.log('[AVT] Found ' + items.length + ' items to translate');
+
       if (items.length === 0) {
         setStatus('No text');
         currentLang = targetCode;
@@ -242,33 +268,61 @@
         }
       });
 
-      /* Translate chunks */
+      console.log('[AVT] ' + uniqueChunks.length + ' chunks to translate');
+
+      /* Translate chunks with timeout protection */
       var results = {};
+      var successCount = 0;
+      var failCount = 0;
+
       for (var i = 0; i < uniqueChunks.length; i++) {
         var item = uniqueChunks[i];
-        setStatus('Translating ' + (i + 1) + '/' + uniqueChunks.length);
-        var translated = await translateChunk(item.chunk, targetCode);
-        results[item.chunk] = translated;
-        if (i < uniqueChunks.length - 1) await new Promise(function(r) { setTimeout(r, 600); });
+        try {
+          var translated = await translateChunk(item.chunk, targetCode);
+          results[item.chunk] = translated;
+          if (translated !== item.chunk) successCount++;
+          else failCount++;
+        } catch (err) {
+          console.error('[AVT] Chunk failed:', err);
+          results[item.chunk] = item.chunk;
+          failCount++;
+        }
+        if (i < uniqueChunks.length - 1) {
+          await new Promise(function(r) { setTimeout(r, DELAY_MS); });
+        }
       }
 
+      console.log('[AVT] Results: ' + successCount + ' translated, ' + failCount + ' failed');
+
       /* Apply translations */
+      var appliedCount = 0;
       items.forEach(function(item) {
         var chunks = splitIntoChunks(item.text, CHUNK_SIZE);
         var translatedParts = chunks.map(function(c) { return results[c] || c; });
         var fullTranslated = translatedParts.join(' ');
         if (fullTranslated !== item.text) {
           item.node.textContent = fullTranslated;
+          appliedCount++;
         }
       });
+
+      console.log('[AVT] Applied to ' + appliedCount + ' nodes');
 
       currentLang = targetCode;
       localStorage.setItem(STORAGE_KEY, targetCode);
       updateBtn(targetCode);
       setStatus('Done!');
+      setTimeout(function() {
+        var l = LANGUAGES.find(function(x) { return x.code === targetCode; });
+        if (l && nameSpan) nameSpan.textContent = l.name;
+      }, 1500);
     } catch (err) {
-      console.error('[AVT] Error:', err);
+      console.error('[AVT] Fatal error:', err);
       setStatus('Error');
+      setTimeout(function() {
+        var l = LANGUAGES.find(function(x) { return x.code === currentLang; });
+        if (l && nameSpan) nameSpan.textContent = l.name;
+      }, 2000);
     } finally {
       isTranslating = false;
     }
@@ -408,7 +462,7 @@
       injectStyles();
       buildUI();
       autoRestore();
-      console.log('[AVT] v7 Ready');
+      console.log('[AVT] v8 Ready');
     } catch (err) {
       console.error('[AVT] Fatal start:', err);
     }
