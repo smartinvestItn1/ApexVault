@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Careers - ApexVault</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- ===== GOOGLE FONTS ===== -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --bg: #0a0e1a;
@@ -16,8 +22,31 @@
       --text-muted: #94a3b8;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ===== FONT FAMILY + BOLD EVERYTHING ===== */
+    body, p, span, a, li, div, button, input, textarea, label, small, strong, em, b, i, u, td, th, figcaption, blockquote, cite, dfn, abbr, q, sub, sup, mark, ins, del, time, data {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+      font-weight: 700 !important;
+    }
+    h1, h2, h3, h4, h5, h6,
+    .logo, .page-title, .content-box h3,
+    .back-btn, .footer, .content-box strong {
+      font-family: 'Montserrat', 'Inter', sans-serif !important;
+      font-weight: 800 !important;
+    }
+    /* Muted text slightly lighter but still bold */
+    .page-subtitle, .content-box p, .content-box ul, .content-box li,
+    .footer, .back-btn, .text-muted {
+      font-family: 'Inter', 'Segoe UI', sans-serif !important;
+      font-weight: 600 !important;
+    }
+    /* Headings extra bold */
+    .page-title, .content-box h3, .content-box strong {
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.7;
@@ -55,17 +84,21 @@
       display: flex; align-items: center; justify-content: space-between;
     }
     .logo {
-      font-size: 1.5rem; font-weight: 800;
+      font-size: 1.5rem;
       background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text; text-decoration: none;
       cursor: pointer; transition: transform 0.3s;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
     .logo:hover { transform: scale(1.05); }
     .back-btn {
       color: var(--text-muted); text-decoration: none;
       font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;
       transition: color 0.2s;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 700 !important;
     }
     .back-btn:hover { color: var(--accent); }
 
@@ -78,9 +111,13 @@
       font-size: 2rem; margin-bottom: 0.5rem;
       background: linear-gradient(135deg, #fff, var(--accent));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
     .page-subtitle {
       color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
     .content-box {
       background: var(--card-bg);
@@ -91,28 +128,41 @@
     .content-box h3 {
       font-size: 1.1rem; color: var(--accent);
       margin: 1.5rem 0 0.6rem;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
     .content-box h3:first-child { margin-top: 0; }
     .content-box p {
       color: var(--text-muted); font-size: 0.92rem;
       margin-bottom: 1rem;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
     .content-box ul {
       color: var(--text-muted); font-size: 0.92rem;
       padding-left: 1.2rem; margin-bottom: 1rem;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
     .content-box li { margin-bottom: 0.4rem; }
     .content-box a { color: var(--accent); text-decoration: none; }
     .content-box a:hover { text-decoration: underline; }
+    .content-box strong {
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
+      color: var(--text);
+    }
 
     .footer {
       position: relative; z-index: 1;
       text-align: center; padding: 2rem 1rem;
       color: var(--text-muted); font-size: 0.8rem;
       border-top: 1px solid rgba(255,255,255,0.05);
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
-    
   </style>
+<base target="_blank">
 </head>
 <body>
   <div class="particles-container" id="particles"></div>
@@ -127,29 +177,29 @@
     <p class="page-subtitle fade-in fade-in-delay-1">ApexVault Platform</p>
     <div class="content-box fade-in fade-in-delay-2">
       <h3>Join Our Team</h3>
-<p>We are building the future of digital wealth management. Based in the <strong>United Kingdom</strong>, ApexVault is a fast-growing fintech company on a mission to democratize investing for everyone.</p>
+      <p>We are building the future of digital wealth management. Based in the <strong>United Kingdom</strong>, ApexVault is a fast-growing fintech company on a mission to democratize investing for everyone.</p>
 
-<h3>Why Work With Us?</h3>
-<ul>
-  <li>UK-based headquarters with remote-friendly culture</li>
-  <li>Competitive salaries and performance bonuses</li>
-  <li>Flexible working hours and generous annual leave</li>
-  <li>Learning & development budget for every team member</li>
-  <li>Modern tech stack and collaborative environment</li>
-</ul>
+      <h3>Why Work With Us?</h3>
+      <ul>
+        <li>UK-based headquarters with remote-friendly culture</li>
+        <li>Competitive salaries and performance bonuses</li>
+        <li>Flexible working hours and generous annual leave</li>
+        <li>Learning &amp; development budget for every team member</li>
+        <li>Modern tech stack and collaborative environment</li>
+      </ul>
 
-<h3>Open Positions</h3>
-<p><strong>Frontend Developer</strong> — Remote / London<br>Build beautiful, responsive dashboards using modern JavaScript and CSS.</p>
-<p><strong>Backend Engineer</strong> — Remote / London<br>Design scalable APIs and real-time data pipelines.</p>
-<p><strong>Customer Success Manager</strong> — UK Based<br>Support our global investor community with world-class service.</p>
+      <h3>Open Positions</h3>
+      <p><strong>Frontend Developer</strong> — Remote / London<br>Build beautiful, responsive dashboards using modern JavaScript and CSS.</p>
+      <p><strong>Backend Engineer</strong> — Remote / London<br>Design scalable APIs and real-time data pipelines.</p>
+      <p><strong>Customer Success Manager</strong> — UK Based<br>Support our global investor community with world-class service.</p>
 
-<h3>How to Apply</h3>
-<p>Send your CV and cover letter to <a href="mailto:careers@apexvault.com">careers@apexvault.com</a>. We review every application personally.</p>
+      <h3>How to Apply</h3>
+      <p>Send your CV and cover letter to <a href="mailto:careers@apexvault.com">careers@apexvault.com</a>. We review every application personally.</p>
     </div>
   </main>
 
   <footer class="footer">
-    © 2026 ApexVault. All rights reserved.
+    &#169; 2026 ApexVault. All rights reserved.
   </footer>
 
   <script>
