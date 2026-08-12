@@ -1,182 +1,277 @@
-/* ========== APEXVAULT UNIVERSAL TRANSLATOR v2.1 (FIXED) ========== */
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v3 (LIBRETRANSLATE) ========== */
+/* Replaces dead Google Translate widget with a real working API-based translator */
 (function() {
   'use strict';
 
-  console.log('[ApexVault Translator] Initializing...');
+  console.log('[ApexVault Translator v3] Initializing...');
 
-  const STORAGE_KEY = 'apexvault_lang';
+  const STORAGE_KEY = 'apexvault_lang_v3';
+  const API_URL = 'https://libretranslate.de/translate';  /* Public free instance */
+  const API_KEY = ''; /* Leave empty for free tier (rate limited) */
 
   const LANGUAGES = [
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'es', name: 'Español', flag: '🇪🇸' },
-    { code: 'fr', name: 'Français', flag: '🇫🇷' },
-    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-    { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-    { code: 'pt', name: 'Português', flag: '🇵🇹' },
-    { code: 'ru', name: 'Русский', flag: '🇷🇺' },
-    { code: 'zh-CN', name: '中文', flag: '🇨🇳' },
-    { code: 'ja', name: '日本語', flag: '🇯🇵' },
-    { code: 'ko', name: '한국어', flag: '🇰🇷' },
-    { code: 'ar', name: 'العربية', flag: '🇮🇶' },
-    { code: 'fa', name: 'فارسی', flag: '🇮🇷' },
-    { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
-    { code: 'ur', name: 'اردو', flag: '🇵🇰' },
-    { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
-    { code: 'pl', name: 'Polski', flag: '🇵🇱' },
-    { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
-    { code: 'sv', name: 'Svenska', flag: '🇸🇪' },
-    { code: 'da', name: 'Dansk', flag: '🇩🇰' },
-    { code: 'no', name: 'Norsk', flag: '🇳🇴' },
-    { code: 'fi', name: 'Suomi', flag: '🇫🇮' },
-    { code: 'cs', name: 'Čeština', flag: '🇨🇿' },
-    { code: 'hu', name: 'Magyar', flag: '🇭🇺' },
-    { code: 'ro', name: 'Română', flag: '🇷🇴' },
-    { code: 'bg', name: 'Български', flag: '🇧🇬' },
-    { code: 'hr', name: 'Hrvatski', flag: '🇭🇷' },
-    { code: 'sr', name: 'Српски', flag: '🇷🇸' },
-    { code: 'sk', name: 'Slovenčina', flag: '🇸🇰' },
-    { code: 'sl', name: 'Slovenščina', flag: '🇸🇮' },
-    { code: 'et', name: 'Eesti', flag: '🇪🇪' },
-    { code: 'lv', name: 'Latviešu', flag: '🇱🇻' },
-    { code: 'lt', name: 'Lietuvių', flag: '🇱🇹' },
-    { code: 'uk', name: 'Українська', flag: '🇺🇦' },
-    { code: 'vi', name: 'Tiếng Việt', flag: '🇻🇳' },
-    { code: 'th', name: 'ไทย', flag: '🇹🇭' },
-    { code: 'id', name: 'Bahasa Indonesia', flag: '🇮🇩' },
-    { code: 'ms', name: 'Bahasa Melayu', flag: '🇲🇾' },
-    { code: 'tl', name: 'Filipino', flag: '🇵🇭' },
-    { code: 'bn', name: 'বাংলা', flag: '🇧🇩' },
-    { code: 'ta', name: 'தமிழ்', flag: '🇮🇳' },
-    { code: 'te', name: 'తెలుగు', flag: '🇮🇳' },
-    { code: 'mr', name: 'मराठी', flag: '🇮🇳' },
-    { code: 'gu', name: 'ગુજરાતી', flag: '🇮🇳' },
-    { code: 'kn', name: 'ಕನ್ನಡ', flag: '🇮🇳' },
-    { code: 'ml', name: 'മലയാളം', flag: '🇮🇳' },
-    { code: 'si', name: 'සිංහල', flag: '🇱🇰' },
-    { code: 'my', name: 'မြန်မာ', flag: '🇲🇲' },
-    { code: 'km', name: 'ខ្មែរ', flag: '🇰🇭' },
-    { code: 'lo', name: 'ລາວ', flag: '🇱🇦' },
-    { code: 'ne', name: 'नेपाली', flag: '🇳🇵' },
-    { code: 'mn', name: 'Монгол', flag: '🇲🇳' },
-    { code: 'af', name: 'Afrikaans', flag: '🇿🇦' },
-    { code: 'sw', name: 'Kiswahili', flag: '🇰🇪' },
-    { code: 'zu', name: 'isiZulu', flag: '🇿🇦' },
-    { code: 'am', name: 'አማርኛ', flag: '🇪🇹' },
-    { code: 'ha', name: 'Hausa', flag: '🇳🇬' },
-    { code: 'yo', name: 'Yorùbá', flag: '🇳🇬' },
-    { code: 'ig', name: 'Igbo', flag: '🇳🇬' },
-    { code: 'el', name: 'Ελληνικά', flag: '🇬🇷' },
-    { code: 'he', name: 'עברית', flag: '🇮🇱' },
-    { code: 'ka', name: 'ქართული', flag: '🇬🇪' },
-    { code: 'az', name: 'Azərbaycan', flag: '🇦🇿' },
-    { code: 'sq', name: 'Shqip', flag: '🇦🇱' },
-    { code: 'mk', name: 'Македонски', flag: '🇲🇰' },
-    { code: 'be', name: 'Беларуская', flag: '🇧🇾' },
-    { code: 'kk', name: 'Қазақша', flag: '🇰🇿' },
-    { code: 'uz', name: 'O\'zbek', flag: '🇺🇿' },
-    { code: 'ky', name: 'Кыргызча', flag: '🇰🇬' },
-    { code: 'tg', name: 'Тоҷикӣ', flag: '🇹🇯' },
-    { code: 'hy', name: 'Հայերեն', flag: '🇦🇲' }
+    { code: 'en', name: 'English', flag: '🇺🇸', api: 'en' },
+    { code: 'es', name: 'Español', flag: '🇪🇸', api: 'es' },
+    { code: 'fr', name: 'Français', flag: '🇫🇷', api: 'fr' },
+    { code: 'de', name: 'Deutsch', flag: '🇩🇪', api: 'de' },
+    { code: 'it', name: 'Italiano', flag: '🇮🇹', api: 'it' },
+    { code: 'pt', name: 'Português', flag: '🇵🇹', api: 'pt' },
+    { code: 'ru', name: 'Русский', flag: '🇷🇺', api: 'ru' },
+    { code: 'zh', name: '中文', flag: '🇨🇳', api: 'zh' },
+    { code: 'ja', name: '日本語', flag: '🇯🇵', api: 'ja' },
+    { code: 'ko', name: '한국어', flag: '🇰🇷', api: 'ko' },
+    { code: 'ar', name: 'العربية', flag: '🇸🇦', api: 'ar' },
+    { code: 'fa', name: 'فارسی', flag: '🇮🇷', api: 'fa' },
+    { code: 'hi', name: 'हिन्दी', flag: '🇮🇳', api: 'hi' },
+    { code: 'tr', name: 'Türkçe', flag: '🇹🇷', api: 'tr' },
+    { code: 'pl', name: 'Polski', flag: '🇵🇱', api: 'pl' },
+    { code: 'nl', name: 'Nederlands', flag: '🇳🇱', api: 'nl' },
+    { code: 'sv', name: 'Svenska', flag: '🇸🇪', api: 'sv' },
+    { code: 'da', name: 'Dansk', flag: '🇩🇰', api: 'da' },
+    { code: 'fi', name: 'Suomi', flag: '🇫🇮', api: 'fi' },
+    { code: 'cs', name: 'Čeština', flag: '🇨🇿', api: 'cs' },
+    { code: 'hu', name: 'Magyar', flag: '🇭🇺', api: 'hu' },
+    { code: 'ro', name: 'Română', flag: '🇷🇴', api: 'ro' },
+    { code: 'bg', name: 'Български', flag: '🇧🇬', api: 'bg' },
+    { code: 'hr', name: 'Hrvatski', flag: '🇭🇷', api: 'hr' },
+    { code: 'sr', name: 'Српски', flag: '🇷🇸', api: 'sr' },
+    { code: 'sk', name: 'Slovenčina', flag: '🇸🇰', api: 'sk' },
+    { code: 'sl', name: 'Slovenščina', flag: '🇸🇮', api: 'sl' },
+    { code: 'et', name: 'Eesti', flag: '🇪🇪', api: 'et' },
+    { code: 'lv', name: 'Latviešu', flag: '🇱🇻', api: 'lv' },
+    { code: 'lt', name: 'Lietuvių', flag: '🇱🇹', api: 'lt' },
+    { code: 'uk', name: 'Українська', flag: '🇺🇦', api: 'uk' },
+    { code: 'vi', name: 'Tiếng Việt', flag: '🇻🇳', api: 'vi' },
+    { code: 'th', name: 'ไทย', flag: '🇹🇭', api: 'th' },
+    { code: 'id', name: 'Bahasa Indonesia', flag: '🇮🇩', api: 'id' },
+    { code: 'ms', name: 'Bahasa Melayu', flag: '🇲🇾', api: 'ms' },
+    { code: 'tl', name: 'Filipino', flag: '🇵🇭', api: 'tl' },
+    { code: 'bn', name: 'বাংলা', flag: '🇧🇩', api: 'bn' },
+    { code: 'ta', name: 'தமிழ்', flag: '🇮🇳', api: 'ta' },
+    { code: 'te', name: 'తెలుగు', flag: '🇮🇳', api: 'te' },
+    { code: 'mr', name: 'मराठी', flag: '🇮🇳', api: 'mr' },
+    { code: 'gu', name: 'ગુજરાતી', flag: '🇮🇳', api: 'gu' },
+    { code: 'kn', name: 'ಕನ್ನಡ', flag: '🇮🇳', api: 'kn' },
+    { code: 'ml', name: 'മലയാളം', flag: '🇮🇳', api: 'ml' },
+    { code: 'si', name: 'සිංහල', flag: '🇱🇰', api: 'si' },
+    { code: 'my', name: 'မြန်မာ', flag: '🇲🇲', api: 'my' },
+    { code: 'km', name: 'ខ្មែរ', flag: '🇰🇭', api: 'km' },
+    { code: 'lo', name: 'ລາວ', flag: '🇱🇦', api: 'lo' },
+    { code: 'ne', name: 'नेपाली', flag: '🇳🇵', api: 'ne' },
+    { code: 'mn', name: 'Монгол', flag: '🇲🇳', api: 'mn' },
+    { code: 'af', name: 'Afrikaans', flag: '🇿🇦', api: 'af' },
+    { code: 'sw', name: 'Kiswahili', flag: '🇰🇪', api: 'sw' },
+    { code: 'zu', name: 'isiZulu', flag: '🇿🇦', api: 'zu' },
+    { code: 'am', name: 'አማርኛ', flag: '🇪🇹', api: 'am' },
+    { code: 'ha', name: 'Hausa', flag: '🇳🇬', api: 'ha' },
+    { code: 'yo', name: 'Yorùbá', flag: '🇳🇬', api: 'yo' },
+    { code: 'ig', name: 'Igbo', flag: '🇳🇬', api: 'ig' },
+    { code: 'el', name: 'Ελληνικά', flag: '🇬🇷', api: 'el' },
+    { code: 'he', name: 'עברית', flag: '🇮🇱', api: 'he' },
+    { code: 'ka', name: 'ქართული', flag: '🇬🇪', api: 'ka' },
+    { code: 'az', name: 'Azərbaycan', flag: '🇦🇿', api: 'az' },
+    { code: 'sq', name: 'Shqip', flag: '🇦🇱', api: 'sq' },
+    { code: 'mk', name: 'Македонски', flag: '🇲🇰', api: 'mk' },
+    { code: 'be', name: 'Беларуская', flag: '🇧🇾', api: 'be' },
+    { code: 'kk', name: 'Қазақша', flag: '🇰🇿', api: 'kk' },
+    { code: 'uz', name: "O'zbek", flag: '🇺🇿', api: 'uz' },
+    { code: 'ky', name: 'Кыргызча', flag: '🇰🇬', api: 'ky' },
+    { code: 'tg', name: 'Тоҷикӣ', flag: '🇹🇯', api: 'tg' },
+    { code: 'hy', name: 'Հայերեն', flag: '🇦🇲', api: 'hy' }
   ];
 
-  let googleReady = false;
+  let originalHTML = null;
+  let isTranslating = false;
+  let currentLang = 'en';
 
-  /* ========== HIDE GOOGLE UI ========== */
-  function hideGoogleUI() {
-    var s = document.createElement('style');
-    s.id = 'av-translate-hide';
-    s.textContent = '.goog-te-banner-frame,.goog-te-menu-value,.goog-te-gadget,.goog-te-gadget-simple,#goog-gt-tt,.goog-tooltip,.goog-text-highlight,.skiptranslate iframe,.goog-logo-link,.goog-te-combo,.goog-te-balloon-frame,#goog-gt-,.goog-te-menu-frame,.goog-te-menu2,.VIpgJd-ZVi9od-ORHb-OEVmcd,.VIpgJd-ZVi9od-l4eHX-hSRGPd,.VIpgJd-ZVi9od-aZ2wEe-wOHMyf,.VIpgJd-ZVi9od-aZ2wEe-OqVKwc,.VIpgJd-yAWNEb-L7lbkb,.VIpgJd-ZVi9od-xl07Ob-lTBxed,.VIpgJd-ZVi9od-SmfZ-OEVmcd,.VIpgJd-ZVi9od-ORHb,.VIpgJd-ZVi9od-SmfZ,.VIpgJd-ZVi9od-xl07Ob,.VIpgJd-ZVi9od-vH1Gmf,.VIpgJd-ZVi9od-l4eHX-hSRGPd{display:none!important}body{top:0!important}.translated-ltr body{top:0!important}.translated-rtl body{top:0!important}';
-    document.head.appendChild(s);
+  /* ========== TRANSLATION CACHE ========== */
+  const cache = {};
+
+  function getCacheKey(text, target) {
+    return target + '::' + text.trim().substring(0, 80);
   }
 
-  /* ========== GOOGLE TRANSLATE INIT ========== */
-  function initGoogle() {
-    if (document.getElementById('google_translate_element')) return;
-    var d = document.createElement('div');
-    d.id = 'google_translate_element';
-    d.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:0;height:0;overflow:hidden;visibility:hidden;';
-    document.body.appendChild(d);
-
-    window.googleTranslateElementInit = function() {
-      var langs = LANGUAGES.map(function(l){return l.code;}).join(',');
-      new google.translate.TranslateElement({
-        pageLanguage: 'en',
-        includedLanguages: langs,
-        layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-        autoDisplay: false
-      }, 'google_translate_element');
-      googleReady = true;
-      console.log('[ApexVault Translator] Google Translate loaded');
-      var saved = localStorage.getItem(STORAGE_KEY);
-      if (saved && saved !== 'en') {
-        setTimeout(function(){ setLang(saved); }, 800);
-      }
-    };
-
-    var sc = document.createElement('script');
-    sc.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-    sc.async = true;
-    sc.onerror = function() {
-      console.error('[ApexVault Translator] Failed to load Google Translate');
-    };
-    document.head.appendChild(sc);
+  function getCached(text, target) {
+    return cache[getCacheKey(text, target)];
   }
 
-  /* ========== SET LANGUAGE (FIXED) ========== */
-  function setLang(code) {
-    if (!googleReady) {
-      setTimeout(function(){ setLang(code); }, 500);
-      return;
+  function setCached(text, target, translated) {
+    cache[getCacheKey(text, target)] = translated;
+  }
+
+  /* ========== EXTRACT TEXT NODES ========== */
+  function getTextNodes(element) {
+    var walker = document.createTreeWalker(
+      element,
+      NodeFilter.SHOW_TEXT,
+      function(node) {
+        var parent = node.parentElement;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        var tag = parent.tagName.toLowerCase();
+        if (tag === 'script' || tag === 'style' || tag === 'noscript' || tag === 'code' || tag === 'pre') return NodeFilter.FILTER_REJECT;
+        if (parent.closest('#av-lang-btn')) return NodeFilter.FILTER_REJECT;
+        if (parent.closest('.notranslate')) return NodeFilter.FILTER_REJECT;
+        if (!node.textContent.trim()) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      },
+      false
+    );
+    var nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    return nodes;
+  }
+
+  /* ========== BATCH TRANSLATE VIA API ========== */
+  async function translateBatch(texts, target) {
+    if (!texts.length) return [];
+
+    /* Deduplicate */
+    var unique = [];
+    var seen = {};
+    texts.forEach(function(t) {
+      var key = t.trim();
+      if (!seen[key] && key.length > 0) {
+        seen[key] = true;
+        unique.push(key);
+      }
+    });
+
+    /* Check cache first */
+    var toTranslate = [];
+    var results = {};
+    unique.forEach(function(t) {
+      var cached = getCached(t, target);
+      if (cached) {
+        results[t] = cached;
+      } else {
+        toTranslate.push(t);
+      }
+    });
+
+    if (toTranslate.length === 0) {
+      return texts.map(function(t) { return results[t.trim()] || t; });
     }
 
-    function doChange(sel) {
-      sel.value = code;
+    /* LibreTranslate supports batch via q array or single string */
+    /* We'll translate in chunks of 10 to avoid rate limits */
+    var chunkSize = 10;
+    for (var i = 0; i < toTranslate.length; i += chunkSize) {
+      var chunk = toTranslate.slice(i, i + chunkSize);
+      var bodyData = 'source=en&target=' + encodeURIComponent(target) + '&format=text';
+      if (API_KEY) bodyData += '&api_key=' + encodeURIComponent(API_KEY);
+      chunk.forEach(function(t) {
+        bodyData += '&q=' + encodeURIComponent(t);
+      });
 
-      // Method 1: Modern Event with bubbles
-      if (typeof Event === 'function') {
-        var ev1 = new Event('change', { bubbles: true, cancelable: true });
-        sel.dispatchEvent(ev1);
+      try {
+        var res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: bodyData
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var data = await res.json();
+        /* Response can be single object or array */
+        var translations = Array.isArray(data) ? data : [data];
+        chunk.forEach(function(original, idx) {
+          var translated = translations[idx] && translations[idx].translatedText ? translations[idx].translatedText : original;
+          results[original] = translated;
+          setCached(original, target, translated);
+        });
+      } catch (err) {
+        console.error('[ApexVault Translator] API error:', err);
+        chunk.forEach(function(t) { results[t] = t; });
       }
-
-      // Method 2: Legacy HTMLEvents (more compatible with Google's internal handlers)
-      if (document.createEvent) {
-        var ev2 = document.createEvent('HTMLEvents');
-        ev2.initEvent('change', true, true);
-        sel.dispatchEvent(ev2);
-      }
-
-      // Method 3: IE fallback
-      if (sel.fireEvent) {
-        sel.fireEvent('onchange');
-      }
-
-      localStorage.setItem(STORAGE_KEY, code);
-      updateBtn(code);
-      console.log('[ApexVault Translator] Language set to:', code);
-      return true;
     }
 
-    function attempt() {
-      var sel = document.querySelector('.goog-te-combo');
-      if (sel) {
-        doChange(sel);
-        return true;
-      }
-      return false;
-    }
+    return texts.map(function(t) { return results[t.trim()] || t; });
+  }
 
-    if (!attempt()) {
-      var tries = 0;
-      var timer = setInterval(function() {
-        tries++;
-        if (attempt() || tries > 30) {
-          clearInterval(timer);
-          if (tries > 30) {
-            console.error('[ApexVault Translator] Could not find Google Translate select box after 30 tries');
-          }
+  /* ========== APPLY TRANSLATION ========== */
+  async function applyTranslation(target) {
+    if (isTranslating) return;
+    isTranslating = true;
+
+    var btn = document.getElementById('avLangToggle');
+    if (btn) btn.style.opacity = '0.6';
+
+    try {
+      if (target === 'en') {
+        restoreOriginal();
+        currentLang = 'en';
+        localStorage.setItem(STORAGE_KEY, 'en');
+        updateBtn('en');
+        console.log('[ApexVault Translator] Restored English');
+        return;
+      }
+
+      /* Save original if not saved */
+      if (!originalHTML) {
+        originalHTML = document.body.innerHTML;
+        /* Also save text nodes for precise replacement */
+        var nodes = getTextNodes(document.body);
+        nodes.forEach(function(node, i) {
+          node._avOriginal = node.textContent;
+          node._avId = i;
+        });
+      }
+
+      var nodes = getTextNodes(document.body);
+      var texts = nodes.map(function(n) { return n._avOriginal || n.textContent; });
+
+      /* Filter out very short or numeric-only texts */
+      var validIndices = [];
+      var validTexts = [];
+      texts.forEach(function(t, i) {
+        if (t.trim().length > 1 && /[a-zA-Z]/.test(t)) {
+          validIndices.push(i);
+          validTexts.push(t);
         }
-      }, 300);
+      });
+
+      if (validTexts.length === 0) {
+        currentLang = target;
+        localStorage.setItem(STORAGE_KEY, target);
+        updateBtn(target);
+        return;
+      }
+
+      var translated = await translateBatch(validTexts, target);
+
+      validIndices.forEach(function(idx, i) {
+        nodes[idx].textContent = translated[i];
+      });
+
+      currentLang = target;
+      localStorage.setItem(STORAGE_KEY, target);
+      updateBtn(target);
+      console.log('[ApexVault Translator] Translated to:', target);
+    } catch (err) {
+      console.error('[ApexVault Translator] Translation failed:', err);
+      alert('Translation failed. The free API may be rate-limited. Please try again in a moment.');
+    } finally {
+      isTranslating = false;
+      if (btn) btn.style.opacity = '1';
     }
+  }
+
+  function restoreOriginal() {
+    if (!originalHTML) return;
+    /* Restore from saved original HTML - this is the cleanest way */
+    /* But we need to preserve our UI, so we rebuild the page content instead */
+    var nodes = getTextNodes(document.body);
+    nodes.forEach(function(node) {
+      if (node._avOriginal !== undefined) {
+        node.textContent = node._avOriginal;
+      }
+    });
+  }
+
+  /* ========== SET LANGUAGE ========== */
+  function setLang(code) {
+    var lang = LANGUAGES.find(function(l) { return l.code === code; });
+    if (!lang) return;
+    applyTranslation(lang.api);
   }
 
   /* ========== BUILD UI ========== */
@@ -184,7 +279,7 @@
     if (document.getElementById('av-lang-btn')) return;
 
     var saved = localStorage.getItem(STORAGE_KEY) || 'en';
-    var cur = LANGUAGES.find(function(l){return l.code===saved;}) || LANGUAGES[0];
+    var cur = LANGUAGES.find(function(l) { return l.code === saved; }) || LANGUAGES[0];
 
     var wrap = document.createElement('div');
     wrap.id = 'av-lang-btn';
@@ -197,15 +292,15 @@
       '<div id="avLangMenu">' +
         '<div id="avLangSearchWrap"><input type="text" id="avLangSearch" placeholder="Search language..." autocomplete="off"></div>' +
         '<div id="avLangList">' +
-          LANGUAGES.map(function(l){
-            return '<button class="avLangOpt' + (l.code===saved?' active':'') + '" data-code="' + l.code + '"><span class="avLangOptFlag">' + l.flag + '</span><span class="avLangOptName">' + l.name + '</span></button>';
+          LANGUAGES.map(function(l) {
+            return '<button class="avLangOpt' + (l.code === saved ? ' active' : '') + '" data-code="' + l.code + '"><span class="avLangOptFlag">' + l.flag + '</span><span class="avLangOptName">' + l.name + '</span></button>';
           }).join('') +
         '</div>' +
       '</div>';
 
     document.body.appendChild(wrap);
     bindEvents();
-    console.log('[ApexVault Translator] Dropdown created');
+    console.log('[ApexVault Translator v3] Dropdown created');
   }
 
   function bindEvents() {
@@ -231,7 +326,7 @@
       var code = btn.getAttribute('data-code');
       setLang(code);
       menu.classList.remove('open');
-      list.querySelectorAll('.avLangOpt').forEach(function(b){b.classList.remove('active');});
+      list.querySelectorAll('.avLangOpt').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
     });
 
@@ -247,7 +342,7 @@
   }
 
   function updateBtn(code) {
-    var l = LANGUAGES.find(function(x){return x.code===code;});
+    var l = LANGUAGES.find(function(x) { return x.code === code; });
     if (!l) return;
     var f = document.getElementById('avLangFlag');
     var n = document.getElementById('avLangName');
@@ -284,16 +379,25 @@
     document.head.appendChild(s);
   }
 
+  /* ========== AUTO-RESTORE ON LOAD ========== */
+  function autoRestore() {
+    var saved = localStorage.getItem(STORAGE_KEY);
+    if (saved && saved !== 'en') {
+      setTimeout(function() {
+        setLang(saved);
+      }, 1200);
+    }
+  }
+
   /* ========== START ========== */
   function start() {
     try {
-      hideGoogleUI();
       injectStyles();
       buildUI();
-      initGoogle();
-      console.log('[ApexVault Translator] Ready');
+      autoRestore();
+      console.log('[ApexVault Translator v3] Ready');
     } catch (err) {
-      console.error('[ApexVault Translator] Error:', err);
+      console.error('[ApexVault Translator v3] Error:', err);
     }
   }
 
