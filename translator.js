@@ -1,9 +1,8 @@
-// ========== APEXVAULT UNIVERSAL TRANSLATOR ==========
-// Supports 60+ languages via Google Translate
-// Persists across all pages via localStorage
-
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v2 ========== */
 (function() {
   'use strict';
+
+  console.log('[ApexVault Translator] Initializing...');
 
   const STORAGE_KEY = 'apexvault_lang';
 
@@ -47,7 +46,6 @@
     { code: 'ms', name: 'Bahasa Melayu', flag: '🇲🇾' },
     { code: 'tl', name: 'Filipino', flag: '🇵🇭' },
     { code: 'bn', name: 'বাংলা', flag: '🇧🇩' },
-    { code: 'pa', name: 'ਪੰਜਾਬੀ', flag: '🇮🇳' },
     { code: 'ta', name: 'தமிழ்', flag: '🇮🇳' },
     { code: 'te', name: 'తెలుగు', flag: '🇮🇳' },
     { code: 'mr', name: 'मराठी', flag: '🇮🇳' },
@@ -75,335 +73,194 @@
     { code: 'mk', name: 'Македонски', flag: '🇲🇰' },
     { code: 'be', name: 'Беларуская', flag: '🇧🇾' },
     { code: 'kk', name: 'Қазақша', flag: '🇰🇿' },
-    { code: 'uz', name: 'O'zbek', flag: '🇺🇿' },
+    { code: 'uz', name: 'O\'zbek', flag: '🇺🇿' },
     { code: 'ky', name: 'Кыргызча', flag: '🇰🇬' },
     { code: 'tg', name: 'Тоҷикӣ', flag: '🇹🇯' },
     { code: 'hy', name: 'Հայերեն', flag: '🇦🇲' }
   ];
 
-  let googleTranslateLoaded = false;
-  let translateInstance = null;
+  let googleReady = false;
 
-  // ========== INJECT HIDDEN GOOGLE TRANSLATE ELEMENT ==========
-  function injectGoogleElement() {
+  /* ========== HIDE GOOGLE UI ========== */
+  function hideGoogleUI() {
+    var s = document.createElement('style');
+    s.id = 'av-translate-hide';
+    s.textContent = '.goog-te-banner-frame,.goog-te-menu-value,.goog-te-gadget,.goog-te-gadget-simple,#goog-gt-tt,.goog-tooltip,.goog-text-highlight,.skiptranslate iframe,.goog-logo-link,.goog-te-combo,.goog-te-balloon-frame,#goog-gt-,.goog-te-menu-frame,.goog-te-menu2,.VIpgJd-ZVi9od-ORHb-OEVmcd,.VIpgJd-ZVi9od-l4eHX-hSRGPd,.VIpgJd-ZVi9od-aZ2wEe-wOHMyf,.VIpgJd-ZVi9od-aZ2wEe-OqVKwc,.VIpgJd-yAWNEb-L7lbkb,.VIpgJd-ZVi9od-xl07Ob-lTBxed,.VIpgJd-ZVi9od-SmfZ-OEVmcd,.VIpgJd-ZVi9od-ORHb,.VIpgJd-ZVi9od-SmfZ,.VIpgJd-ZVi9od-xl07Ob,.VIpgJd-ZVi9od-vH1Gmf,.VIpgJd-ZVi9od-l4eHX-hSRGPd{display:none!important}body{top:0!important}.translated-ltr body{top:0!important}.translated-rtl body{top:0!important}';
+    document.head.appendChild(s);
+  }
+
+  /* ========== GOOGLE TRANSLATE INIT ========== */
+  function initGoogle() {
     if (document.getElementById('google_translate_element')) return;
-    const div = document.createElement('div');
-    div.id = 'google_translate_element';
-    div.style.cssText = 'position:absolute;left:-9999px;top:-9999px;visibility:hidden;width:0;height:0;overflow:hidden;';
-    document.body.appendChild(div);
-  }
-
-  // ========== INJECT STYLES TO HIDE GOOGLE UI ==========
-  function injectStyles() {
-    if (document.getElementById('apexvault-translate-styles')) return;
-    const style = document.createElement('style');
-    style.id = 'apexvault-translate-styles';
-    style.textContent = `
-      .goog-te-banner-frame, .goog-te-menu-value, .goog-te-gadget,
-      .goog-te-gadget-simple, #goog-gt-tt, .goog-tooltip, .goog-tooltip:hover,
-      .goog-text-highlight, .skiptranslate iframe, .goog-logo-link,
-      .goog-te-combo, .goog-te-balloon-frame, #goog-gt-,
-      .goog-te-menu-frame, .goog-te-menu2, .goog-te-menu2-item,
-      .goog-te-menu2-item-selected, .goog-te-menu2-item-hover,
-      .VIpgJd-ZVi9od-ORHb-OEVmcd, .VIpgJd-ZVi9od-l4eHX-hSRGPd,
-      .VIpgJd-ZVi9od-aZ2wEe-wOHMyf, .VIpgJd-ZVi9od-aZ2wEe-OqVKwc,
-      .VIpgJd-yAWNEb-L7lbkb, .VIpgJd-yAWNEb-L7lbkb-ihhZMc,
-      .VIpgJd-ZVi9od-xl07Ob-lTBxed, .VIpgJd-ZVi9od-SmfZ-OEVmcd,
-      .VIpgJd-ZVi9od-ORHb, .VIpgJd-ZVi9od-SmfZ, .VIpgJd-ZVi9od-xl07Ob,
-      .VIpgJd-ZVi9od-vH1Gmf, .VIpgJd-ZVi9od-l4eHX-hSRGPd {
-        display: none !important;
-      }
-      body { top: 0 !important; }
-      .translated-ltr body { top: 0 !important; }
-      .translated-rtl body { top: 0 !important; }
-      .goog-te-gadget { display: none !important; }
-      .goog-te-gadget-simple { display: none !important; }
-      iframe.goog-te-banner-frame { display: none !important; }
-      .goog-te-balloon-frame { display: none !important; }
-    `;
-    document.head.appendChild(style);
-  }
-
-  // ========== LOAD GOOGLE TRANSLATE SCRIPT ==========
-  function loadGoogleTranslate() {
-    if (googleTranslateLoaded) return;
-    if (document.getElementById('google-translate-script')) return;
-
-    injectGoogleElement();
-    injectStyles();
+    var d = document.createElement('div');
+    d.id = 'google_translate_element';
+    d.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:0;height:0;overflow:hidden;visibility:hidden;';
+    document.body.appendChild(d);
 
     window.googleTranslateElementInit = function() {
-      const includedLangs = LANGUAGES.map(l => l.code).join(',');
-      translateInstance = new google.translate.TranslateElement({
+      var langs = LANGUAGES.map(function(l){return l.code;}).join(',');
+      new google.translate.TranslateElement({
         pageLanguage: 'en',
-        includedLanguages: includedLangs,
+        includedLanguages: langs,
         layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
         autoDisplay: false
       }, 'google_translate_element');
-      googleTranslateLoaded = true;
-
-      // Apply saved language after Google loads
-      const savedLang = localStorage.getItem(STORAGE_KEY);
-      if (savedLang && savedLang !== 'en') {
-        setTimeout(() => applyLanguage(savedLang), 800);
+      googleReady = true;
+      console.log('[ApexVault Translator] Google Translate loaded');
+      var saved = localStorage.getItem(STORAGE_KEY);
+      if (saved && saved !== 'en') {
+        setTimeout(function(){ setLang(saved); }, 600);
       }
     };
 
-    const script = document.createElement('script');
-    script.id = 'google-translate-script';
-    script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-    script.async = true;
-    document.head.appendChild(script);
+    var sc = document.createElement('script');
+    sc.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+    sc.async = true;
+    sc.onerror = function() {
+      console.error('[ApexVault Translator] Failed to load Google Translate');
+    };
+    document.head.appendChild(sc);
   }
 
-  // ========== APPLY LANGUAGE ==========
-  function applyLanguage(langCode) {
-    if (!googleTranslateLoaded || !translateInstance) {
-      setTimeout(() => applyLanguage(langCode), 500);
+  /* ========== SET LANGUAGE ========== */
+  function setLang(code) {
+    if (!googleReady) {
+      setTimeout(function(){ setLang(code); }, 400);
       return;
     }
-
-    const select = document.querySelector('.goog-te-combo');
-    if (select) {
-      select.value = langCode;
-      select.dispatchEvent(new Event('change'));
-      localStorage.setItem(STORAGE_KEY, langCode);
-      updateDropdownLabel(langCode);
+    var sel = document.querySelector('.goog-te-combo');
+    if (sel) {
+      sel.value = code;
+      sel.dispatchEvent(new Event('change'));
+      localStorage.setItem(STORAGE_KEY, code);
+      updateBtn(code);
+      console.log('[ApexVault Translator] Language set to:', code);
     } else {
-      // Fallback: try again
-      setTimeout(() => applyLanguage(langCode), 300);
+      setTimeout(function(){ setLang(code); }, 300);
     }
   }
 
-  // ========== BUILD CUSTOM DROPDOWN ==========
-  function buildDropdown() {
-    if (document.getElementById('apexvault-lang-dropdown')) return;
+  /* ========== BUILD UI ========== */
+  function buildUI() {
+    if (document.getElementById('av-lang-btn')) return;
 
-    const container = document.createElement('div');
-    container.id = 'apexvault-lang-dropdown';
-    container.className = 'apexvault-lang-dropdown';
+    var saved = localStorage.getItem(STORAGE_KEY) || 'en';
+    var cur = LANGUAGES.find(function(l){return l.code===saved;}) || LANGUAGES[0];
 
-    const savedLang = localStorage.getItem(STORAGE_KEY) || 'en';
-    const currentLang = LANGUAGES.find(l => l.code === savedLang) || LANGUAGES[0];
+    var wrap = document.createElement('div');
+    wrap.id = 'av-lang-btn';
+    wrap.innerHTML =
+      '<button id="avLangToggle" title="Change Language">' +
+        '<span id="avLangFlag">' + cur.flag + '</span>' +
+        '<span id="avLangName">' + cur.name + '</span>' +
+        '<svg width="10" height="10" viewBox="0 0 12 12" fill="none" style="margin-left:4px;opacity:0.7;"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      '</button>' +
+      '<div id="avLangMenu">' +
+        '<div id="avLangSearchWrap"><input type="text" id="avLangSearch" placeholder="Search language..." autocomplete="off"></div>' +
+        '<div id="avLangList">' +
+          LANGUAGES.map(function(l){
+            return '<button class="avLangOpt' + (l.code===saved?' active':'') + '" data-code="' + l.code + '"><span class="avLangOptFlag">' + l.flag + '</span><span class="avLangOptName">' + l.name + '</span></button>';
+          }).join('') +
+        '</div>' +
+      '</div>';
 
-    container.innerHTML = `
-      <button class="lang-toggle" id="langToggle" title="Change Language">
-        <span class="lang-flag">${currentLang.flag}</span>
-        <span class="lang-name">${currentLang.name}</span>
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="margin-left:4px;opacity:0.6;">
-          <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <div class="lang-menu" id="langMenu">
-        <div class="lang-search">
-          <input type="text" id="langSearch" placeholder="Search language..." autocomplete="off">
-        </div>
-        <div class="lang-list" id="langList">
-          ${LANGUAGES.map(l => `
-            <button class="lang-option${l.code === savedLang ? ' active' : ''}" data-code="${l.code}">
-              <span class="lang-option-flag">${l.flag}</span>
-              <span class="lang-option-name">${l.name}</span>
-            </button>
-          `).join('')}
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(container);
-    attachDropdownEvents();
+    document.body.appendChild(wrap);
+    bindEvents();
+    console.log('[ApexVault Translator] Dropdown created');
   }
 
-  function attachDropdownEvents() {
-    const toggle = document.getElementById('langToggle');
-    const menu = document.getElementById('langMenu');
-    const search = document.getElementById('langSearch');
-    const list = document.getElementById('langList');
+  function bindEvents() {
+    var toggle = document.getElementById('avLangToggle');
+    var menu = document.getElementById('avLangMenu');
+    var search = document.getElementById('avLangSearch');
+    var list = document.getElementById('avLangList');
+    var wrap = document.getElementById('av-lang-btn');
 
-    if (!toggle || !menu) return;
-
-    toggle.addEventListener('click', (e) => {
+    toggle.addEventListener('click', function(e) {
       e.stopPropagation();
       menu.classList.toggle('open');
-      if (menu.classList.contains('open') && search) {
-        search.focus();
-      }
+      if (menu.classList.contains('open') && search) search.focus();
     });
 
-    const dropdownContainer = document.getElementById('apexvault-lang-dropdown');
-    document.addEventListener('click', (e) => {
-      if (dropdownContainer && !dropdownContainer.contains(e.target)) {
-        menu.classList.remove('open');
-      }
+    document.addEventListener('click', function(e) {
+      if (wrap && !wrap.contains(e.target)) menu.classList.remove('open');
     });
 
-    // Language selection
-    list.addEventListener('click', (e) => {
-      const btn = e.target.closest('.lang-option');
+    list.addEventListener('click', function(e) {
+      var btn = e.target.closest('.avLangOpt');
       if (!btn) return;
-      const code = btn.dataset.code;
-      applyLanguage(code);
+      var code = btn.getAttribute('data-code');
+      setLang(code);
       menu.classList.remove('open');
-
-      list.querySelectorAll('.lang-option').forEach(b => b.classList.remove('active'));
+      list.querySelectorAll('.avLangOpt').forEach(function(b){b.classList.remove('active');});
       btn.classList.add('active');
     });
 
-    // Search filter
     if (search) {
-      search.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        list.querySelectorAll('.lang-option').forEach(btn => {
-          const name = btn.querySelector('.lang-option-name').textContent.toLowerCase();
-          btn.style.display = name.includes(term) ? 'flex' : 'none';
+      search.addEventListener('input', function(e) {
+        var term = e.target.value.toLowerCase();
+        list.querySelectorAll('.avLangOpt').forEach(function(btn) {
+          var name = btn.querySelector('.avLangOptName').textContent.toLowerCase();
+          btn.style.display = name.indexOf(term) !== -1 ? 'flex' : 'none';
         });
       });
     }
   }
 
-  function updateDropdownLabel(code) {
-    const lang = LANGUAGES.find(l => l.code === code);
-    if (!lang) return;
-    const toggle = document.getElementById('langToggle');
-    if (toggle) {
-      toggle.querySelector('.lang-flag').textContent = lang.flag;
-      toggle.querySelector('.lang-name').textContent = lang.name;
+  function updateBtn(code) {
+    var l = LANGUAGES.find(function(x){return x.code===code;});
+    if (!l) return;
+    var f = document.getElementById('avLangFlag');
+    var n = document.getElementById('avLangName');
+    if (f) f.textContent = l.flag;
+    if (n) n.textContent = l.name;
+  }
+
+  /* ========== STYLES ========== */
+  function injectStyles() {
+    if (document.getElementById('av-translate-style')) return;
+    var s = document.createElement('style');
+    s.id = 'av-translate-style';
+    s.textContent =
+      '#av-lang-btn{position:fixed!important;top:12px!important;right:12px!important;z-index:99999!important;font-family:"Inter","Segoe UI",system-ui,sans-serif!important;}' +
+      '#avLangToggle{display:flex!important;align-items:center!important;gap:6px!important;padding:10px 16px!important;background:rgba(17,34,64,0.95)!important;border:2px solid #64ffda!important;border-radius:12px!important;color:#fff!important;font-size:0.9rem!important;font-weight:700!important;cursor:pointer!important;backdrop-filter:blur(12px)!important;box-shadow:0 4px 20px rgba(0,212,170,0.25)!important;transition:all 0.2s!important;}' +
+      '#avLangToggle:hover{box-shadow:0 6px 30px rgba(0,212,170,0.4)!important;transform:translateY(-1px)!important;}' +
+      '#avLangFlag{font-size:1.1rem!important;}' +
+      '#avLangName{max-width:110px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}' +
+      '#avLangMenu{position:absolute!important;top:calc(100% + 10px)!important;right:0!important;width:280px!important;max-height:400px!important;background:rgba(17,34,64,0.98)!important;border:1px solid #233554!important;border-radius:16px!important;overflow:hidden!important;opacity:0!important;visibility:hidden!important;transform:translateY(-10px)!important;transition:all 0.25s ease!important;box-shadow:0 25px 60px rgba(0,0,0,0.6)!important;display:flex!important;flex-direction:column!important;}' +
+      '#avLangMenu.open{opacity:1!important;visibility:visible!important;transform:translateY(0)!important;}' +
+      '#avLangSearchWrap{padding:14px!important;border-bottom:1px solid #233554!important;flex-shrink:0!important;}' +
+      '#avLangSearch{width:100%!important;padding:12px 16px!important;background:#0a0e1a!important;border:1px solid #233554!important;border-radius:10px!important;color:#ccd6f6!important;font-size:0.9rem!important;outline:none!important;font-family:"Inter",sans-serif!important;font-weight:600!important;}' +
+      '#avLangSearch:focus{border-color:#64ffda!important;}' +
+      '#avLangSearch::placeholder{color:#8892b0!important;}' +
+      '#avLangList{overflow-y:auto!important;padding:8px!important;scrollbar-width:thin!important;scrollbar-color:#233554 transparent!important;}' +
+      '#avLangList::-webkit-scrollbar{width:5px!important;}' +
+      '#avLangList::-webkit-scrollbar-thumb{background:#233554!important;border-radius:4px!important;}' +
+      '.avLangOpt{display:flex!important;align-items:center!important;gap:10px!important;width:100%!important;padding:11px 14px!important;background:none!important;border:none!important;border-radius:10px!important;color:#ccd6f6!important;font-size:0.92rem!important;font-weight:600!important;cursor:pointer!important;text-align:left!important;transition:all 0.15s!important;font-family:"Inter",sans-serif!important;}' +
+      '.avLangOpt:hover{background:rgba(100,255,218,0.1)!important;color:#64ffda!important;}' +
+      '.avLangOpt.active{background:rgba(100,255,218,0.15)!important;color:#64ffda!important;}' +
+      '.avLangOptFlag{font-size:1.15rem!important;flex-shrink:0!important;}' +
+      '.avLangOptName{flex:1!important;}' +
+      '@media(max-width:480px){#av-lang-btn{top:8px!important;right:8px!important;}#avLangToggle{padding:8px 12px!important;font-size:0.82rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}}';
+    document.head.appendChild(s);
+  }
+
+  /* ========== START ========== */
+  function start() {
+    try {
+      hideGoogleUI();
+      injectStyles();
+      buildUI();
+      initGoogle();
+      console.log('[ApexVault Translator] Ready');
+    } catch (err) {
+      console.error('[ApexVault Translator] Error:', err);
     }
   }
 
-  // ========== INJECT DROPDOWN STYLES ==========
-  function injectDropdownStyles() {
-    if (document.getElementById('apexvault-dropdown-styles')) return;
-    const style = document.createElement('style');
-    style.id = 'apexvault-dropdown-styles';
-    style.textContent = `
-      .apexvault-lang-dropdown {
-        position: fixed;
-        top: 16px;
-        right: 16px;
-        z-index: 9999;
-        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-      }
-      .lang-toggle {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 14px;
-        background: rgba(17, 34, 64, 0.9);
-        border: 1px solid #233554;
-        border-radius: 10px;
-        color: #ccd6f6;
-        font-size: 0.85rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        backdrop-filter: blur(10px);
-        white-space: nowrap;
-      }
-      .lang-toggle:hover {
-        border-color: #64ffda;
-        background: rgba(17, 34, 64, 1);
-      }
-      .lang-flag { font-size: 1rem; }
-      .lang-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
-      .lang-menu {
-        position: absolute;
-        top: calc(100% + 8px);
-        right: 0;
-        width: 260px;
-        max-height: 380px;
-        background: rgba(17, 34, 64, 0.98);
-        border: 1px solid #233554;
-        border-radius: 14px;
-        overflow: hidden;
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(-8px);
-        transition: all 0.25s ease;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        display: flex;
-        flex-direction: column;
-      }
-      .lang-menu.open {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-      }
-      .lang-search {
-        padding: 12px;
-        border-bottom: 1px solid #233554;
-        flex-shrink: 0;
-      }
-      .lang-search input {
-        width: 100%;
-        padding: 10px 14px;
-        background: #0a0e1a;
-        border: 1px solid #233554;
-        border-radius: 8px;
-        color: #ccd6f6;
-        font-size: 0.85rem;
-        outline: none;
-        font-family: 'Inter', sans-serif;
-      }
-      .lang-search input:focus {
-        border-color: #64ffda;
-      }
-      .lang-search input::placeholder {
-        color: #8892b0;
-      }
-      .lang-list {
-        overflow-y: auto;
-        padding: 6px;
-        scrollbar-width: thin;
-        scrollbar-color: #233554 transparent;
-      }
-      .lang-list::-webkit-scrollbar { width: 4px; }
-      .lang-list::-webkit-scrollbar-thumb { background: #233554; border-radius: 4px; }
-      .lang-option {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        width: 100%;
-        padding: 10px 12px;
-        background: none;
-        border: none;
-        border-radius: 8px;
-        color: #ccd6f6;
-        font-size: 0.9rem;
-        font-weight: 600;
-        cursor: pointer;
-        text-align: left;
-        transition: all 0.15s;
-        font-family: 'Inter', sans-serif;
-      }
-      .lang-option:hover {
-        background: rgba(100, 255, 218, 0.08);
-        color: #64ffda;
-      }
-      .lang-option.active {
-        background: rgba(100, 255, 218, 0.12);
-        color: #64ffda;
-      }
-      .lang-option-flag { font-size: 1.1rem; flex-shrink: 0; }
-      .lang-option-name { flex: 1; }
-      @media (max-width: 480px) {
-        .apexvault-lang-dropdown { top: 10px; right: 10px; }
-        .lang-toggle { padding: 6px 10px; font-size: 0.8rem; }
-        .lang-menu { width: 220px; max-height: 320px; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  // ========== INIT ==========
-  function init() {
-    injectDropdownStyles();
-    buildDropdown();
-    loadGoogleTranslate();
-  }
-
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', start);
   } else {
-    init();
+    start();
   }
 })();
