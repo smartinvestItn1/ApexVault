@@ -1,10 +1,10 @@
-/* ========== APEXVAULT UNIVERSAL TRANSLATOR v14 (LEFT SIDE) ========== */
-/* Button on LEFT. Parallel batching + cache = fast. */
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v15 (UNMISSABLE) ========== */
+/* Big, bright, pulsing button. Left side. Guaranteed visible. */
 (function() {
   'use strict';
 
-  const STORAGE_KEY = 'apexvault_lang_v14';
-  const CACHE_KEY = 'apexvault_cache_v14';
+  const STORAGE_KEY = 'apexvault_lang_v15';
+  const CACHE_KEY = 'apexvault_cache_v15';
   const CHUNK_SIZE = 900;
   const DELAY_MS = 150;
   const FETCH_TIMEOUT = 8000;
@@ -316,35 +316,36 @@
 
     var wrap = document.createElement('div');
     wrap.id = 'av-lang-btn';
-    /* LEFT SIDE positioning */
-    wrap.style.cssText = 'position:fixed!important;top:80px!important;left:12px!important;right:auto!important;z-index:99999!important;font-family:"Inter","Segoe UI",system-ui,sans-serif!important;';
+    /* LEFT side, lower to clear header, high z-index */
+    wrap.style.cssText = 'position:fixed!important;top:120px!important;left:16px!important;right:auto!important;z-index:2147483647!important;font-family:"Inter","Segoe UI",system-ui,sans-serif!important;';
 
     var btn = document.createElement('button');
     btn.id = 'avLangToggle';
     btn.title = 'Change Language';
+    /* BRIGHT teal background, bigger, impossible to miss */
     btn.style.cssText =
-      'display:flex!important;align-items:center!important;gap:8px!important;' +
-      'padding:10px 18px!important;margin:0!important;border:none!important;' +
-      'background:rgba(17,34,64,0.95)!important;' +
-      'border:2px solid #64ffda!important;border-radius:12px!important;' +
-      'color:#fff!important;font-size:0.9rem!important;font-weight:700!important;' +
+      'display:flex!important;align-items:center!important;gap:10px!important;' +
+      'padding:14px 22px!important;margin:0!important;border:none!important;' +
+      'background:#00d4aa!important;' +
+      'border:3px solid #fff!important;border-radius:14px!important;' +
+      'color:#0a192f!important;font-size:1rem!important;font-weight:800!important;' +
       'cursor:pointer!important;backdrop-filter:blur(12px)!important;' +
-      'box-shadow:0 4px 20px rgba(0,212,170,0.35)!important;' +
+      'box-shadow:0 0 20px rgba(0,212,170,0.6), 0 4px 15px rgba(0,0,0,0.4)!important;' +
       'transition:all 0.2s!important;outline:none!important;' +
       '-webkit-tap-highlight-color:transparent!important;';
 
     var flag = document.createElement('span');
     flag.id = 'avLangFlag';
     flag.textContent = cur.flag;
-    flag.style.cssText = 'font-size:1.1rem!important;line-height:1!important;pointer-events:none!important;';
+    flag.style.cssText = 'font-size:1.3rem!important;line-height:1!important;pointer-events:none!important;';
 
     var name = document.createElement('span');
     name.id = 'avLangName';
     name.textContent = cur.name;
-    name.style.cssText = 'max-width:110px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;pointer-events:none!important;';
+    name.style.cssText = 'pointer-events:none!important;';
 
     var arrow = document.createElement('span');
-    arrow.innerHTML = '<svg width="10" height="10" viewBox="0 0 12 12" fill="none" style="opacity:0.7;pointer-events:none;"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    arrow.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="opacity:0.8;pointer-events:none;"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     arrow.style.cssText = 'display:flex!important;align-items:center!important;pointer-events:none!important;';
 
     btn.appendChild(flag);
@@ -365,7 +366,7 @@
 
     document.body.appendChild(wrap);
     bindEvents();
-    console.log('[AVT] Button created on LEFT side');
+    console.log('[AVT] Button created on LEFT at top:120px');
   }
 
   function bindEvents() {
@@ -421,7 +422,6 @@
     if (document.getElementById('av-translate-style')) return;
     var s = document.createElement('style');
     s.id = 'av-translate-style';
-    /* Menu opens from LEFT side now */
     s.textContent =
       '#avLangMenu{position:absolute!important;top:calc(100% + 10px)!important;left:0!important;right:auto!important;width:280px!important;max-height:400px!important;background:rgba(17,34,64,0.98)!important;border:1px solid #233554!important;border-radius:16px!important;overflow:hidden!important;opacity:0!important;visibility:hidden!important;transform:translateY(-10px)!important;transition:all 0.25s ease!important;box-shadow:0 25px 60px rgba(0,0,0,0.6)!important;display:flex!important;flex-direction:column!important;}' +
       '#avLangMenu.open{opacity:1!important;visibility:visible!important;transform:translateY(0)!important;}' +
@@ -437,7 +437,7 @@
       '.avLangOpt.active{background:rgba(100,255,218,0.15)!important;color:#64ffda!important;}' +
       '.avLangOptFlag{font-size:1.15rem!important;flex-shrink:0!important;}' +
       '.avLangOptName{flex:1!important;}' +
-      '@media(max-width:480px){#av-lang-btn{top:70px!important;left:8px!important;right:auto!important;}#avLangToggle{padding:8px 14px!important;font-size:0.82rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}}';
+      '@media(max-width:480px){#av-lang-btn{top:100px!important;left:10px!important;right:auto!important;}#avLangToggle{padding:10px 16px!important;font-size:0.9rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}}';
     document.head.appendChild(s);
   }
 
@@ -451,7 +451,7 @@
       injectStyles();
       buildUI();
       autoRestore();
-      console.log('[AVT] v14 Ready - Left side');
+      console.log('[AVT] v15 Ready - Unmissable left button');
     } catch (err) {
       console.error('[AVT] Fatal start:', err);
     }
