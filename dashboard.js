@@ -18,7 +18,7 @@ const db = getDatabase(app);
 
 // ========== CONFIG ==========
 const DAILY_WITHDRAW_LIMIT = 10000;
-const WITHDRAW_FEE_RATE = 0.02;
+const WITHDRAW_FEE_RATE = 0;
 const REFERRAL_BONUS_PERCENT = 5; // Referrer earns 5% of investment
 let DEPOSIT_ADDRESSES = {
   USDT_BEP20: "0x681ef5FF6d9e2FD31ce87Cd256d09a0e4755F9d9",
@@ -157,6 +157,18 @@ async function loadUserData() {
 
 // ========== WITHDRAW LIMIT DISPLAY ==========
 async function updateWithdrawLimitDisplay() {
+  const bannerAmount = document.getElementById('dailyLimitAmount');
+  const bannerFill = document.getElementById('dailyLimitFill');
+  const modalRemaining = document.getElementById('withdrawRemaining');
+
+  const kycApproved = userData.kyc && userData.kyc.status === 'approved';
+  if (kycApproved) {
+    if (bannerAmount) bannerAmount.textContent = 'Unlimited';
+    if (bannerFill) bannerFill.style.width = '0%';
+    if (modalRemaining) modalRemaining.textContent = 'Unlimited';
+    return;
+  }
+
   const todayKey = getTodayKey();
   const dailyRef = ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey);
 
@@ -165,10 +177,6 @@ async function updateWithdrawLimitDisplay() {
     const dailyUsed = snapshot.exists() ? snapshot.val() : 0;
     const remaining = Math.max(0, DAILY_WITHDRAW_LIMIT - dailyUsed);
     const percentage = (dailyUsed / DAILY_WITHDRAW_LIMIT) * 100;
-
-    const bannerAmount = document.getElementById('dailyLimitAmount');
-    const bannerFill = document.getElementById('dailyLimitFill');
-    const modalRemaining = document.getElementById('withdrawRemaining');
 
     if (bannerAmount) {
       bannerAmount.textContent = `$${dailyUsed.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} / $${DAILY_WITHDRAW_LIMIT.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
@@ -628,18 +636,6 @@ window.openWithdrawModal = async function() {
   openModal('withdrawModal');
 };
 
-const withdrawAmountInput = document.getElementById('withdrawAmount');
-if (withdrawAmountInput) {
-  withdrawAmountInput.addEventListener('input', function() {
-    const amount = parseFloat(this.value) || 0;
-    const fee = amount * WITHDRAW_FEE_RATE;
-    const total = amount + fee;
-    const feeEl = document.getElementById('withdrawFee');
-    const totalEl = document.getElementById('withdrawTotal');
-    if (feeEl) feeEl.textContent = '$' + fee.toFixed(2);
-    if (totalEl) totalEl.textContent = '$' + total.toFixed(2);
-  });
-}
 
 window.submitWithdraw = async function(event) {
   event.preventDefault();
@@ -661,13 +657,16 @@ window.submitWithdraw = async function(event) {
   if (!walletAddress) { alert('Please enter your wallet address'); return; }
   if (amount > balance) { alert('Insufficient balance!'); return; }
 
-  const todayKey = getTodayKey();
-  const dailySnapshot = await get(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey));
-  const dailyUsed = dailySnapshot.exists() ? dailySnapshot.val() : 0;
+  const kycApproved = userData.kyc && userData.kyc.status === 'approved';
+  if (!kycApproved) {
+    const todayKey = getTodayKey();
+    const dailySnapshot = await get(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey));
+    const dailyUsed = dailySnapshot.exists() ? dailySnapshot.val() : 0;
 
-  if ((dailyUsed + amount) > DAILY_WITHDRAW_LIMIT) {
-    alert(`Daily limit exceeded! You can only withdraw $${(DAILY_WITHDRAW_LIMIT - dailyUsed).toFixed(2)} more today.`);
-    return;
+    if ((dailyUsed + amount) > DAILY_WITHDRAW_LIMIT) {
+      alert(`Daily limit exceeded! You can only withdraw $${(DAILY_WITHDRAW_LIMIT - dailyUsed).toFixed(2)} more today.`);
+      return;
+    }
   }
 
   try {
