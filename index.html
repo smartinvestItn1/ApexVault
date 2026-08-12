@@ -6,21 +6,79 @@
   <title>ApexVault - Smart Investments</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- ===== GOOGLE FONTS ===== -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <base target="_blank">
 
-  <!-- ===== MAKE EVERYTHING BOLD ===== -->
+  <!-- ===== FONT FAMILY ASSIGNMENTS + BOLD EVERYTHING ===== -->
   <style>
-    body, p, span, a, li, div, button, input, textarea, label, small, strong, em, b, i, u, td, th, figcaption, blockquote, cite, code, pre, samp, kbd, var, dfn, abbr, q, sub, sup, mark, ins, del, time, data, ruby, rt, rp, bdi, bdo, wbr {
+    /* Base: Inter for body, bold everything */
+    body, p, span, a, li, div, button, input, textarea, label, small, strong, em, b, i, u, td, th, figcaption, blockquote, cite, code, pre, samp, kbd, var, dfn, abbr, q, sub, sup, mark, ins, del, time, data {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
       font-weight: 700 !important;
     }
-    h1, h2, h3, h4, h5, h6 {
+
+    /* Headings: Montserrat for impact */
+    h1, h2, h3, h4, h5, h6,
+    .hero h1, .section-header h2, .section-title,
+    .card h3, .plan-card h3, .step-card h3,
+    .cta-section h2, .market-section h2,
+    .live-feed-section h3, .uk-section h2,
+    .stat-item h3, .stat-box h2,
+    .footer-col h4, .sidebar-section h3,
+    .sidebar-cta h4, .plan-return, .plan-price,
+    .counter, .author-name, .faq-question,
+    .location-text, .uk-badge-large .text,
+    .app-badge strong, .ticker-item .coin,
+    .ticker-item .price, .feed-amount,
+    .hero-tag, .section-label, .plan-badge,
+    .step-number, .nav-links a, .nav-btn,
+    .btn-primary, .btn-secondary,
+    .sidebar-cta button, .sidebar-link .text,
+    .footer-brand .logo, .logo {
+      font-family: 'Montserrat', 'Inter', sans-serif !important;
       font-weight: 800 !important;
     }
-    .logo, .hero h1, .section-header h2, .stat-item h3, .plan-return, .plan-price, .hero-tag, .section-label, .nav-links a, .btn-primary, .btn-secondary, .nav-btn, .sidebar-section h3, .footer-col h4, .faq-question, .author-name, .plan-badge, .step-number, .trust-item p, .location-text, .uk-badge-large .text, .app-badge strong, .ticker-item .coin, .ticker-item .price, .feed-user, .feed-amount, .counter, .stat-box h2, .market-section h2, .live-feed-section h3, .section-title, .plan-features li, .card h3, .card p, .testimonial-card > p, .author-title, .plan-duration, .plan-price span, .plan-return span, .sidebar-link .text, .sidebar-link .subtext, .sidebar-cta h4, .sidebar-cta p, .sidebar-cta button, .footer-brand p, .footer-col a, .footer-bottom, .hero p, .section-header p, .stats-bar .stat-item p, .location-badge, .uk-badge-large .sub, .app-badge small, .faq-answer, .trust-bar > p, .market-section p {
+
+    /* Badge curved text: Oswald for tall impact */
+    .badge-text, .rotating-badge text {
+      font-family: 'Oswald', 'Montserrat', sans-serif !important;
       font-weight: 700 !important;
+      letter-spacing: 5px !important;
     }
-    .logo, .hero h1 span, .stat-item h3, .plan-return, .counter, .stat-box h2, .section-header h2, .market-section h2, .section-title, .live-feed-section h3, .btn-primary, .nav-btn, .sidebar-cta button, .plan-badge, .step-number, .author-name, .card h3, .faq-question, .location-text, .uk-badge-large .text, .app-badge strong, .ticker-item .coin, .ticker-item .price, .feed-amount, .hero-tag, .section-label, .sidebar-section h3, .footer-col h4 {
+
+    /* Subtext & muted: slightly lighter weight but still bold */
+    .text-muted, .subtext, .author-title,
+    .plan-price span, .plan-return span,
+    .plan-features li, .card p,
+    .section-header p, .hero p,
+    .stats-bar .stat-item p,
+    .footer-brand p, .footer-col a,
+    .footer-bottom, .sidebar-link .subtext,
+    .sidebar-cta p, .faq-answer,
+    .trust-bar > p, .market-section p,
+    .section-subtitle, .badge-image-placeholder p {
+      font-family: 'Inter', 'Segoe UI', sans-serif !important;
+      font-weight: 600 !important;
+    }
+
+    /* Navigation links crisp */
+    .nav-links a, .nav-btn {
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.5px !important;
+    }
+
+    /* Buttons extra punch */
+    .btn-primary, .btn-secondary, .nav-btn,
+    .sidebar-cta button, .plan-card .btn-primary {
+      font-family: 'Montserrat', sans-serif !important;
       font-weight: 800 !important;
+      letter-spacing: 0.3px !important;
     }
   </style>
 
@@ -87,11 +145,12 @@
       display: block;
       margin-bottom: 10px;
     }
+
+    /* ===== ROTATING BADGE ===== */
     .rotating-badge {
       position: absolute;
       bottom: -8px;
       left: 50%;
-      transform: translateX(-50%);
       width: 160px;
       height: 160px;
       z-index: 10;
@@ -120,13 +179,17 @@
     .badge-text {
       fill: var(--accent);
       font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 4.5px;
+      font-weight: 700;
+      letter-spacing: 5px;
       text-transform: uppercase;
     }
     .badge-dot {
       fill: var(--gradient-start);
     }
+
+    /* ===== TROPHY INSIDE CIRCLE - MOVING AROUND ===== */
+    /* The trophy group counter-rotates so it stays upright 
+       while the entire badge spins around it */
     .trophy-group {
       animation: trophyCounterSpin 14s linear infinite;
       transform-origin: center;
@@ -141,6 +204,8 @@
     .trophy-star {
       fill: var(--bg-deep);
     }
+
+    /* Glow behind badge */
     .badge-glow {
       position: absolute;
       bottom: 12px;
@@ -158,6 +223,7 @@
       0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
       50%      { opacity: 1; transform: translateX(-50%) scale(1.15); }
     }
+
     @media (max-width: 768px) {
       .experience-badge-wrap {
         width: 280px;
@@ -304,20 +370,30 @@
       <p>Trusted expertise built over a decade and a half of financial innovation and client success.</p>
     </div>
     <div class="experience-badge-wrap scroll-reveal">
+      <!-- Glow behind badge -->
       <div class="badge-glow"></div>
       <div class="badge-image-area">
-  <img src="your-image.jpg" alt="15 Years of Experience">
+  <img src="your-image.jpg" alt="Our Team">
 </div>
+
+      <!-- ===== ROTATING BADGE WITH TROPHY INSIDE ===== -->
+      <!-- The entire badge spins. The trophy counter-rotates so it stays upright. -->
       <div class="rotating-badge">
         <svg class="badge-svg" viewBox="0 0 200 200">
           <defs>
+            <!-- Gradient for outer ring -->
             <linearGradient id="badgeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stop-color="#00d4aa"/>
               <stop offset="100%" stop-color="#00a8e8"/>
             </linearGradient>
+            <!-- Path for curved text -->
             <path id="circlePath" d="M 100, 100 m -78, 0 a 78,78 0 1,1 156,0 a 78,78 0 1,1 -156,0"/>
           </defs>
+
+          <!-- Outer dark ring with gradient border -->
           <circle cx="100" cy="100" r="96" class="badge-outer-ring"/>
+
+          <!-- Decorative dots around outer edge -->
           <circle cx="100" cy="4" r="2.8" class="badge-dot"/>
           <circle cx="100" cy="196" r="2.8" class="badge-dot"/>
           <circle cx="4" cy="100" r="2.8" class="badge-dot"/>
@@ -326,18 +402,31 @@
           <circle cx="150" cy="17" r="1.8" class="badge-dot"/>
           <circle cx="50" cy="183" r="1.8" class="badge-dot"/>
           <circle cx="150" cy="183" r="1.8" class="badge-dot"/>
+
+          <!-- Inner circle -->
           <circle cx="100" cy="100" r="64" class="badge-inner-circle"/>
+
+          <!-- Curved Text: "15 YEARS OF EXPERIENCE" -->
+          <!-- Uses Oswald font for tall, impactful circular text -->
           <text class="badge-text">
             <textPath href="#circlePath" startOffset="0%" textLength="490">
               15 YEARS OF EXPERIENCE
             </textPath>
           </text>
+
+          <!-- ===== TROPHY ICON (centered, counter-rotating to stay upright) ===== -->
           <g class="trophy-group" transform="translate(100, 100)">
+            <!-- Trophy cup body -->
             <path class="trophy-body" d="M-17,-15 L17,-15 L17,-4 C17,7 11,14 5,17 L5,24 L-5,24 L-5,17 C-11,14 -17,7 -17,-4 Z"/>
+            <!-- Left handle -->
             <path d="M-17,-11 C-25,-11 -25,5 -17,5" fill="none" stroke="#64ffda" stroke-width="3" stroke-linecap="round"/>
+            <!-- Right handle -->
             <path d="M17,-11 C25,-11 25,5 17,5" fill="none" stroke="#64ffda" stroke-width="3" stroke-linecap="round"/>
+            <!-- Star inside trophy -->
             <polygon class="trophy-star" points="0,-5.5 1.6,-1.6 5.5,-1.6 2.6,1.2 3.6,5 0,2.8 -3.6,5 -2.6,1.2 -5.5,-1.6 -1.6,-1.6"/>
+            <!-- Base top -->
             <rect class="trophy-base" x="-9" y="24" width="18" height="4" rx="1"/>
+            <!-- Base bottom -->
             <rect class="trophy-base" x="-13" y="29" width="26" height="4" rx="1"/>
           </g>
         </svg>
