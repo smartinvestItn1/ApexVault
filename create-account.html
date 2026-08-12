@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Create Account - ApexVault</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- ===== GOOGLE FONTS ===== -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --bg-deep: #0a0e1a;
@@ -21,8 +28,34 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    /* ===== FONT FAMILY + BOLD EVERYTHING ===== */
+    body, p, span, a, li, div, button, input, textarea, label, small, strong, em, b, i, u, td, th, figcaption, blockquote, cite, dfn, abbr, q, sub, sup, mark, ins, del, time, data {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+      font-weight: 700 !important;
+    }
+    h1, h2, h3, h4, h5, h6,
+    .logo, .signup-container h2,
+    .btn-primary, .toggle-password,
+    .status.success-text, .login-link a,
+    .terms a {
+      font-family: 'Montserrat', 'Inter', sans-serif !important;
+      font-weight: 800 !important;
+    }
+    /* Form labels and muted text */
+    .form-group label, .subtitle, .login-link,
+    .terms, .error-text, .status.error,
+    .form-group input::placeholder {
+      font-family: 'Inter', 'Segoe UI', sans-serif !important;
+      font-weight: 600 !important;
+    }
+    /* Headings extra bold */
+    .logo, .signup-container h2, .btn-primary,
+    .status.success-text {
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
+    }
+
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
       background: var(--bg-deep);
       color: var(--text-light);
       min-height: 100vh;
@@ -78,11 +111,12 @@
 
     .logo {
       font-size: 1.8rem;
-      font-weight: 800;
       background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
 
     .signup-container h2 {
@@ -90,6 +124,8 @@
       font-size: 1.6rem;
       text-align: center;
       margin-bottom: 8px;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
 
     .subtitle {
@@ -97,6 +133,8 @@
       text-align: center;
       margin-bottom: 32px;
       font-size: 0.95rem;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
 
     .form-group {
@@ -108,7 +146,8 @@
       color: var(--text-light);
       font-size: 0.9rem;
       margin-bottom: 8px;
-      font-weight: 500;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
 
     .password-wrapper {
@@ -124,6 +163,8 @@
       color: var(--text-white);
       font-size: 1rem;
       transition: border-color 0.3s, box-shadow 0.3s;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
 
     .password-wrapper input:focus {
@@ -134,8 +175,11 @@
 
     .password-wrapper input::placeholder {
       color: var(--text-muted);
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
 
+    /* ===== EYE ICON BUTTON ===== */
     .toggle-password {
       position: absolute;
       right: 14px;
@@ -145,10 +189,14 @@
       border: none;
       color: var(--text-muted);
       cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 600;
+      font-size: 1.1rem;
       padding: 4px 8px;
       transition: color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
 
     .toggle-password:hover {
@@ -164,6 +212,8 @@
       color: var(--text-white);
       font-size: 1rem;
       transition: border-color 0.3s, box-shadow 0.3s;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
 
     .form-group input:not(.password-wrapper input):focus {
@@ -174,6 +224,8 @@
 
     .form-group input:not(.password-wrapper input)::placeholder {
       color: var(--text-muted);
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
 
     .input-error {
@@ -186,6 +238,8 @@
       font-size: 0.8rem;
       margin-top: 6px;
       display: none;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
 
     .error-text.show {
@@ -200,10 +254,11 @@
       border: none;
       border-radius: 10px;
       font-size: 1rem;
-      font-weight: 700;
       cursor: pointer;
       transition: transform 0.3s, box-shadow 0.3s;
       margin-top: 8px;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
 
     .btn-primary:hover {
@@ -223,6 +278,8 @@
       margin: 24px 0;
       color: var(--text-muted);
       font-size: 0.85rem;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
 
     .divider::before,
@@ -242,19 +299,22 @@
       margin-top: 24px;
       color: var(--text-muted);
       font-size: 0.95rem;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
 
     .login-link a {
       color: var(--accent);
       text-decoration: none;
-      font-weight: 600;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
 
     .login-link a:hover {
       text-decoration: underline;
     }
 
-    /* ========== SUCCESS MESSAGE - BOLD & BEAUTIFUL ========== */
+    /* ========== SUCCESS MESSAGE ========== */
     .status {
       margin-top: 20px;
       text-align: center;
@@ -276,9 +336,10 @@
     .status.success-text {
       color: var(--success);
       font-size: 1.15rem;
-      font-weight: 800;
       letter-spacing: 0.5px;
       text-transform: uppercase;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
 
     .status.error {
@@ -288,7 +349,8 @@
       padding: 14px;
       color: var(--danger);
       font-size: 0.9rem;
-      font-weight: 600;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
 
     @keyframes fadeInUp {
@@ -318,13 +380,18 @@
       color: var(--text-muted);
       font-size: 0.8rem;
       line-height: 1.6;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
 
     .terms a {
       color: var(--accent);
       text-decoration: none;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
   </style>
+  <base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -360,7 +427,9 @@
         <label for="password">Password</label>
         <div class="password-wrapper">
           <input type="password" id="password" placeholder="Create a strong password (min 6 chars)" required>
-          <button type="button" class="toggle-password" onclick="togglePassword('password', this)">Show</button>
+          <button type="button" class="toggle-password" onclick="togglePassword('password', this)">
+            <i class="fas fa-eye"></i>
+          </button>
         </div>
       </div>
 
@@ -368,7 +437,9 @@
         <label for="confirmPassword">Confirm Password</label>
         <div class="password-wrapper">
           <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
-          <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword', this)">Show</button>
+          <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword', this)">
+            <i class="fas fa-eye"></i>
+          </button>
         </div>
         <div class="error-text" id="passwordError">Passwords do not match</div>
       </div>
@@ -419,12 +490,13 @@
 
     window.togglePassword = function(inputId, btn) {
       const input = document.getElementById(inputId);
+      const icon = btn.querySelector('i');
       if (input.type === 'password') {
         input.type = 'text';
-        btn.textContent = 'Hide';
+        icon.className = 'fas fa-eye-slash';
       } else {
         input.type = 'password';
-        btn.textContent = 'Show';
+        icon.className = 'fas fa-eye';
       }
     };
 
@@ -545,11 +617,9 @@
           fullName: fullName
         }));
 
-        // BOLD & BEAUTIFUL SUCCESS - NO EMOJIS, NO REDIRECT TEXT
         status.className = 'status success show';
         status.innerHTML = '<div class="success-text">Account Created</div>';
 
-        // Silent redirect after delay
         setTimeout(() => {
           window.location.href = 'login.html';
         }, 1500);
