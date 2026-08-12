@@ -1,10 +1,10 @@
-/* ========== APEXVAULT UNIVERSAL TRANSLATOR v13 (FAST) ========== */
-/* Parallel batching (4 at once) + localStorage cache = 4-10x faster */
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v14 (LEFT SIDE) ========== */
+/* Button on LEFT. Parallel batching + cache = fast. */
 (function() {
   'use strict';
 
-  const STORAGE_KEY = 'apexvault_lang_v13';
-  const CACHE_KEY = 'apexvault_cache_v13';
+  const STORAGE_KEY = 'apexvault_lang_v14';
+  const CACHE_KEY = 'apexvault_cache_v14';
   const CHUNK_SIZE = 900;
   const DELAY_MS = 150;
   const FETCH_TIMEOUT = 8000;
@@ -85,7 +85,6 @@
   let currentLang = 'en';
   let cache = {};
 
-  /* ========== LOAD CACHE ========== */
   try {
     var raw = localStorage.getItem(CACHE_KEY);
     if (raw) cache = JSON.parse(raw);
@@ -95,20 +94,13 @@
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch(e) {}
   }
 
-  function getCacheKey(text, target) {
-    return target + '::' + text;
-  }
-
-  function getCached(text, target) {
-    return cache[getCacheKey(text, target)];
-  }
-
+  function getCacheKey(text, target) { return target + '::' + text; }
+  function getCached(text, target) { return cache[getCacheKey(text, target)]; }
   function setCached(text, target, translated) {
     cache[getCacheKey(text, target)] = translated;
     saveCache();
   }
 
-  /* ========== FETCH WITH TIMEOUT ========== */
   function fetchWithTimeout(url, options, ms) {
     return new Promise(function(resolve, reject) {
       var timer = setTimeout(function() { reject(new Error('Timeout')); }, ms);
@@ -117,7 +109,6 @@
     });
   }
 
-  /* ========== EXTRACT TEXT NODES ========== */
   function getTextNodes(root) {
     var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, function(node) {
       var parent = node.parentElement;
@@ -134,7 +125,6 @@
     return nodes;
   }
 
-  /* ========== SAVE ORIGINALS ========== */
   function saveOriginals() {
     var nodes = getTextNodes(document.body);
     nodes.forEach(function(node) {
@@ -142,7 +132,6 @@
     });
   }
 
-  /* ========== SPLIT TEXT INTO CHUNKS ========== */
   function splitIntoChunks(text, maxBytes) {
     var chunks = [];
     var current = '';
@@ -177,7 +166,6 @@
     return chunks;
   }
 
-  /* ========== MYMEMORY API ========== */
   async function translateMyMemory(text, target) {
     var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + target;
     var res = await fetchWithTimeout(url, { method: 'GET', mode: 'cors' }, FETCH_TIMEOUT);
@@ -189,7 +177,6 @@
     throw new Error('Status ' + data.responseStatus);
   }
 
-  /* ========== GOOGLE UNOFFICIAL API ========== */
   async function translateGoogle(text, target) {
     var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=' + target + '&dt=t&q=' + encodeURIComponent(text);
     var res = await fetchWithTimeout(url, { method: 'GET', mode: 'cors' }, FETCH_TIMEOUT);
@@ -199,7 +186,6 @@
     throw new Error('Bad response');
   }
 
-  /* ========== TRANSLATE ONE CHUNK ========== */
   async function translateChunk(text, target) {
     var cached = getCached(text, target);
     if (cached) return cached;
@@ -212,21 +198,15 @@
         var result = await translateGoogle(text, target);
         setCached(text, target, result);
         return result;
-      } catch (e2) {
-        return text;
-      }
+      } catch (e2) { return text; }
     }
   }
 
-  /* ========== TRANSLATE BATCH IN PARALLEL ========== */
   async function translateBatch(chunks, target) {
-    var promises = chunks.map(function(chunk) {
-      return translateChunk(chunk, target);
-    });
+    var promises = chunks.map(function(chunk) { return translateChunk(chunk, target); });
     return await Promise.all(promises);
   }
 
-  /* ========== APPLY TRANSLATION ========== */
   async function applyTranslation(targetCode) {
     if (isTranslating) return;
     isTranslating = true;
@@ -264,7 +244,6 @@
         return;
       }
 
-      /* Build unique chunks */
       var uniqueMap = {};
       var uniqueChunks = [];
       items.forEach(function(item) {
@@ -275,9 +254,6 @@
         }
       });
 
-      console.log('[AVT] ' + uniqueChunks.length + ' chunks, batch size ' + BATCH_SIZE);
-
-      /* Translate in parallel batches */
       var results = {};
       var total = uniqueChunks.length;
       var done = 0;
@@ -285,22 +261,13 @@
       for (var i = 0; i < total; i += BATCH_SIZE) {
         var batch = uniqueChunks.slice(i, i + BATCH_SIZE);
         var batchChunks = batch.map(function(b) { return b.chunk; });
-
         var translated = await translateBatch(batchChunks, targetCode);
-
-        batch.forEach(function(b, idx) {
-          results[b.chunk] = translated[idx];
-        });
-
+        batch.forEach(function(b, idx) { results[b.chunk] = translated[idx]; });
         done += batch.length;
         setStatus('Translating ' + Math.round((done / total) * 100) + '%');
-
-        if (i + BATCH_SIZE < total) {
-          await new Promise(function(r) { setTimeout(r, DELAY_MS); });
-        }
+        if (i + BATCH_SIZE < total) await new Promise(function(r) { setTimeout(r, DELAY_MS); });
       }
 
-      /* Apply translations */
       items.forEach(function(item) {
         var chunks = splitIntoChunks(item.text, CHUNK_SIZE);
         var translatedParts = chunks.map(function(c) { return results[c] || c; });
@@ -349,7 +316,8 @@
 
     var wrap = document.createElement('div');
     wrap.id = 'av-lang-btn';
-    wrap.style.cssText = 'position:fixed!important;top:80px!important;right:12px!important;z-index:99999!important;font-family:"Inter","Segoe UI",system-ui,sans-serif!important;';
+    /* LEFT SIDE positioning */
+    wrap.style.cssText = 'position:fixed!important;top:80px!important;left:12px!important;right:auto!important;z-index:99999!important;font-family:"Inter","Segoe UI",system-ui,sans-serif!important;';
 
     var btn = document.createElement('button');
     btn.id = 'avLangToggle';
@@ -397,6 +365,7 @@
 
     document.body.appendChild(wrap);
     bindEvents();
+    console.log('[AVT] Button created on LEFT side');
   }
 
   function bindEvents() {
@@ -406,7 +375,7 @@
     var list = document.getElementById('avLangList');
     var wrap = document.getElementById('av-lang-btn');
 
-    if (!toggle) return;
+    if (!toggle) { console.error('[AVT] Button missing!'); return; }
 
     toggle.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -452,8 +421,9 @@
     if (document.getElementById('av-translate-style')) return;
     var s = document.createElement('style');
     s.id = 'av-translate-style';
+    /* Menu opens from LEFT side now */
     s.textContent =
-      '#avLangMenu{position:absolute!important;top:calc(100% + 10px)!important;right:0!important;width:280px!important;max-height:400px!important;background:rgba(17,34,64,0.98)!important;border:1px solid #233554!important;border-radius:16px!important;overflow:hidden!important;opacity:0!important;visibility:hidden!important;transform:translateY(-10px)!important;transition:all 0.25s ease!important;box-shadow:0 25px 60px rgba(0,0,0,0.6)!important;display:flex!important;flex-direction:column!important;}' +
+      '#avLangMenu{position:absolute!important;top:calc(100% + 10px)!important;left:0!important;right:auto!important;width:280px!important;max-height:400px!important;background:rgba(17,34,64,0.98)!important;border:1px solid #233554!important;border-radius:16px!important;overflow:hidden!important;opacity:0!important;visibility:hidden!important;transform:translateY(-10px)!important;transition:all 0.25s ease!important;box-shadow:0 25px 60px rgba(0,0,0,0.6)!important;display:flex!important;flex-direction:column!important;}' +
       '#avLangMenu.open{opacity:1!important;visibility:visible!important;transform:translateY(0)!important;}' +
       '#avLangSearchWrap{padding:14px!important;border-bottom:1px solid #233554!important;flex-shrink:0!important;}' +
       '#avLangSearch{width:100%!important;padding:12px 16px!important;background:#0a0e1a!important;border:1px solid #233554!important;border-radius:10px!important;color:#ccd6f6!important;font-size:0.9rem!important;outline:none!important;font-family:"Inter",sans-serif!important;font-weight:600!important;}' +
@@ -467,7 +437,7 @@
       '.avLangOpt.active{background:rgba(100,255,218,0.15)!important;color:#64ffda!important;}' +
       '.avLangOptFlag{font-size:1.15rem!important;flex-shrink:0!important;}' +
       '.avLangOptName{flex:1!important;}' +
-      '@media(max-width:480px){#av-lang-btn{top:70px!important;right:8px!important;}#avLangToggle{padding:8px 14px!important;font-size:0.82rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}}';
+      '@media(max-width:480px){#av-lang-btn{top:70px!important;left:8px!important;right:auto!important;}#avLangToggle{padding:8px 14px!important;font-size:0.82rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}}';
     document.head.appendChild(s);
   }
 
@@ -481,7 +451,7 @@
       injectStyles();
       buildUI();
       autoRestore();
-      console.log('[AVT] v13 Ready - Parallel batching + cache');
+      console.log('[AVT] v14 Ready - Left side');
     } catch (err) {
       console.error('[AVT] Fatal start:', err);
     }
