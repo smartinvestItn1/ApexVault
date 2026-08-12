@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>API Documentation - ApexVault</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- ===== GOOGLE FONTS ===== -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --bg: #0a0e1a;
@@ -16,8 +22,36 @@
       --text-muted: #94a3b8;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ===== FONT FAMILY + BOLD EVERYTHING ===== */
+    body, p, span, a, li, div, button, input, textarea, label, small, strong, em, b, i, u, td, th, figcaption, blockquote, cite, dfn, abbr, q, sub, sup, mark, ins, del, time, data {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+      font-weight: 700 !important;
+    }
+    h1, h2, h3, h4, h5, h6,
+    .logo, .page-title, .content-box h3,
+    .back-btn, .footer {
+      font-family: 'Montserrat', 'Inter', sans-serif !important;
+      font-weight: 800 !important;
+    }
+    /* Code elements stay monospace but bold */
+    code, pre, samp, kbd, var {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace !important;
+      font-weight: 700 !important;
+    }
+    /* Muted text slightly lighter but still bold */
+    .page-subtitle, .content-box p, .content-box ul, .content-box li,
+    .footer, .back-btn, .text-muted {
+      font-family: 'Inter', 'Segoe UI', sans-serif !important;
+      font-weight: 600 !important;
+    }
+    /* Headings extra bold */
+    .page-title, .content-box h3 {
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.7;
@@ -55,17 +89,21 @@
       display: flex; align-items: center; justify-content: space-between;
     }
     .logo {
-      font-size: 1.5rem; font-weight: 800;
+      font-size: 1.5rem;
       background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text; text-decoration: none;
       cursor: pointer; transition: transform 0.3s;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
     .logo:hover { transform: scale(1.05); }
     .back-btn {
       color: var(--text-muted); text-decoration: none;
       font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;
       transition: color 0.2s;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 700 !important;
     }
     .back-btn:hover { color: var(--accent); }
 
@@ -78,9 +116,13 @@
       font-size: 2rem; margin-bottom: 0.5rem;
       background: linear-gradient(135deg, #fff, var(--accent));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
     .page-subtitle {
       color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
     .content-box {
       background: var(--card-bg);
@@ -91,28 +133,49 @@
     .content-box h3 {
       font-size: 1.1rem; color: var(--accent);
       margin: 1.5rem 0 0.6rem;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
     }
     .content-box h3:first-child { margin-top: 0; }
     .content-box p {
       color: var(--text-muted); font-size: 0.92rem;
       margin-bottom: 1rem;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
     .content-box ul {
       color: var(--text-muted); font-size: 0.92rem;
       padding-left: 1.2rem; margin-bottom: 1rem;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
     .content-box li { margin-bottom: 0.4rem; }
     .content-box a { color: var(--accent); text-decoration: none; }
     .content-box a:hover { text-decoration: underline; }
+    .content-box strong {
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 800 !important;
+      color: var(--text);
+    }
+    .content-box code {
+      background: rgba(255,255,255,0.05);
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace !important;
+      font-weight: 700 !important;
+      color: var(--accent);
+    }
 
     .footer {
       position: relative; z-index: 1;
       text-align: center; padding: 2rem 1rem;
       color: var(--text-muted); font-size: 0.8rem;
       border-top: 1px solid rgba(255,255,255,0.05);
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
     }
-    
   </style>
+<base target="_blank">
 </head>
 <body>
   <div class="particles-container" id="particles"></div>
@@ -127,34 +190,34 @@
     <p class="page-subtitle fade-in fade-in-delay-1">ApexVault Platform</p>
     <div class="content-box fade-in fade-in-delay-2">
       <h3>Getting Started</h3>
-<p>The ApexVault API allows developers to integrate our platform into their own applications. All endpoints return JSON and require authentication via API key.</p>
+      <p>The ApexVault API allows developers to integrate our platform into their own applications. All endpoints return JSON and require authentication via API key.</p>
 
-<h3>Base URL</h3>
-<p><code style="background:rgba(255,255,255,0.05);padding:0.3rem 0.6rem;border-radius:6px;font-family:monospace;">https://api.apexvault.com/v1</code></p>
+      <h3>Base URL</h3>
+      <p><code>https://api.apexvault.com/v1</code></p>
 
-<h3>Authentication</h3>
-<p>Include your API key in the header of every request:</p>
-<p><code style="background:rgba(255,255,255,0.05);padding:0.3rem 0.6rem;border-radius:6px;font-family:monospace;">Authorization: Bearer YOUR_API_KEY</code></p>
+      <h3>Authentication</h3>
+      <p>Include your API key in the header of every request:</p>
+      <p><code>Authorization: Bearer YOUR_API_KEY</code></p>
 
-<h3>Endpoints</h3>
-<ul>
-  <li><strong>GET /balance</strong> — Retrieve user balance</li>
-  <li><strong>GET /investments</strong> — List active investments</li>
-  <li><strong>GET /history</strong> — Fetch transaction history</li>
-  <li><strong>POST /deposit</strong> — Initiate a deposit request</li>
-  <li><strong>POST /withdraw</strong> — Submit a withdrawal request</li>
-</ul>
+      <h3>Endpoints</h3>
+      <ul>
+        <li><strong>GET /balance</strong> — Retrieve user balance</li>
+        <li><strong>GET /investments</strong> — List active investments</li>
+        <li><strong>GET /history</strong> — Fetch transaction history</li>
+        <li><strong>POST /deposit</strong> — Initiate a deposit request</li>
+        <li><strong>POST /withdraw</strong> — Submit a withdrawal request</li>
+      </ul>
 
-<h3>Rate Limits</h3>
-<p>100 requests per minute per API key. Contact support if you need higher limits.</p>
+      <h3>Rate Limits</h3>
+      <p>100 requests per minute per API key. Contact support if you need higher limits.</p>
 
-<h3>Support</h3>
-<p>Email <a href="mailto:api@apexvault.com">api@apexvault.com</a> for technical assistance.</p>
+      <h3>Support</h3>
+      <p>Email <a href="mailto:api@apexvault.com">api@apexvault.com</a> for technical assistance.</p>
     </div>
   </main>
 
   <footer class="footer">
-    © 2026 ApexVault. All rights reserved.
+    &#169; 2026 ApexVault. All rights reserved.
   </footer>
 
   <script>
@@ -171,4 +234,4 @@
     }
   </script>
 </body>
-  </html>
+</html>
