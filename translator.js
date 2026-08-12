@@ -1,30 +1,11 @@
-/* ========== APEXVAULT UNIVERSAL TRANSLATOR v4 (MULTI-ENGINE) ========== */
-/* Tries: 1) Browser Native API → 2) Lingva.ml (Google proxy) → 3) LibreTranslate */
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v5 (MYMEMORY + GOOGLE FALLBACK) ========== */
+/* Primary: MyMemory API (CORS-enabled, no key, 500 bytes per request) */
+/* Fallback: Google unofficial API (client=gtx) */
 (function() {
   'use strict';
 
-  console.log('[ApexVault Translator v4] Initializing...');
-
-  const STORAGE_KEY = 'apexvault_lang_v4';
-
-  /* ========== API CONFIG ========== */
-  const APIS = {
-    lingva: {
-      name: 'Lingva.ml',
-      url: 'https://lingva.ml/api/v1/en/{target}/{text}',
-      type: 'GET'
-    },
-    libre1: {
-      name: 'LibreTranslate (de)',
-      url: 'https://libretranslate.de/translate',
-      type: 'POST'
-    },
-    libre2: {
-      name: 'LibreTranslate (com)',
-      url: 'https://libretranslate.com/translate',
-      type: 'POST'
-    }
-  };
+  const STORAGE_KEY = 'apexvault_lang_v5';
+  const CHUNK_SIZE = 450; /* MyMemory limit is 500 bytes */
 
   const LANGUAGES = [
     { code: 'en', name: 'English', flag: '🇺🇸', api: 'en' },
@@ -100,26 +81,22 @@
   let originalTexts = new Map();
   let isTranslating = false;
   let currentLang = 'en';
-  let nativeTranslator = null;
+  let debugLogs = [];
 
-  /* ========== BROWSER NATIVE TRANSLATOR API (Chrome 138+, Edge 148+) ========== */
-  async function initNativeTranslator(targetLang) {
-    if (!('Translator' in window)) {
-      console.log('[ApexVault Translator] Browser native Translator API not available');
-      return null;
-    }
-    try {
-      const pair = { sourceLanguage: 'en', targetLanguage: targetLang };
-      const availability = await window.Translator.availability(pair);
-      console.log('[ApexVault Translator] Native API availability:', availability);
-      if (availability === 'unavailable') return null;
+  /* ========== DEBUG LOGGER ========== */
+  function log(msg) {
+    var line = '[AVT] ' + msg;
+    debugLogs.push(line);
+    if (debugLogs.length > 20) debugLogs.shift();
+    console.log(line);
+    updateDebugPanel();
+  }
 
-      const translator = await window.Translator.create(pair);
-      console.log('[ApexVault Translator] Native translator created for', targetLang);
-      return translator;
-    } catch (e) {
-      console.log('[ApexVault Translator] Native translator failed:', e.message);
-      return null;
+  function updateDebugPanel() {
+    var panel = document.getElementById('av-debug-panel');
+    if (panel) {
+      panel.innerHTML = debugLogs.join('<br>');
+      panel.scrollTop = panel.scrollHeight;
     }
   }
 
@@ -134,6 +111,7 @@
         var tag = parent.tagName.toLowerCase();
         if (tag === 'script' || tag === 'style' || tag === 'noscript' || tag === 'code' || tag === 'pre') return NodeFilter.FILTER_REJECT;
         if (parent.closest('#av-lang-btn')) return NodeFilter.FILTER_REJECT;
+        if (parent.closest('#av-debug-panel')) return NodeFilter.FILTER_REJECT;
         if (parent.closest('.notranslate')) return NodeFilter.FILTER_REJECT;
         if (!node.textContent.trim()) return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
@@ -145,106 +123,92 @@
     return nodes;
   }
 
-  /* ========== SAVE ORIGINAL TEXTS ========== */
+  /* ========== SAVE ORIGINALS ========== */
   function saveOriginals() {
     if (originalTexts.size > 0) return;
     var nodes = getTextNodes(document.body);
     nodes.forEach(function(node, i) {
-      var key = 'av-node-' + i;
+      var key = 'avn-' + i;
       node.setAttribute('data-av-id', key);
       originalTexts.set(key, node.textContent);
     });
-    console.log('[ApexVault Translator] Saved', originalTexts.size, 'text nodes');
+    log('Saved ' + originalTexts.size + ' text nodes');
   }
 
-  /* ========== TRANSLATE SINGLE TEXT ========== */
-  async function translateOne(text, target, attempt) {
-    attempt = attempt || 0;
-    var apis = ['lingva', 'libre1', 'libre2'];
-    var apiName = apis[attempt] || apis[0];
-    var api = APIS[apiName];
-
-    try {
-      if (apiName === 'lingva') {
-        /* Lingva.ml - GET request, Google Translate proxy */
-        var url = api.url.replace('{target}', encodeURIComponent(target)).replace('{text}', encodeURIComponent(text));
-        console.log('[ApexVault Translator] Trying Lingva:', url.substring(0, 100));
-        var res = await fetch(url, { method: 'GET', mode: 'cors' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        var data = await res.json();
-        if (data.translation) {
-          console.log('[ApexVault Translator] Lingva success:', text.substring(0, 30), '→', data.translation.substring(0, 30));
-          return data.translation;
-        }
-        throw new Error('No translation in response');
-      } else {
-        /* LibreTranslate - POST request */
-        var body = 'source=en&target=' + encodeURIComponent(target) + '&format=text&q=' + encodeURIComponent(text);
-        console.log('[ApexVault Translator] Trying', api.name);
-        var res = await fetch(api.url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: body
+  /* ========== SPLIT TEXT INTO CHUNKS ========== */
+  function splitIntoChunks(text, maxBytes) {
+    var chunks = [];
+    var current = '';
+    var currentBytes = 0;
+    var sentences = text.split(/(?<=[.!?\n])\s+/);
+    sentences.forEach(function(sentence) {
+      var sentenceBytes = new Blob([sentence]).size;
+      if (sentenceBytes > maxBytes) {
+        /* Sentence too long, split by words */
+        var words = sentence.split(' ');
+        words.forEach(function(word) {
+          var wordBytes = new Blob([word + ' ']).size;
+          if (currentBytes + wordBytes > maxBytes && current) {
+            chunks.push(current.trim());
+            current = word + ' ';
+            currentBytes = wordBytes;
+          } else {
+            current += word + ' ';
+            currentBytes += wordBytes;
+          }
         });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        var data = await res.json();
-        var translated = Array.isArray(data) ? (data[0] && data[0].translatedText) : data.translatedText;
-        if (translated) {
-          console.log('[ApexVault Translator]', api.name, 'success');
-          return translated;
-        }
-        throw new Error('No translation in response');
-      }
-    } catch (err) {
-      console.warn('[ApexVault Translator]', api.name, 'failed:', err.message);
-      if (attempt < apis.length - 1) {
-        return translateOne(text, target, attempt + 1);
-      }
-      return text; /* Return original if all fail */
-    }
-  }
-
-  /* ========== BATCH TRANSLATE ========== */
-  async function translateBatch(texts, target) {
-    /* Deduplicate */
-    var unique = [];
-    var seen = {};
-    texts.forEach(function(t) {
-      var key = t.trim();
-      if (!seen[key] && key.length > 1 && /[a-zA-Z]/.test(key)) {
-        seen[key] = true;
-        unique.push(key);
+      } else if (currentBytes + sentenceBytes > maxBytes && current) {
+        chunks.push(current.trim());
+        current = sentence + ' ';
+        currentBytes = sentenceBytes;
+      } else {
+        current += sentence + ' ';
+        currentBytes += sentenceBytes;
       }
     });
+    if (current.trim()) chunks.push(current.trim());
+    return chunks;
+  }
 
-    if (unique.length === 0) return {};
-
-    var results = {};
-
-    /* Try native translator first if available */
-    if (nativeTranslator) {
-      console.log('[ApexVault Translator] Using native browser translator for', unique.length, 'items');
-      for (var i = 0; i < unique.length; i++) {
-        try {
-          results[unique[i]] = await nativeTranslator.translate(unique[i]);
-        } catch (e) {
-          results[unique[i]] = unique[i];
-        }
-      }
-      return results;
+  /* ========== MYMEMORY API ========== */
+  async function translateMyMemory(text, target) {
+    var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + target;
+    log('MyMemory: ' + text.substring(0, 40) + '...');
+    var res = await fetch(url, { method: 'GET', mode: 'cors' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+    if (data.responseStatus === 200 && data.responseData && data.responseData.translatedText) {
+      return data.responseData.translatedText;
     }
+    throw new Error('MyMemory status: ' + data.responseStatus);
+  }
 
-    /* API-based translation with delay between requests */
-    console.log('[ApexVault Translator] Using API translation for', unique.length, 'items');
-    for (var i = 0; i < unique.length; i++) {
-      var txt = unique[i];
-      results[txt] = await translateOne(txt, target, 0);
-      /* Small delay to avoid rate limits */
-      if (i < unique.length - 1) {
-        await new Promise(function(r) { setTimeout(r, 300); });
+  /* ========== GOOGLE UNOFFICIAL API ========== */
+  async function translateGoogle(text, target) {
+    var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=' + target + '&dt=t&q=' + encodeURIComponent(text);
+    log('Google: ' + text.substring(0, 40) + '...');
+    var res = await fetch(url, { method: 'GET', mode: 'cors' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+    if (data && data[0] && data[0][0] && data[0][0][0]) {
+      return data[0][0][0];
+    }
+    throw new Error('Google: bad response format');
+  }
+
+  /* ========== TRANSLATE ONE CHUNK ========== */
+  async function translateChunk(text, target) {
+    try {
+      return await translateMyMemory(text, target);
+    } catch (e1) {
+      log('MyMemory failed: ' + e1.message);
+      try {
+        return await translateGoogle(text, target);
+      } catch (e2) {
+        log('Google failed: ' + e2.message);
+        return text;
       }
     }
-    return results;
   }
 
   /* ========== APPLY TRANSLATION ========== */
@@ -253,9 +217,11 @@
     isTranslating = true;
 
     var btn = document.getElementById('avLangToggle');
-    if (btn) {
-      btn.style.opacity = '0.5';
-      btn.querySelector('#avLangName').textContent = 'Translating...';
+    var nameSpan = btn ? btn.querySelector('#avLangName') : null;
+
+    function setStatus(txt) {
+      if (nameSpan) nameSpan.textContent = txt;
+      log(txt);
     }
 
     try {
@@ -264,75 +230,80 @@
         currentLang = 'en';
         localStorage.setItem(STORAGE_KEY, 'en');
         updateBtn('en');
-        console.log('[ApexVault Translator] Restored English');
+        setStatus('English');
+        log('Restored English');
         return;
       }
 
       saveOriginals();
-
-      /* Try to init native translator */
-      nativeTranslator = await initNativeTranslator(targetCode);
+      setStatus('Reading page...');
 
       var nodes = getTextNodes(document.body);
-      var texts = [];
-      var nodeMap = [];
-
+      var items = [];
       nodes.forEach(function(node) {
         var original = originalTexts.get(node.getAttribute('data-av-id'));
-        var text = original || node.textContent;
-        if (text.trim().length > 1 && /[a-zA-Z]/.test(text)) {
-          texts.push(text);
-          nodeMap.push(node);
+        var text = (original || node.textContent).trim();
+        if (text.length > 1 && /[a-zA-Z]/.test(text)) {
+          items.push({ node: node, text: text });
         }
       });
 
-      console.log('[ApexVault Translator] Translating', texts.length, 'text nodes to', targetCode);
+      log('Found ' + items.length + ' text items to translate');
 
-      if (texts.length === 0) {
-        console.warn('[ApexVault Translator] No translatable text found');
+      if (items.length === 0) {
+        setStatus('No text found');
         currentLang = targetCode;
         localStorage.setItem(STORAGE_KEY, targetCode);
         updateBtn(targetCode);
         return;
       }
 
-      /* Translate in chunks to avoid overwhelming APIs */
-      var chunkSize = nativeTranslator ? 50 : 8;
-      for (var i = 0; i < texts.length; i += chunkSize) {
-        var chunkTexts = texts.slice(i, i + chunkSize);
-        var chunkNodes = nodeMap.slice(i, i + chunkSize);
-        var results = await translateBatch(chunkTexts, targetCode);
-
-        chunkNodes.forEach(function(node, idx) {
-          var original = chunkTexts[idx];
-          var translated = results[original];
-          if (translated && translated !== original) {
-            node.textContent = translated;
-          }
-        });
-
-        /* Progress update */
-        if (btn) {
-          var pct = Math.round(((i + chunkTexts.length) / texts.length) * 100);
-          btn.querySelector('#avLangName').textContent = 'Translating ' + pct + '%';
+      /* Build unique chunks */
+      var uniqueTexts = [];
+      var seen = {};
+      items.forEach(function(item) {
+        if (!seen[item.text]) {
+          seen[item.text] = true;
+          var chunks = splitIntoChunks(item.text, CHUNK_SIZE);
+          chunks.forEach(function(chunk) {
+            uniqueTexts.push({ original: item.text, chunk: chunk });
+          });
         }
+      });
 
-        /* Delay between chunks */
-        if (i + chunkSize < texts.length) {
-          await new Promise(function(r) { setTimeout(r, 500); });
-        }
+      log('Split into ' + uniqueTexts.length + ' chunks (max ' + CHUNK_SIZE + ' bytes each)');
+
+      /* Translate chunks with delay */
+      var results = {};
+      for (var i = 0; i < uniqueTexts.length; i++) {
+        var item = uniqueTexts[i];
+        setStatus('Translating ' + (i + 1) + '/' + uniqueTexts.length);
+        var translated = await translateChunk(item.chunk, targetCode);
+        results[item.chunk] = translated;
+        /* Delay to respect rate limits */
+        if (i < uniqueTexts.length - 1) await new Promise(function(r) { setTimeout(r, 600); });
       }
+
+      /* Apply translations */
+      items.forEach(function(item) {
+        var chunks = splitIntoChunks(item.text, CHUNK_SIZE);
+        var translatedParts = chunks.map(function(c) { return results[c] || c; });
+        var fullTranslated = translatedParts.join(' ');
+        if (fullTranslated !== item.text) {
+          item.node.textContent = fullTranslated;
+        }
+      });
 
       currentLang = targetCode;
       localStorage.setItem(STORAGE_KEY, targetCode);
       updateBtn(targetCode);
-      console.log('[ApexVault Translator] Done! Translated to', targetCode);
+      setStatus('Done!');
+      log('Translation complete to ' + targetCode);
     } catch (err) {
-      console.error('[ApexVault Translator] Fatal error:', err);
-      alert('Translation failed. Check browser console (F12 → Console) for details.\n\nCommon causes:\n• API rate limit (wait 1 minute)\n• Browser blocking CORS\n• No internet connection');
+      log('FATAL ERROR: ' + err.message);
+      setStatus('Error - see debug');
     } finally {
       isTranslating = false;
-      if (btn) btn.style.opacity = '1';
     }
   }
 
@@ -379,7 +350,16 @@
 
     document.body.appendChild(wrap);
     bindEvents();
-    console.log('[ApexVault Translator v4] Dropdown created');
+    log('Dropdown created');
+  }
+
+  function buildDebugPanel() {
+    if (document.getElementById('av-debug-panel')) return;
+    var panel = document.createElement('div');
+    panel.id = 'av-debug-panel';
+    panel.innerHTML = '<strong>Translator Debug Log</strong><br><em>Tap here to hide</em>';
+    panel.onclick = function() { panel.style.display = 'none'; };
+    document.body.appendChild(panel);
   }
 
   function bindEvents() {
@@ -454,18 +434,18 @@
       '.avLangOpt.active{background:rgba(100,255,218,0.15)!important;color:#64ffda!important;}' +
       '.avLangOptFlag{font-size:1.15rem!important;flex-shrink:0!important;}' +
       '.avLangOptName{flex:1!important;}' +
-      '@media(max-width:480px){#av-lang-btn{top:8px!important;right:8px!important;}#avLangToggle{padding:8px 12px!important;font-size:0.82rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}}';
+      '#av-debug-panel{position:fixed!important;bottom:10px!important;left:10px!important;right:10px!important;max-height:200px!important;overflow-y:auto!important;background:rgba(0,0,0,0.9)!important;color:#64ffda!important;padding:12px!important;border-radius:8px!important;font-family:monospace!important;font-size:11px!important;z-index:99998!important;line-height:1.5!important;border:1px solid #233554!important;}' +
+      '#av-debug-panel strong{color:#fff!important;}' +
+      '@media(max-width:480px){#av-lang-btn{top:8px!important;right:8px!important;}#avLangToggle{padding:8px 12px!important;font-size:0.82rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}#av-debug-panel{left:5px!important;right:5px!important;bottom:5px!important;}}';
     document.head.appendChild(s);
   }
 
-  /* ========== AUTO-RESTORE ON LOAD ========== */
+  /* ========== AUTO-RESTORE ========== */
   function autoRestore() {
     var saved = localStorage.getItem(STORAGE_KEY);
     if (saved && saved !== 'en') {
-      console.log('[ApexVault Translator] Auto-restoring language:', saved);
-      setTimeout(function() {
-        setLang(saved);
-      }, 1500);
+      log('Auto-restoring: ' + saved);
+      setTimeout(function() { setLang(saved); }, 2000);
     }
   }
 
@@ -474,10 +454,11 @@
     try {
       injectStyles();
       buildUI();
+      buildDebugPanel();
       autoRestore();
-      console.log('[ApexVault Translator v4] Ready. Press F12 → Console to see live logs.');
+      log('v5 Ready - MyMemory + Google fallback');
     } catch (err) {
-      console.error('[ApexVault Translator v4] Error:', err);
+      console.error('[AVT] Fatal start error:', err);
     }
   }
 
