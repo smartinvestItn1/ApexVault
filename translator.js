@@ -229,8 +229,9 @@
       }
     });
 
+    const dropdownContainer = document.getElementById('apexvault-lang-dropdown');
     document.addEventListener('click', (e) => {
-      if (!container.contains(e.target)) {
+      if (dropdownContainer && !dropdownContainer.contains(e.target)) {
         menu.classList.remove('open');
       }
     });
