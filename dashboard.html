@@ -43,6 +43,7 @@
     }
   </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -94,32 +95,32 @@
       </button>
     </div>
     <nav class="drawer-nav">
-      <a class="drawer-link active" onclick="showSection('overview'); toggleMobileSidebar()">
+      <a class="drawer-link active" onclick="showSection('overview')">
         <i class="fas fa-chart-pie"></i> Overview
       </a>
-      <a class="drawer-link" onclick="showSection('invest'); toggleMobileSidebar()">
+      <a class="drawer-link" onclick="showSection('invest')">
         <i class="fas fa-rocket"></i> Invest
       </a>
-      <a class="drawer-link" onclick="showSection('deposit'); toggleMobileSidebar()">
+      <a class="drawer-link" onclick="showSection('deposit')">
         <i class="fas fa-wallet"></i> Deposit
       </a>
-      <a class="drawer-link" onclick="showSection('withdraw'); toggleMobileSidebar()">
+      <a class="drawer-link" onclick="showSection('withdraw')">
         <i class="fas fa-money-bill-wave"></i> Withdraw
       </a>
-      <a class="drawer-link" onclick="showSection('transfer'); toggleMobileSidebar()">
+      <a class="drawer-link" onclick="showSection('transfer')">
         <i class="fas fa-exchange-alt"></i> Transfer
       </a>
-      <a class="drawer-link" onclick="showSection('history'); toggleMobileSidebar()">
+      <a class="drawer-link" onclick="showSection('history')">
         <i class="fas fa-history"></i> History
       </a>
-      <a class="drawer-link" onclick="showSection('referral'); toggleMobileSidebar()">
+      <a class="drawer-link" onclick="showSection('referral')">
         <i class="fas fa-users"></i> Referral
       </a>
-      <a class="drawer-link" onclick="showSection('pending'); toggleMobileSidebar()">
+      <a class="drawer-link" onclick="showSection('pending')">
         <i class="fas fa-clock"></i> Pending
       </a>
-      <a class="drawer-link" onclick="showKYC(); toggleMobileSidebar()">
-        <i class="fas fa-id-card"></i> <span class="kyc-badge">more info</span>
+      <a class="drawer-link" onclick="showKYC()">
+        <span class="kyc-badge">more info</span>
       </a>
     </nav>
     <div class="drawer-footer">
@@ -545,14 +546,6 @@
         </select>
         <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;">Wallet Address</label>
         <input type="text" id="withdrawWalletAddress" required style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.7rem; color:var(--text); margin-bottom:0.75rem;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
-          <span style="font-size:0.8rem; color:var(--text-muted);">Fee (2%)</span>
-          <span id="withdrawFee" style="font-size:0.8rem; font-weight:600;">$0.00</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
-          <span style="font-size:0.85rem; font-weight:600;">Total Deduction</span>
-          <span id="withdrawTotal" style="font-size:0.85rem; font-weight:600; color:var(--accent);">$0.00</span>
-        </div>
         <button type="submit" style="width:100%; background:linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); border:none; border-radius:12px; padding:0.9rem; color:#fff; font-weight:600; cursor:pointer;">Request Withdrawal</button>
       </form>
     </div>
