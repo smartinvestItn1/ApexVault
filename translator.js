@@ -1,4 +1,4 @@
-/* ========== APEXVAULT UNIVERSAL TRANSLATOR v2 ========== */
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v2.1 (FIXED) ========== */
 (function() {
   'use strict';
 
@@ -109,7 +109,7 @@
       console.log('[ApexVault Translator] Google Translate loaded');
       var saved = localStorage.getItem(STORAGE_KEY);
       if (saved && saved !== 'en') {
-        setTimeout(function(){ setLang(saved); }, 600);
+        setTimeout(function(){ setLang(saved); }, 800);
       }
     };
 
@@ -122,21 +122,60 @@
     document.head.appendChild(sc);
   }
 
-  /* ========== SET LANGUAGE ========== */
+  /* ========== SET LANGUAGE (FIXED) ========== */
   function setLang(code) {
     if (!googleReady) {
-      setTimeout(function(){ setLang(code); }, 400);
+      setTimeout(function(){ setLang(code); }, 500);
       return;
     }
-    var sel = document.querySelector('.goog-te-combo');
-    if (sel) {
+
+    function doChange(sel) {
       sel.value = code;
-      sel.dispatchEvent(new Event('change'));
+
+      // Method 1: Modern Event with bubbles
+      if (typeof Event === 'function') {
+        var ev1 = new Event('change', { bubbles: true, cancelable: true });
+        sel.dispatchEvent(ev1);
+      }
+
+      // Method 2: Legacy HTMLEvents (more compatible with Google's internal handlers)
+      if (document.createEvent) {
+        var ev2 = document.createEvent('HTMLEvents');
+        ev2.initEvent('change', true, true);
+        sel.dispatchEvent(ev2);
+      }
+
+      // Method 3: IE fallback
+      if (sel.fireEvent) {
+        sel.fireEvent('onchange');
+      }
+
       localStorage.setItem(STORAGE_KEY, code);
       updateBtn(code);
       console.log('[ApexVault Translator] Language set to:', code);
-    } else {
-      setTimeout(function(){ setLang(code); }, 300);
+      return true;
+    }
+
+    function attempt() {
+      var sel = document.querySelector('.goog-te-combo');
+      if (sel) {
+        doChange(sel);
+        return true;
+      }
+      return false;
+    }
+
+    if (!attempt()) {
+      var tries = 0;
+      var timer = setInterval(function() {
+        tries++;
+        if (attempt() || tries > 30) {
+          clearInterval(timer);
+          if (tries > 30) {
+            console.error('[ApexVault Translator] Could not find Google Translate select box after 30 tries');
+          }
+        }
+      }, 300);
     }
   }
 
