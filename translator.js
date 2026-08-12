@@ -1,11 +1,10 @@
-/* ========== APEXVAULT UNIVERSAL TRANSLATOR v5 (MYMEMORY + GOOGLE FALLBACK) ========== */
-/* Primary: MyMemory API (CORS-enabled, no key, 500 bytes per request) */
-/* Fallback: Google unofficial API (client=gtx) */
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v6 (FIXED) ========== */
+/* Fixed: Text nodes cannot use setAttribute — now uses direct properties */
 (function() {
   'use strict';
 
-  const STORAGE_KEY = 'apexvault_lang_v5';
-  const CHUNK_SIZE = 450; /* MyMemory limit is 500 bytes */
+  const STORAGE_KEY = 'apexvault_lang_v6';
+  const CHUNK_SIZE = 450;
 
   const LANGUAGES = [
     { code: 'en', name: 'English', flag: '🇺🇸', api: 'en' },
@@ -78,7 +77,6 @@
     { code: 'hy', name: 'Հայերեն', flag: '🇦🇲', api: 'hy' }
   ];
 
-  let originalTexts = new Map();
   let isTranslating = false;
   let currentLang = 'en';
   let debugLogs = [];
@@ -87,7 +85,7 @@
   function log(msg) {
     var line = '[AVT] ' + msg;
     debugLogs.push(line);
-    if (debugLogs.length > 20) debugLogs.shift();
+    if (debugLogs.length > 30) debugLogs.shift();
     console.log(line);
     updateDebugPanel();
   }
@@ -95,7 +93,7 @@
   function updateDebugPanel() {
     var panel = document.getElementById('av-debug-panel');
     if (panel) {
-      panel.innerHTML = debugLogs.join('<br>');
+      panel.innerHTML = '<strong>Translator Debug Log</strong> (tap to hide)<br>' + debugLogs.join('<br>');
       panel.scrollTop = panel.scrollHeight;
     }
   }
@@ -123,16 +121,17 @@
     return nodes;
   }
 
-  /* ========== SAVE ORIGINALS ========== */
+  /* ========== SAVE ORIGINALS (FIXED) ========== */
   function saveOriginals() {
-    if (originalTexts.size > 0) return;
     var nodes = getTextNodes(document.body);
-    nodes.forEach(function(node, i) {
-      var key = 'avn-' + i;
-      node.setAttribute('data-av-id', key);
-      originalTexts.set(key, node.textContent);
+    var count = 0;
+    nodes.forEach(function(node) {
+      if (node._avOriginal === undefined) {
+        node._avOriginal = node.textContent;
+        count++;
+      }
     });
-    log('Saved ' + originalTexts.size + ' text nodes');
+    log('Saved ' + count + ' new text nodes (total: ' + nodes.length + ')');
   }
 
   /* ========== SPLIT TEXT INTO CHUNKS ========== */
@@ -144,7 +143,6 @@
     sentences.forEach(function(sentence) {
       var sentenceBytes = new Blob([sentence]).size;
       if (sentenceBytes > maxBytes) {
-        /* Sentence too long, split by words */
         var words = sentence.split(' ');
         words.forEach(function(word) {
           var wordBytes = new Blob([word + ' ']).size;
@@ -173,27 +171,27 @@
   /* ========== MYMEMORY API ========== */
   async function translateMyMemory(text, target) {
     var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + target;
-    log('MyMemory: ' + text.substring(0, 40) + '...');
+    log('MyMemory: "' + text.substring(0, 50) + '..."');
     var res = await fetch(url, { method: 'GET', mode: 'cors' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     var data = await res.json();
     if (data.responseStatus === 200 && data.responseData && data.responseData.translatedText) {
       return data.responseData.translatedText;
     }
-    throw new Error('MyMemory status: ' + data.responseStatus);
+    throw new Error('Status ' + data.responseStatus);
   }
 
   /* ========== GOOGLE UNOFFICIAL API ========== */
   async function translateGoogle(text, target) {
     var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=' + target + '&dt=t&q=' + encodeURIComponent(text);
-    log('Google: ' + text.substring(0, 40) + '...');
+    log('Google: "' + text.substring(0, 50) + '..."');
     var res = await fetch(url, { method: 'GET', mode: 'cors' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     var data = await res.json();
     if (data && data[0] && data[0][0] && data[0][0][0]) {
       return data[0][0][0];
     }
-    throw new Error('Google: bad response format');
+    throw new Error('Bad response');
   }
 
   /* ========== TRANSLATE ONE CHUNK ========== */
@@ -201,11 +199,11 @@
     try {
       return await translateMyMemory(text, target);
     } catch (e1) {
-      log('MyMemory failed: ' + e1.message);
+      log('MyMemory fail: ' + e1.message);
       try {
         return await translateGoogle(text, target);
       } catch (e2) {
-        log('Google failed: ' + e2.message);
+        log('Google fail: ' + e2.message);
         return text;
       }
     }
@@ -236,19 +234,19 @@
       }
 
       saveOriginals();
-      setStatus('Reading page...');
+      setStatus('Scanning page...');
 
       var nodes = getTextNodes(document.body);
       var items = [];
       nodes.forEach(function(node) {
-        var original = originalTexts.get(node.getAttribute('data-av-id'));
-        var text = (original || node.textContent).trim();
+        var original = node._avOriginal || node.textContent;
+        var text = original.trim();
         if (text.length > 1 && /[a-zA-Z]/.test(text)) {
           items.push({ node: node, text: text });
         }
       });
 
-      log('Found ' + items.length + ' text items to translate');
+      log('Found ' + items.length + ' items to translate');
 
       if (items.length === 0) {
         setStatus('No text found');
@@ -259,29 +257,28 @@
       }
 
       /* Build unique chunks */
-      var uniqueTexts = [];
-      var seen = {};
+      var uniqueMap = {};
+      var uniqueChunks = [];
       items.forEach(function(item) {
-        if (!seen[item.text]) {
-          seen[item.text] = true;
+        if (!uniqueMap[item.text]) {
+          uniqueMap[item.text] = true;
           var chunks = splitIntoChunks(item.text, CHUNK_SIZE);
           chunks.forEach(function(chunk) {
-            uniqueTexts.push({ original: item.text, chunk: chunk });
+            uniqueChunks.push({ fullText: item.text, chunk: chunk });
           });
         }
       });
 
-      log('Split into ' + uniqueTexts.length + ' chunks (max ' + CHUNK_SIZE + ' bytes each)');
+      log('Split into ' + uniqueChunks.length + ' chunks');
 
-      /* Translate chunks with delay */
+      /* Translate chunks */
       var results = {};
-      for (var i = 0; i < uniqueTexts.length; i++) {
-        var item = uniqueTexts[i];
-        setStatus('Translating ' + (i + 1) + '/' + uniqueTexts.length);
+      for (var i = 0; i < uniqueChunks.length; i++) {
+        var item = uniqueChunks[i];
+        setStatus('Translating ' + (i + 1) + '/' + uniqueChunks.length);
         var translated = await translateChunk(item.chunk, targetCode);
         results[item.chunk] = translated;
-        /* Delay to respect rate limits */
-        if (i < uniqueTexts.length - 1) await new Promise(function(r) { setTimeout(r, 600); });
+        if (i < uniqueChunks.length - 1) await new Promise(function(r) { setTimeout(r, 600); });
       }
 
       /* Apply translations */
@@ -298,9 +295,9 @@
       localStorage.setItem(STORAGE_KEY, targetCode);
       updateBtn(targetCode);
       setStatus('Done!');
-      log('Translation complete to ' + targetCode);
+      log('Complete → ' + targetCode);
     } catch (err) {
-      log('FATAL ERROR: ' + err.message);
+      log('FATAL: ' + err.message);
       setStatus('Error - see debug');
     } finally {
       isTranslating = false;
@@ -310,9 +307,8 @@
   function restoreEnglish() {
     var nodes = getTextNodes(document.body);
     nodes.forEach(function(node) {
-      var key = node.getAttribute('data-av-id');
-      if (key && originalTexts.has(key)) {
-        node.textContent = originalTexts.get(key);
+      if (node._avOriginal !== undefined) {
+        node.textContent = node._avOriginal;
       }
     });
   }
@@ -357,7 +353,7 @@
     if (document.getElementById('av-debug-panel')) return;
     var panel = document.createElement('div');
     panel.id = 'av-debug-panel';
-    panel.innerHTML = '<strong>Translator Debug Log</strong><br><em>Tap here to hide</em>';
+    panel.innerHTML = '<strong>Translator Debug Log</strong> (tap to hide)<br><em>Initializing...</em>';
     panel.onclick = function() { panel.style.display = 'none'; };
     document.body.appendChild(panel);
   }
@@ -434,7 +430,7 @@
       '.avLangOpt.active{background:rgba(100,255,218,0.15)!important;color:#64ffda!important;}' +
       '.avLangOptFlag{font-size:1.15rem!important;flex-shrink:0!important;}' +
       '.avLangOptName{flex:1!important;}' +
-      '#av-debug-panel{position:fixed!important;bottom:10px!important;left:10px!important;right:10px!important;max-height:200px!important;overflow-y:auto!important;background:rgba(0,0,0,0.9)!important;color:#64ffda!important;padding:12px!important;border-radius:8px!important;font-family:monospace!important;font-size:11px!important;z-index:99998!important;line-height:1.5!important;border:1px solid #233554!important;}' +
+      '#av-debug-panel{position:fixed!important;bottom:10px!important;left:10px!important;right:10px!important;max-height:200px!important;overflow-y:auto!important;background:rgba(0,0,0,0.92)!important;color:#64ffda!important;padding:12px!important;border-radius:8px!important;font-family:monospace!important;font-size:11px!important;z-index:99998!important;line-height:1.5!important;border:1px solid #233554!important;}' +
       '#av-debug-panel strong{color:#fff!important;}' +
       '@media(max-width:480px){#av-lang-btn{top:8px!important;right:8px!important;}#avLangToggle{padding:8px 12px!important;font-size:0.82rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}#av-debug-panel{left:5px!important;right:5px!important;bottom:5px!important;}}';
     document.head.appendChild(s);
@@ -456,9 +452,9 @@
       buildUI();
       buildDebugPanel();
       autoRestore();
-      log('v5 Ready - MyMemory + Google fallback');
+      log('v6 Ready - MyMemory + Google fallback');
     } catch (err) {
-      console.error('[AVT] Fatal start error:', err);
+      console.error('[AVT] Fatal start:', err);
     }
   }
 
