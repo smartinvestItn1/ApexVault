@@ -1,12 +1,12 @@
-/* ========== APEXVAULT UNIVERSAL TRANSLATOR v8 (ROBUST) ========== */
-/* Google primary, MyMemory fallback, timeouts, no counting UI */
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v9 (FAST + CLEAN) ========== */
+/* Based on v7 (works) — removed counting UI, faster delays, fetch timeout */
 (function() {
   'use strict';
 
-  const STORAGE_KEY = 'apexvault_lang_v8';
+  const STORAGE_KEY = 'apexvault_lang_v9';
   const CHUNK_SIZE = 450;
-  const FETCH_TIMEOUT = 8000;
-  const DELAY_MS = 250;
+  const DELAY_MS = 200;
+  const FETCH_TIMEOUT = 6000;
 
   const LANGUAGES = [
     { code: 'en', name: 'English', flag: '🇺🇸', api: 'en' },
@@ -86,7 +86,7 @@
   function fetchWithTimeout(url, options, ms) {
     return new Promise(function(resolve, reject) {
       var timer = setTimeout(function() {
-        reject(new Error('Timeout after ' + ms + 'ms'));
+        reject(new Error('Timeout'));
       }, ms);
       fetch(url, options).then(function(res) {
         clearTimeout(timer);
@@ -123,14 +123,11 @@
   /* ========== SAVE ORIGINALS ========== */
   function saveOriginals() {
     var nodes = getTextNodes(document.body);
-    var count = 0;
     nodes.forEach(function(node) {
       if (node._avOriginal === undefined) {
         node._avOriginal = node.textContent;
-        count++;
       }
     });
-    console.log('[AVT] Saved ' + count + ' text nodes');
   }
 
   /* ========== SPLIT TEXT INTO CHUNKS ========== */
@@ -168,21 +165,9 @@
     return chunks;
   }
 
-  /* ========== GOOGLE TRANSLATE API (PRIMARY) ========== */
-  async function translateGoogle(text, target) {
-    var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=' + encodeURIComponent(target) + '&dt=t&q=' + encodeURIComponent(text);
-    var res = await fetchWithTimeout(url, { method: 'GET', mode: 'cors' }, FETCH_TIMEOUT);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    var data = await res.json();
-    if (data && data[0] && data[0][0] && data[0][0][0]) {
-      return data[0][0][0];
-    }
-    throw new Error('Bad response');
-  }
-
-  /* ========== MYMEMORY API (FALLBACK) ========== */
+  /* ========== MYMEMORY API ========== */
   async function translateMyMemory(text, target) {
-    var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + encodeURIComponent(target);
+    var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + target;
     var res = await fetchWithTimeout(url, { method: 'GET', mode: 'cors' }, FETCH_TIMEOUT);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     var data = await res.json();
@@ -192,18 +177,26 @@
     throw new Error('Status ' + data.responseStatus);
   }
 
+  /* ========== GOOGLE UNOFFICIAL API ========== */
+  async function translateGoogle(text, target) {
+    var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=' + target + '&dt=t&q=' + encodeURIComponent(text);
+    var res = await fetchWithTimeout(url, { method: 'GET', mode: 'cors' }, FETCH_TIMEOUT);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+    if (data && data[0] && data[0][0] && data[0][0][0]) {
+      return data[0][0][0];
+    }
+    throw new Error('Bad response');
+  }
+
   /* ========== TRANSLATE ONE CHUNK ========== */
   async function translateChunk(text, target) {
-    /* Try Google first */
     try {
-      return await translateGoogle(text, target);
+      return await translateMyMemory(text, target);
     } catch (e1) {
-      console.log('[AVT] Google failed, trying MyMemory:', e1.message);
-      /* Try MyMemory */
       try {
-        return await translateMyMemory(text, target);
+        return await translateGoogle(text, target);
       } catch (e2) {
-        console.log('[AVT] MyMemory failed, keeping original:', e2.message);
         return text;
       }
     }
@@ -216,7 +209,6 @@
 
     var btn = document.getElementById('avLangToggle');
     var nameSpan = btn ? btn.querySelector('#avLangName') : null;
-    var flagSpan = btn ? btn.querySelector('#avLangFlag') : null;
 
     function setStatus(txt) {
       if (nameSpan) nameSpan.textContent = txt;
@@ -245,8 +237,6 @@
         }
       });
 
-      console.log('[AVT] Found ' + items.length + ' items to translate');
-
       if (items.length === 0) {
         setStatus('No text');
         currentLang = targetCode;
@@ -268,45 +258,26 @@
         }
       });
 
-      console.log('[AVT] ' + uniqueChunks.length + ' chunks to translate');
-
-      /* Translate chunks with timeout protection */
+      /* Translate chunks — NO COUNTING, just "Translating..." */
       var results = {};
-      var successCount = 0;
-      var failCount = 0;
-
       for (var i = 0; i < uniqueChunks.length; i++) {
         var item = uniqueChunks[i];
-        try {
-          var translated = await translateChunk(item.chunk, targetCode);
-          results[item.chunk] = translated;
-          if (translated !== item.chunk) successCount++;
-          else failCount++;
-        } catch (err) {
-          console.error('[AVT] Chunk failed:', err);
-          results[item.chunk] = item.chunk;
-          failCount++;
-        }
+        var translated = await translateChunk(item.chunk, targetCode);
+        results[item.chunk] = translated;
         if (i < uniqueChunks.length - 1) {
           await new Promise(function(r) { setTimeout(r, DELAY_MS); });
         }
       }
 
-      console.log('[AVT] Results: ' + successCount + ' translated, ' + failCount + ' failed');
-
       /* Apply translations */
-      var appliedCount = 0;
       items.forEach(function(item) {
         var chunks = splitIntoChunks(item.text, CHUNK_SIZE);
         var translatedParts = chunks.map(function(c) { return results[c] || c; });
         var fullTranslated = translatedParts.join(' ');
         if (fullTranslated !== item.text) {
           item.node.textContent = fullTranslated;
-          appliedCount++;
         }
       });
-
-      console.log('[AVT] Applied to ' + appliedCount + ' nodes');
 
       currentLang = targetCode;
       localStorage.setItem(STORAGE_KEY, targetCode);
@@ -315,9 +286,9 @@
       setTimeout(function() {
         var l = LANGUAGES.find(function(x) { return x.code === targetCode; });
         if (l && nameSpan) nameSpan.textContent = l.name;
-      }, 1500);
+      }, 1200);
     } catch (err) {
-      console.error('[AVT] Fatal error:', err);
+      console.error('[AVT] Error:', err);
       setStatus('Error');
       setTimeout(function() {
         var l = LANGUAGES.find(function(x) { return x.code === currentLang; });
@@ -462,7 +433,7 @@
       injectStyles();
       buildUI();
       autoRestore();
-      console.log('[AVT] v8 Ready');
+      console.log('[AVT] v9 Ready');
     } catch (err) {
       console.error('[AVT] Fatal start:', err);
     }
