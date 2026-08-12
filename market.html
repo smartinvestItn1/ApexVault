@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Market Data - ApexVault</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&family=Montserrat:wght@800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -17,7 +20,8 @@
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-weight: 600;
       background: var(--bg);
       color: var(--text);
       line-height: 1.7;
@@ -55,6 +59,7 @@
       display: flex; align-items: center; justify-content: space-between;
     }
     .logo {
+      font-family: 'Montserrat', sans-serif;
       font-size: 1.5rem; font-weight: 800;
       background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -63,6 +68,8 @@
     }
     .logo:hover { transform: scale(1.05); }
     .back-btn {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
       color: var(--text-muted); text-decoration: none;
       font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;
       transition: color 0.2s;
@@ -75,11 +82,15 @@
       max-width: 720px; margin: 0 auto;
     }
     .page-title {
-      font-size: 2rem; margin-bottom: 0.5rem;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 2rem; font-weight: 800;
+      margin-bottom: 0.5rem;
       background: linear-gradient(135deg, #fff, var(--accent));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     .page-subtitle {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
       color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;
     }
     .content-box {
@@ -89,30 +100,42 @@
       backdrop-filter: blur(10px);
     }
     .content-box h3 {
-      font-size: 1.1rem; color: var(--accent);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.1rem; font-weight: 800;
+      color: var(--accent);
       margin: 1.5rem 0 0.6rem;
     }
     .content-box h3:first-child { margin-top: 0; }
     .content-box p {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
       color: var(--text-muted); font-size: 0.92rem;
       margin-bottom: 1rem;
     }
     .content-box ul {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
       color: var(--text-muted); font-size: 0.92rem;
       padding-left: 1.2rem; margin-bottom: 1rem;
     }
     .content-box li { margin-bottom: 0.4rem; }
-    .content-box a { color: var(--accent); text-decoration: none; }
+    .content-box a {
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      color: var(--accent); text-decoration: none;
+    }
     .content-box a:hover { text-decoration: underline; }
 
     .footer {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
       position: relative; z-index: 1;
       text-align: center; padding: 2rem 1rem;
       color: var(--text-muted); font-size: 0.8rem;
       border-top: 1px solid rgba(255,255,255,0.05);
     }
-    
   </style>
+<base target="_blank">
 </head>
 <body>
   <div class="particles-container" id="particles"></div>
@@ -127,29 +150,29 @@
     <p class="page-subtitle fade-in fade-in-delay-1">ApexVault Platform</p>
     <div class="content-box fade-in fade-in-delay-2">
       <h3>Overview</h3>
-<p>ApexVault provides real-time market data to help investors make informed decisions. Our platform tracks key metrics across major crypto assets and traditional markets.</p>
+      <p>ApexVault provides real-time market data to help investors make informed decisions. Our platform tracks key metrics across major crypto assets and traditional markets.</p>
 
-<h3>Supported Assets</h3>
-<ul>
-  <li>USDT (BEP20 & TRC20)</li>
-  <li>Bitcoin (BTC)</li>
-  <li>Ethereum (ETH)</li>
-  <li>Binance Coin (BNB)</li>
-</ul>
+      <h3>Supported Assets</h3>
+      <ul>
+        <li>USDT (BEP20 & TRC20)</li>
+        <li>Bitcoin (BTC)</li>
+        <li>Ethereum (ETH)</li>
+        <li>Binance Coin (BNB)</li>
+      </ul>
 
-<h3>Data Refresh Rate</h3>
-<p>All market data is refreshed every 60 seconds. Historical charts are updated daily at 00:00 UTC.</p>
+      <h3>Data Refresh Rate</h3>
+      <p>All market data is refreshed every 60 seconds. Historical charts are updated daily at 00:00 UTC.</p>
 
-<h3>API Access</h3>
-<p>Developers can access our market data via the <a href="api.html">ApexVault API</a>. Documentation and rate limits are available on the API page.</p>
+      <h3>API Access</h3>
+      <p>Developers can access our market data via the <a href="api.html">ApexVault API</a>. Documentation and rate limits are available on the API page.</p>
 
-<h3>Disclaimer</h3>
-<p>Market data is provided for informational purposes only and does not constitute financial advice. Past performance is not indicative of future results.</p>
+      <h3>Disclaimer</h3>
+      <p>Market data is provided for informational purposes only and does not constitute financial advice. Past performance is not indicative of future results.</p>
     </div>
   </main>
 
   <footer class="footer">
-    © 2026 ApexVault. All rights reserved.
+    &copy; 2026 ApexVault. All rights reserved.
   </footer>
 
   <script>
@@ -166,4 +189,4 @@
     }
   </script>
 </body>
-    </html>
+</html>
