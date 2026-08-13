@@ -1,12 +1,14 @@
-/* ========== APEXVAULT UNIVERSAL TRANSLATOR v12 (VISIBLE) ========== */
-/* Big button below your header. Inline styles so nothing can hide it. */
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v13 OPTIMIZED ========== */
 (function() {
   'use strict';
 
-  const STORAGE_KEY = 'apexvault_lang_v12';
-  const CHUNK_SIZE = 450;
-  const DELAY_MS = 200;
+  const STORAGE_KEY = 'apexvault_lang_v13';
+  const CACHE_KEY   = 'apexvault_trans_cache_v13';
+  const CHUNK_SIZE  = 900;      // larger chunks = fewer API calls
+  const BATCH_SIZE  = 3;        // parallel requests
+  const BATCH_DELAY = 120;      // ms between batches (was 200 ms per chunk)
   const FETCH_TIMEOUT = 6000;
+  const MAX_CACHE_KEYS = 600;
 
   const LANGUAGES = [
     { code: 'en', name: 'English', flag: '🇺🇸', api: 'en' },
@@ -81,6 +83,13 @@
 
   let isTranslating = false;
   let currentLang = 'en';
+  let originalsSaved = false;
+  var translationCache = {};
+
+  /* ---------- Load persistent cache ---------- */
+  try {
+    translationCache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+  } catch(e) { translationCache = {}; }
 
   function fetchWithTimeout(url, options, ms) {
     return new Promise(function(resolve, reject) {
@@ -113,35 +122,32 @@
     });
   }
 
-  function splitIntoChunks(text, maxBytes) {
+  /* ---------- Fast character-based chunking (replaces slow Blob size) ---------- */
+  function splitIntoChunks(text, maxLen) {
+    if (text.length <= maxLen) return [text];
     var chunks = [];
     var current = '';
-    var currentBytes = 0;
     var sentences = text.split(/(?<=[.!?\n])\s+/);
-    sentences.forEach(function(sentence) {
-      var sentenceBytes = new Blob([sentence]).size;
-      if (sentenceBytes > maxBytes) {
+    for (var i = 0; i < sentences.length; i++) {
+      var sentence = sentences[i];
+      if (sentence.length > maxLen) {
         var words = sentence.split(' ');
-        words.forEach(function(word) {
-          var wordBytes = new Blob([word + ' ']).size;
-          if (currentBytes + wordBytes > maxBytes && current) {
+        for (var j = 0; j < words.length; j++) {
+          var word = words[j];
+          if (current.length + word.length + 1 > maxLen && current) {
             chunks.push(current.trim());
             current = word + ' ';
-            currentBytes = wordBytes;
           } else {
             current += word + ' ';
-            currentBytes += wordBytes;
           }
-        });
-      } else if (currentBytes + sentenceBytes > maxBytes && current) {
+        }
+      } else if (current.length + sentence.length + 1 > maxLen && current) {
         chunks.push(current.trim());
         current = sentence + ' ';
-        currentBytes = sentenceBytes;
       } else {
         current += sentence + ' ';
-        currentBytes += sentenceBytes;
       }
-    });
+    }
     if (current.trim()) chunks.push(current.trim());
     return chunks;
   }
@@ -166,21 +172,57 @@
     throw new Error('Bad response');
   }
 
-  async function translateChunk(text, target) {
-    try { return await translateMyMemory(text, target); }
-    catch (e1) {
-      try { return await translateGoogle(text, target); }
-      catch (e2) { return text; }
-    }
+  /* ---------- Cache helpers ---------- */
+  var cacheSaveTimeout;
+  function saveCache() {
+    clearTimeout(cacheSaveTimeout);
+    cacheSaveTimeout = setTimeout(function() {
+      try {
+        var keys = Object.keys(translationCache);
+        if (keys.length > MAX_CACHE_KEYS) {
+          var trimmed = {};
+          keys.slice(keys.length - MAX_CACHE_KEYS).forEach(function(k) {
+            trimmed[k] = translationCache[k];
+          });
+          translationCache = trimmed;
+        }
+        localStorage.setItem(CACHE_KEY, JSON.stringify(translationCache));
+      } catch(e) {
+        console.warn('[AVT] Cache save failed', e);
+      }
+    }, 1500);
   }
 
+  async function translateChunk(text, target) {
+    var cacheKey = target + '::' + text;
+    if (translationCache[cacheKey]) return translationCache[cacheKey];
+
+    var result = text;
+    try {
+      result = await translateMyMemory(text, target);
+    } catch (e1) {
+      try {
+        result = await translateGoogle(text, target);
+      } catch (e2) {
+        result = text;
+      }
+    }
+
+    if (result !== text) {
+      translationCache[cacheKey] = result;
+      saveCache();
+    }
+    return result;
+  }
+
+  /* ---------- Main translation logic (parallel batches) ---------- */
   async function applyTranslation(targetCode) {
     if (isTranslating) return;
+    if (targetCode === currentLang) return;
     isTranslating = true;
 
     var btn = document.getElementById('avLangToggle');
     var nameSpan = btn ? btn.querySelector('#avLangName') : null;
-
     function setStatus(txt) { if (nameSpan) nameSpan.textContent = txt; }
 
     try {
@@ -190,45 +232,66 @@
         localStorage.setItem(STORAGE_KEY, 'en');
         updateBtn('en');
         setStatus('English');
+        isTranslating = false;
         return;
       }
 
-      saveOriginals();
+      if (!originalsSaved) {
+        saveOriginals();
+        originalsSaved = true;
+      }
       setStatus('Translating...');
 
       var nodes = getTextNodes(document.body);
       var items = [];
+      var textSet = {};
+
       nodes.forEach(function(node) {
         var original = node._avOriginal || node.textContent;
         var text = original.trim();
-        if (text.length > 1 && /[a-zA-Z]/.test(text)) items.push({ node: node, text: text });
+        if (text.length > 1 && /[a-zA-Z]/.test(text)) {
+          items.push({ node: node, text: text });
+          textSet[text] = true;
+        }
       });
 
       if (items.length === 0) {
         currentLang = targetCode;
         localStorage.setItem(STORAGE_KEY, targetCode);
         updateBtn(targetCode);
+        isTranslating = false;
         return;
       }
 
-      var uniqueMap = {};
-      var uniqueChunks = [];
-      items.forEach(function(item) {
-        if (!uniqueMap[item.text]) {
-          uniqueMap[item.text] = true;
-          var chunks = splitIntoChunks(item.text, CHUNK_SIZE);
-          chunks.forEach(function(chunk) { uniqueChunks.push({ fullText: item.text, chunk: chunk }); });
-        }
+      /* Build unique chunks (deduped across the whole page) */
+      var chunkList = [];
+      var chunkSeen = {};
+      var texts = Object.keys(textSet);
+      texts.forEach(function(text) {
+        var chunks = splitIntoChunks(text, CHUNK_SIZE);
+        chunks.forEach(function(chunk) {
+          if (!chunkSeen[chunk]) {
+            chunkSeen[chunk] = true;
+            chunkList.push(chunk);
+          }
+        });
       });
 
+      /* Translate in parallel batches */
       var results = {};
-      for (var i = 0; i < uniqueChunks.length; i++) {
-        var item = uniqueChunks[i];
-        var translated = await translateChunk(item.chunk, targetCode);
-        results[item.chunk] = translated;
-        if (i < uniqueChunks.length - 1) await new Promise(function(r) { setTimeout(r, DELAY_MS); });
+      for (var i = 0; i < chunkList.length; i += BATCH_SIZE) {
+        var batch = chunkList.slice(i, i + BATCH_SIZE);
+        await Promise.all(batch.map(function(chunk) {
+          return translateChunk(chunk, targetCode).then(function(translated) {
+            results[chunk] = translated;
+          });
+        }));
+        if (i + BATCH_SIZE < chunkList.length) {
+          await new Promise(function(r) { setTimeout(r, BATCH_DELAY); });
+        }
       }
 
+      /* Apply back to DOM */
       items.forEach(function(item) {
         var chunks = splitIntoChunks(item.text, CHUNK_SIZE);
         var translatedParts = chunks.map(function(c) { return results[c] || c; });
@@ -244,6 +307,7 @@
         var l = LANGUAGES.find(function(x) { return x.code === targetCode; });
         if (l && nameSpan) nameSpan.textContent = l.name;
       }, 1200);
+
     } catch (err) {
       console.error('[AVT] Error:', err);
       setStatus('Error');
@@ -410,7 +474,7 @@
       injectStyles();
       buildUI();
       autoRestore();
-      console.log('[AVT] v12 Ready');
+      console.log('[AVT] v13 Optimized Ready');
     } catch (err) {
       console.error('[AVT] Fatal start:', err);
     }
