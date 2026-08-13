@@ -1,12 +1,12 @@
-/* ========== APEXVAULT UNIVERSAL TRANSLATOR v14 HYBRID (FREE) ========== */
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v15 (FULL - BOTTOM LEFT) ========== */
 (function() {
   'use strict';
 
-  const STORAGE_KEY = 'apexvault_lang_v14';
-  const CACHE_KEY   = 'apexvault_trans_cache_v14';
-  const CHUNK_SIZE  = 1000;
-  const BATCH_SIZE  = 5;
-  const BATCH_DELAY = 100;
+  const STORAGE_KEY = 'apexvault_lang_v15';
+  const CACHE_KEY   = 'apexvault_trans_cache_v15';
+  const CHUNK_SIZE  = 1200;     /* larger = fewer API calls */
+  const BATCH_SIZE  = 6;        /* 6 parallel requests at once */
+  const BATCH_DELAY = 80;       /* minimal delay between batches */
   const FETCH_TIMEOUT = 6000;
 
   const LANGUAGES = [
@@ -20,8 +20,8 @@
     { code: 'zh', name: '中文', flag: '🇨🇳', api: 'zh' },
     { code: 'ja', name: '日本語', flag: '🇯🇵', api: 'ja' },
     { code: 'ko', name: '한국어', flag: '🇰🇷', api: 'ko' },
-    { code: 'ar', name: 'العربية', flag: '🇸🇦', api: 'ar' },
-    { code: 'fa', name: 'فارسی', flag: '🇮🇷', api: 'fa' },
+    { code: 'ar', name: 'العربية', flag: '🇸🇦', api: 'ar' },      /* ← Arabic */
+    { code: 'fa', name: 'فارسی', flag: '🇮🇷', api: 'fa' },         /* ← Persian (Iran) */
     { code: 'hi', name: 'हिन्दी', flag: '🇮🇳', api: 'hi' },
     { code: 'tr', name: 'Türkçe', flag: '🇹🇷', api: 'tr' },
     { code: 'pl', name: 'Polski', flag: '🇵🇱', api: 'pl' },
@@ -109,7 +109,6 @@
         '</div>' +
         '<button id="av-native-dismiss" style="background:#64ffda;color:#0a192f;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.8rem;white-space:nowrap;">Use Browser</button>' +
       '</div>';
-    /* CHANGED: moved to bottom-left so it sits above the button */
     banner.style.cssText =
       'position:fixed!important;bottom:80px!important;left:12px!important;z-index:99998!important;' +
       'background:rgba(17,34,64,0.98)!important;border:1px solid #64ffda!important;border-radius:14px!important;' +
@@ -243,14 +242,14 @@
     cacheSaveTimeout = setTimeout(function() {
       try {
         var keys = Object.keys(translationCache);
-        if (keys.length > 800) {
+        if (keys.length > 1000) {
           var trimmed = {};
-          keys.slice(keys.length - 800).forEach(function(k) { trimmed[k] = translationCache[k]; });
+          keys.slice(keys.length - 1000).forEach(function(k) { trimmed[k] = translationCache[k]; });
           translationCache = trimmed;
         }
         localStorage.setItem(CACHE_KEY, JSON.stringify(translationCache));
       } catch(e) { console.warn('[AVT] Cache save failed', e); }
-    }, 1500);
+    }, 1000);
   }
 
   async function translateChunk(text, target) {
@@ -285,7 +284,7 @@
     return result;
   }
 
-  /* ========== MAIN TRANSLATION ========== */
+  /* ========== MAIN TRANSLATION (parallel batches) ========== */
   async function applyTranslation(targetCode) {
     if (isTranslating) return;
     if (targetCode === currentLang) return;
@@ -404,7 +403,7 @@
 
     var wrap = document.createElement('div');
     wrap.id = 'av-lang-btn';
-    /* CHANGED: bottom-left floating position, always visible like WhatsApp icon */
+    /* BOTTOM LEFT - always visible floating button */
     wrap.style.cssText = 'position:fixed!important;bottom:20px!important;left:12px!important;z-index:99999!important;font-family:"Inter","Segoe UI",system-ui,sans-serif!important;';
 
     var btn = document.createElement('button');
@@ -453,7 +452,7 @@
 
     document.body.appendChild(wrap);
     bindEvents();
-    console.log('[AVT] Button created at bottom:20px left:12px');
+    console.log('[AVT] Button created at bottom-left');
   }
 
   function bindEvents() {
@@ -524,7 +523,6 @@
       '.avLangOpt.active{background:rgba(100,255,218,0.15)!important;color:#64ffda!important;}' +
       '.avLangOptFlag{font-size:1.15rem!important;flex-shrink:0!important;}' +
       '.avLangOptName{flex:1!important;}' +
-      /* CHANGED: mobile position updated to bottom-left */
       '@media(max-width:480px){#av-lang-btn{bottom:16px!important;left:8px!important;}#avLangToggle{padding:8px 14px!important;font-size:0.82rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}}';
     document.head.appendChild(s);
   }
@@ -539,7 +537,7 @@
       injectStyles();
       buildUI();
       autoRestore();
-      console.log('[AVT] v14 Bottom-Left Ready');
+      console.log('[AVT] v15 Ready — Bottom Left | Arabic + Persian');
     } catch (err) {
       console.error('[AVT] Fatal start:', err);
     }
