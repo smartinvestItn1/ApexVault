@@ -1,14 +1,13 @@
-/* ========== APEXVAULT UNIVERSAL TRANSLATOR v13 OPTIMIZED ========== */
+/* ========== APEXVAULT UNIVERSAL TRANSLATOR v14 HYBRID (FREE) ========== */
 (function() {
   'use strict';
 
-  const STORAGE_KEY = 'apexvault_lang_v13';
-  const CACHE_KEY   = 'apexvault_trans_cache_v13';
-  const CHUNK_SIZE  = 900;      // larger chunks = fewer API calls
-  const BATCH_SIZE  = 3;        // parallel requests
-  const BATCH_DELAY = 120;      // ms between batches (was 200 ms per chunk)
+  const STORAGE_KEY = 'apexvault_lang_v14';
+  const CACHE_KEY   = 'apexvault_trans_cache_v14';
+  const CHUNK_SIZE  = 1000;     // was 450 — fewer API calls
+  const BATCH_SIZE  = 5;        // was 1 — 5x more parallel
+  const BATCH_DELAY = 100;      // was 200 ms
   const FETCH_TIMEOUT = 6000;
-  const MAX_CACHE_KEYS = 600;
 
   const LANGUAGES = [
     { code: 'en', name: 'English', flag: '🇺🇸', api: 'en' },
@@ -91,6 +90,58 @@
     translationCache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
   } catch(e) { translationCache = {}; }
 
+  /* ========== BROWSER NATIVE DETECTION ========== */
+  function hasBrowserNativeTranslate() {
+    var ua = navigator.userAgent;
+    return /Chrome|Edg|SamsungBrowser|CriOS/.test(ua) && !/Firefox|Opera/.test(ua);
+  }
+
+  function showNativeBanner(targetCode, targetName) {
+    if (document.getElementById('av-native-banner')) return;
+    var banner = document.createElement('div');
+    banner.id = 'av-native-banner';
+    banner.innerHTML =
+      '<div style="display:flex;align-items:center;gap:12px;max-width:420px;">' +
+        '<span style="font-size:1.3rem;">⚡</span>' +
+        '<div style="flex:1;">' +
+          '<strong style="color:#64ffda;display:block;margin-bottom:2px;">Fastest option available</strong>' +
+          '<span style="color:#ccd6f6;font-size:0.85rem;">Your browser can translate this page to <b>' + targetName + '</b> instantly with better quality.</span>' +
+        '</div>' +
+        '<button id="av-native-dismiss" style="background:#64ffda;color:#0a192f;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.8rem;white-space:nowrap;">Use Browser</button>' +
+      '</div>';
+    banner.style.cssText =
+      'position:fixed!important;top:140px!important;right:12px!important;z-index:99998!important;' +
+      'background:rgba(17,34,64,0.98)!important;border:1px solid #64ffda!important;border-radius:14px!important;' +
+      'padding:14px 18px!important;color:#fff!important;font-family:"Inter",sans-serif!important;' +
+      'font-size:0.9rem!important;box-shadow:0 10px 40px rgba(0,0,0,0.5)!important;' +
+      'backdrop-filter:blur(12px)!important;max-width:360px!important;animation:avSlideIn 0.4s ease;';
+    document.body.appendChild(banner);
+
+    document.getElementById('av-native-dismiss').addEventListener('click', function() {
+      banner.remove();
+      /* Try to trigger Chrome translation hint */
+      var meta = document.createElement('meta');
+      meta.name = 'google';
+      meta.content = 'translate';
+      document.head.appendChild(meta);
+      alert('Right-click the page and select "Translate to ' + targetName + '"\nOr look for the translate icon in your address bar.');
+    });
+
+    setTimeout(function() { if(banner) banner.remove(); }, 15000);
+  }
+
+  /* ========== CHROME ON-DEVICE AI (Experimental, free & private) ========== */
+  async function tryChromeAI(text, target) {
+    if (typeof Translator === 'undefined' || !Translator.create) return null;
+    try {
+      var avail = await Translator.availability({ sourceLanguage: 'en', targetLanguage: target });
+      if (avail !== 'available' && avail !== 'downloadable') return null;
+      var translator = await Translator.create({ sourceLanguage: 'en', targetLanguage: target });
+      if (translator.ready) await translator.ready;
+      return await translator.translate(text);
+    } catch(e) { return null; }
+  }
+
   function fetchWithTimeout(url, options, ms) {
     return new Promise(function(resolve, reject) {
       var timer = setTimeout(function() { reject(new Error('Timeout')); }, ms);
@@ -105,7 +156,7 @@
       if (!parent) return NodeFilter.FILTER_REJECT;
       var tag = parent.tagName.toLowerCase();
       if (tag === 'script' || tag === 'style' || tag === 'noscript' || tag === 'code' || tag === 'pre') return NodeFilter.FILTER_REJECT;
-      if (parent.closest('#av-lang-btn')) return NodeFilter.FILTER_REJECT;
+      if (parent.closest('#av-lang-btn, #av-native-banner')) return NodeFilter.FILTER_REJECT;
       if (parent.closest('.notranslate')) return NodeFilter.FILTER_REJECT;
       if (!node.textContent.trim()) return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;
@@ -122,7 +173,6 @@
     });
   }
 
-  /* ---------- Fast character-based chunking (replaces slow Blob size) ---------- */
   function splitIntoChunks(text, maxLen) {
     if (text.length <= maxLen) return [text];
     var chunks = [];
@@ -152,6 +202,7 @@
     return chunks;
   }
 
+  /* ========== 4 FREE API PROVIDERS ========== */
   async function translateMyMemory(text, target) {
     var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + target;
     var res = await fetchWithTimeout(url, { method: 'GET', mode: 'cors' }, FETCH_TIMEOUT);
@@ -172,6 +223,20 @@
     throw new Error('Bad response');
   }
 
+  async function translateLibre(text, target) {
+    /* Public LibreTranslate instance — free, open-source */
+    var url = 'https://libretranslate.de/translate';
+    var res = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: text, source: 'en', target: target, format: 'text' })
+    }, FETCH_TIMEOUT);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+    if (data && data.translatedText) return data.translatedText;
+    throw new Error('Bad response');
+  }
+
   /* ---------- Cache helpers ---------- */
   var cacheSaveTimeout;
   function saveCache() {
@@ -179,17 +244,13 @@
     cacheSaveTimeout = setTimeout(function() {
       try {
         var keys = Object.keys(translationCache);
-        if (keys.length > MAX_CACHE_KEYS) {
+        if (keys.length > 800) {
           var trimmed = {};
-          keys.slice(keys.length - MAX_CACHE_KEYS).forEach(function(k) {
-            trimmed[k] = translationCache[k];
-          });
+          keys.slice(keys.length - 800).forEach(function(k) { trimmed[k] = translationCache[k]; });
           translationCache = trimmed;
         }
         localStorage.setItem(CACHE_KEY, JSON.stringify(translationCache));
-      } catch(e) {
-        console.warn('[AVT] Cache save failed', e);
-      }
+      } catch(e) { console.warn('[AVT] Cache save failed', e); }
     }, 1500);
   }
 
@@ -197,14 +258,28 @@
     var cacheKey = target + '::' + text;
     if (translationCache[cacheKey]) return translationCache[cacheKey];
 
+    /* Try Chrome on-device AI first (free, instant, private) */
+    var aiResult = await tryChromeAI(text, target);
+    if (aiResult) {
+      translationCache[cacheKey] = aiResult;
+      saveCache();
+      return aiResult;
+    }
+
     var result = text;
-    try {
-      result = await translateMyMemory(text, target);
-    } catch (e1) {
-      try {
-        result = await translateGoogle(text, target);
-      } catch (e2) {
-        result = text;
+    var errors = [];
+
+    /* Provider 1: MyMemory */
+    try { result = await translateMyMemory(text, target); }
+    catch(e1) { errors.push(e1.message);
+      /* Provider 2: Google unofficial */
+      try { result = await translateGoogle(text, target); }
+      catch(e2) { errors.push(e2.message);
+        /* Provider 3: LibreTranslate public */
+        try { result = await translateLibre(text, target); }
+        catch(e3) { errors.push(e3.message);
+          console.warn('[AVT] All providers failed for chunk:', text.slice(0,40), errors);
+        }
       }
     }
 
@@ -215,7 +290,7 @@
     return result;
   }
 
-  /* ---------- Main translation logic (parallel batches) ---------- */
+  /* ========== MAIN TRANSLATION (parallel batches) ========== */
   async function applyTranslation(targetCode) {
     if (isTranslating) return;
     if (targetCode === currentLang) return;
@@ -224,6 +299,9 @@
     var btn = document.getElementById('avLangToggle');
     var nameSpan = btn ? btn.querySelector('#avLangName') : null;
     function setStatus(txt) { if (nameSpan) nameSpan.textContent = txt; }
+
+    var targetLang = LANGUAGES.find(function(l) { return l.code === targetCode; });
+    if (!targetLang) { isTranslating = false; return; }
 
     try {
       if (targetCode === 'en') {
@@ -236,10 +314,12 @@
         return;
       }
 
-      if (!originalsSaved) {
-        saveOriginals();
-        originalsSaved = true;
+      /* Suggest browser native translation for Chrome/Edge users */
+      if (hasBrowserNativeTranslate()) {
+        showNativeBanner(targetCode, targetLang.name);
       }
+
+      if (!originalsSaved) { saveOriginals(); originalsSaved = true; }
       setStatus('Translating...');
 
       var nodes = getTextNodes(document.body);
@@ -263,21 +343,17 @@
         return;
       }
 
-      /* Build unique chunks (deduped across the whole page) */
+      /* Build unique chunks */
       var chunkList = [];
       var chunkSeen = {};
-      var texts = Object.keys(textSet);
-      texts.forEach(function(text) {
+      Object.keys(textSet).forEach(function(text) {
         var chunks = splitIntoChunks(text, CHUNK_SIZE);
         chunks.forEach(function(chunk) {
-          if (!chunkSeen[chunk]) {
-            chunkSeen[chunk] = true;
-            chunkList.push(chunk);
-          }
+          if (!chunkSeen[chunk]) { chunkSeen[chunk] = true; chunkList.push(chunk); }
         });
       });
 
-      /* Translate in parallel batches */
+      /* Translate in parallel batches of 5 */
       var results = {};
       for (var i = 0; i < chunkList.length; i += BATCH_SIZE) {
         var batch = chunkList.slice(i, i + BATCH_SIZE);
@@ -303,10 +379,7 @@
       localStorage.setItem(STORAGE_KEY, targetCode);
       updateBtn(targetCode);
       setStatus('Done!');
-      setTimeout(function() {
-        var l = LANGUAGES.find(function(x) { return x.code === targetCode; });
-        if (l && nameSpan) nameSpan.textContent = l.name;
-      }, 1200);
+      setTimeout(function() { if (nameSpan) nameSpan.textContent = targetLang.name; }, 1200);
 
     } catch (err) {
       console.error('[AVT] Error:', err);
@@ -335,7 +408,6 @@
 
   function buildUI() {
     if (document.getElementById('av-lang-btn')) return;
-
     var saved = localStorage.getItem(STORAGE_KEY) || 'en';
     var cur = LANGUAGES.find(function(l) { return l.code === saved; }) || LANGUAGES[0];
 
@@ -398,7 +470,6 @@
     var search = document.getElementById('avLangSearch');
     var list = document.getElementById('avLangList');
     var wrap = document.getElementById('av-lang-btn');
-
     if (!toggle) { console.error('[AVT] Button missing!'); return; }
 
     toggle.addEventListener('click', function(e) {
@@ -446,6 +517,7 @@
     var s = document.createElement('style');
     s.id = 'av-translate-style';
     s.textContent =
+      '@keyframes avSlideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}' +
       '#avLangMenu{position:absolute!important;top:calc(100% + 10px)!important;right:0!important;width:280px!important;max-height:400px!important;background:rgba(17,34,64,0.98)!important;border:1px solid #233554!important;border-radius:16px!important;overflow:hidden!important;opacity:0!important;visibility:hidden!important;transform:translateY(-10px)!important;transition:all 0.25s ease!important;box-shadow:0 25px 60px rgba(0,0,0,0.6)!important;display:flex!important;flex-direction:column!important;}' +
       '#avLangMenu.open{opacity:1!important;visibility:visible!important;transform:translateY(0)!important;}' +
       '#avLangSearchWrap{padding:14px!important;border-bottom:1px solid #233554!important;flex-shrink:0!important;}' +
@@ -474,7 +546,7 @@
       injectStyles();
       buildUI();
       autoRestore();
-      console.log('[AVT] v13 Optimized Ready');
+      console.log('[AVT] v14 Hybrid Ready');
     } catch (err) {
       console.error('[AVT] Fatal start:', err);
     }
