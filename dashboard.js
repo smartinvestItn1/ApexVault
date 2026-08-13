@@ -636,7 +636,7 @@ window.openWithdrawModal = async function() {
   openModal('withdrawModal');
 };
 
-
+// ========== WITHDRAW SUBMIT — FIXED ==========
 window.submitWithdraw = async function(event) {
   event.preventDefault();
 
@@ -658,10 +658,14 @@ window.submitWithdraw = async function(event) {
   if (amount > balance) { alert('Insufficient balance!'); return; }
 
   const kycApproved = userData.kyc && userData.kyc.status === 'approved';
+
+  /* FIX: Declare these OUTSIDE the if block so the try block can use them */
+  const todayKey = getTodayKey();
+  let dailyUsed = 0;
+
   if (!kycApproved) {
-    const todayKey = getTodayKey();
     const dailySnapshot = await get(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey));
-    const dailyUsed = dailySnapshot.exists() ? dailySnapshot.val() : 0;
+    dailyUsed = dailySnapshot.exists() ? dailySnapshot.val() : 0;
 
     if ((dailyUsed + amount) > DAILY_WITHDRAW_LIMIT) {
       alert(`Daily limit exceeded! You can only withdraw $${(DAILY_WITHDRAW_LIMIT - dailyUsed).toFixed(2)} more today.`);
@@ -699,7 +703,10 @@ window.submitWithdraw = async function(event) {
       timestamp: Date.now()
     });
 
-    await set(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey), dailyUsed + amount);
+    /* FIX: Only track daily limit for non-KYC users */
+    if (!kycApproved) {
+      await set(ref(db, 'users/' + currentUser.uid + '/dailyWithdrawals/' + todayKey), dailyUsed + amount);
+    }
 
     await update(ref(db, 'users/' + currentUser.uid), {
       balance: balance - total
