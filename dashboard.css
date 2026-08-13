@@ -19,7 +19,7 @@
   --header-height: 60px;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
 html { scroll-behavior: smooth; }
 
@@ -1461,4 +1461,130 @@ body {
 .login-overlay p, .logout-overlay p {
   color: var(--text-muted);
   font-size: 0.95rem;
+}
+
+/* ========== CLICK DELAY FIX ========== */
+button, a, .action-pill, .nav-tab, .nav-fab, .drawer-link, .float-btn,
+.plan-card, .action-btn, .filter-btn, .filter-tab, .toggle-btn, .eye-btn,
+.menu-btn, .notif-btn, .drawer-close, .logout-btn, .pill-icon, .btn-confirm,
+.btn-cancel, .file-upload-box, .referral-link button, .address-box button {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* ========== PROFIT TOAST (Auto-Return Notification) ========== */
+.profit-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-120px);
+  background: linear-gradient(135deg, rgba(0, 212, 170, 0.95), rgba(0, 168, 232, 0.95));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+  padding: 16px 24px;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 212, 170, 0.35), 0 0 0 1px rgba(255,255,255,0.1);
+  z-index: 100000;
+  display: none;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.15);
+  max-width: 90vw;
+}
+.profit-toast.show {
+  display: flex;
+  animation: toastSlideDown 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+@keyframes toastSlideDown {
+  to { transform: translateX(-50%) translateY(0); }
+}
+.profit-toast .toast-icon {
+  font-size: 1.4rem;
+  animation: toastIconPop 0.4s ease 0.2s both;
+}
+@keyframes toastIconPop {
+  0% { transform: scale(0) rotate(-20deg); }
+  70% { transform: scale(1.2) rotate(5deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* ========== TRANSFER ANIMATIONS ========== */
+.transfer-coin {
+  position: fixed;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  color: var(--bg-deep);
+  font-weight: 800;
+  z-index: 99999;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 4px 20px rgba(0, 212, 170, 0.5);
+}
+.transfer-coin.animate {
+  animation: coinFly 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes coinFly {
+  0% { opacity: 1; transform: scale(0.5) translateY(0); }
+  40% { opacity: 1; transform: scale(1.1) translateY(-30px); }
+  100% { opacity: 0; transform: scale(0.6) translateY(-100px); }
+}
+
+/* Balance pop on update */
+.balance-pop {
+  animation: balancePop 0.5s ease;
+}
+@keyframes balancePop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* Transfer modal button loading */
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ========== ACTIVE STATE INSTANT RESPONSE ========== */
+.action-pill:active .pill-icon,
+.nav-tab:active,
+.nav-fab:active,
+.drawer-link:active,
+.float-btn:active,
+.plan-card:active,
+.action-btn:active,
+.filter-btn:active,
+.eye-btn:active,
+.menu-btn:active,
+.notif-btn:active,
+.drawer-close:active,
+.logout-btn:active,
+.btn-confirm:active,
+.btn-cancel:active {
+  transform: scale(0.92);
+  transition: transform 0.08s ease;
 }
