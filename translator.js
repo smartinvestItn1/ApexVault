@@ -4,9 +4,9 @@
 
   const STORAGE_KEY = 'apexvault_lang_v14';
   const CACHE_KEY   = 'apexvault_trans_cache_v14';
-  const CHUNK_SIZE  = 1000;     // was 450 — fewer API calls
-  const BATCH_SIZE  = 5;        // was 1 — 5x more parallel
-  const BATCH_DELAY = 100;      // was 200 ms
+  const CHUNK_SIZE  = 1000;
+  const BATCH_SIZE  = 5;
+  const BATCH_DELAY = 100;
   const FETCH_TIMEOUT = 6000;
 
   const LANGUAGES = [
@@ -109,8 +109,9 @@
         '</div>' +
         '<button id="av-native-dismiss" style="background:#64ffda;color:#0a192f;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.8rem;white-space:nowrap;">Use Browser</button>' +
       '</div>';
+    /* CHANGED: moved to bottom-left so it sits above the button */
     banner.style.cssText =
-      'position:fixed!important;top:140px!important;right:12px!important;z-index:99998!important;' +
+      'position:fixed!important;bottom:80px!important;left:12px!important;z-index:99998!important;' +
       'background:rgba(17,34,64,0.98)!important;border:1px solid #64ffda!important;border-radius:14px!important;' +
       'padding:14px 18px!important;color:#fff!important;font-family:"Inter",sans-serif!important;' +
       'font-size:0.9rem!important;box-shadow:0 10px 40px rgba(0,0,0,0.5)!important;' +
@@ -119,7 +120,6 @@
 
     document.getElementById('av-native-dismiss').addEventListener('click', function() {
       banner.remove();
-      /* Try to trigger Chrome translation hint */
       var meta = document.createElement('meta');
       meta.name = 'google';
       meta.content = 'translate';
@@ -130,7 +130,7 @@
     setTimeout(function() { if(banner) banner.remove(); }, 15000);
   }
 
-  /* ========== CHROME ON-DEVICE AI (Experimental, free & private) ========== */
+  /* ========== CHROME ON-DEVICE AI (Experimental) ========== */
   async function tryChromeAI(text, target) {
     if (typeof Translator === 'undefined' || !Translator.create) return null;
     try {
@@ -202,7 +202,7 @@
     return chunks;
   }
 
-  /* ========== 4 FREE API PROVIDERS ========== */
+  /* ========== 3 FREE API PROVIDERS ========== */
   async function translateMyMemory(text, target) {
     var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + target;
     var res = await fetchWithTimeout(url, { method: 'GET', mode: 'cors' }, FETCH_TIMEOUT);
@@ -224,7 +224,6 @@
   }
 
   async function translateLibre(text, target) {
-    /* Public LibreTranslate instance — free, open-source */
     var url = 'https://libretranslate.de/translate';
     var res = await fetchWithTimeout(url, {
       method: 'POST',
@@ -258,7 +257,6 @@
     var cacheKey = target + '::' + text;
     if (translationCache[cacheKey]) return translationCache[cacheKey];
 
-    /* Try Chrome on-device AI first (free, instant, private) */
     var aiResult = await tryChromeAI(text, target);
     if (aiResult) {
       translationCache[cacheKey] = aiResult;
@@ -269,13 +267,10 @@
     var result = text;
     var errors = [];
 
-    /* Provider 1: MyMemory */
     try { result = await translateMyMemory(text, target); }
     catch(e1) { errors.push(e1.message);
-      /* Provider 2: Google unofficial */
       try { result = await translateGoogle(text, target); }
       catch(e2) { errors.push(e2.message);
-        /* Provider 3: LibreTranslate public */
         try { result = await translateLibre(text, target); }
         catch(e3) { errors.push(e3.message);
           console.warn('[AVT] All providers failed for chunk:', text.slice(0,40), errors);
@@ -290,7 +285,7 @@
     return result;
   }
 
-  /* ========== MAIN TRANSLATION (parallel batches) ========== */
+  /* ========== MAIN TRANSLATION ========== */
   async function applyTranslation(targetCode) {
     if (isTranslating) return;
     if (targetCode === currentLang) return;
@@ -314,7 +309,6 @@
         return;
       }
 
-      /* Suggest browser native translation for Chrome/Edge users */
       if (hasBrowserNativeTranslate()) {
         showNativeBanner(targetCode, targetLang.name);
       }
@@ -343,7 +337,6 @@
         return;
       }
 
-      /* Build unique chunks */
       var chunkList = [];
       var chunkSeen = {};
       Object.keys(textSet).forEach(function(text) {
@@ -353,7 +346,6 @@
         });
       });
 
-      /* Translate in parallel batches of 5 */
       var results = {};
       for (var i = 0; i < chunkList.length; i += BATCH_SIZE) {
         var batch = chunkList.slice(i, i + BATCH_SIZE);
@@ -367,7 +359,6 @@
         }
       }
 
-      /* Apply back to DOM */
       items.forEach(function(item) {
         var chunks = splitIntoChunks(item.text, CHUNK_SIZE);
         var translatedParts = chunks.map(function(c) { return results[c] || c; });
@@ -413,7 +404,8 @@
 
     var wrap = document.createElement('div');
     wrap.id = 'av-lang-btn';
-    wrap.style.cssText = 'position:fixed!important;top:80px!important;right:12px!important;z-index:99999!important;font-family:"Inter","Segoe UI",system-ui,sans-serif!important;';
+    /* CHANGED: bottom-left floating position, always visible like WhatsApp icon */
+    wrap.style.cssText = 'position:fixed!important;bottom:20px!important;left:12px!important;z-index:99999!important;font-family:"Inter","Segoe UI",system-ui,sans-serif!important;';
 
     var btn = document.createElement('button');
     btn.id = 'avLangToggle';
@@ -461,7 +453,7 @@
 
     document.body.appendChild(wrap);
     bindEvents();
-    console.log('[AVT] Button created at top:80px');
+    console.log('[AVT] Button created at bottom:20px left:12px');
   }
 
   function bindEvents() {
@@ -517,8 +509,8 @@
     var s = document.createElement('style');
     s.id = 'av-translate-style';
     s.textContent =
-      '@keyframes avSlideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}' +
-      '#avLangMenu{position:absolute!important;top:calc(100% + 10px)!important;right:0!important;width:280px!important;max-height:400px!important;background:rgba(17,34,64,0.98)!important;border:1px solid #233554!important;border-radius:16px!important;overflow:hidden!important;opacity:0!important;visibility:hidden!important;transform:translateY(-10px)!important;transition:all 0.25s ease!important;box-shadow:0 25px 60px rgba(0,0,0,0.6)!important;display:flex!important;flex-direction:column!important;}' +
+      '@keyframes avSlideIn{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:translateX(0);}}' +
+      '#avLangMenu{position:absolute!important;bottom:calc(100% + 10px)!important;left:0!important;width:280px!important;max-height:400px!important;background:rgba(17,34,64,0.98)!important;border:1px solid #233554!important;border-radius:16px!important;overflow:hidden!important;opacity:0!important;visibility:hidden!important;transform:translateY(10px)!important;transition:all 0.25s ease!important;box-shadow:0 25px 60px rgba(0,0,0,0.6)!important;display:flex!important;flex-direction:column!important;}' +
       '#avLangMenu.open{opacity:1!important;visibility:visible!important;transform:translateY(0)!important;}' +
       '#avLangSearchWrap{padding:14px!important;border-bottom:1px solid #233554!important;flex-shrink:0!important;}' +
       '#avLangSearch{width:100%!important;padding:12px 16px!important;background:#0a0e1a!important;border:1px solid #233554!important;border-radius:10px!important;color:#ccd6f6!important;font-size:0.9rem!important;outline:none!important;font-family:"Inter",sans-serif!important;font-weight:600!important;}' +
@@ -532,7 +524,8 @@
       '.avLangOpt.active{background:rgba(100,255,218,0.15)!important;color:#64ffda!important;}' +
       '.avLangOptFlag{font-size:1.15rem!important;flex-shrink:0!important;}' +
       '.avLangOptName{flex:1!important;}' +
-      '@media(max-width:480px){#av-lang-btn{top:70px!important;right:8px!important;}#avLangToggle{padding:8px 14px!important;font-size:0.82rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}}';
+      /* CHANGED: mobile position updated to bottom-left */
+      '@media(max-width:480px){#av-lang-btn{bottom:16px!important;left:8px!important;}#avLangToggle{padding:8px 14px!important;font-size:0.82rem!important;}#avLangMenu{width:240px!important;max-height:340px!important;}}';
     document.head.appendChild(s);
   }
 
@@ -546,7 +539,7 @@
       injectStyles();
       buildUI();
       autoRestore();
-      console.log('[AVT] v14 Hybrid Ready');
+      console.log('[AVT] v14 Bottom-Left Ready');
     } catch (err) {
       console.error('[AVT] Fatal start:', err);
     }
